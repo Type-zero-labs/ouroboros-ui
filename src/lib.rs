@@ -19,8 +19,10 @@
 //! [egui]: https://github.com/emilk/egui
 //! [shadcn/ui]: https://ui.shadcn.com
 
+pub mod auto_layout;
 pub mod theme;
 pub mod tokens;
 
+pub use theme::typography::{TypeStyle, Weight};
 pub use theme::Mode;
 pub use tokens::semantic::Theme;
