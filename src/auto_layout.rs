@@ -120,29 +120,34 @@ pub struct Padding {
 
 impl Padding {
     pub const fn all(v: f32) -> Self {
-        Self { top: v, right: v, bottom: v, left: v }
+        Self {
+            top: v,
+            right: v,
+            bottom: v,
+            left: v,
+        }
     }
     /// Horizontal (left/right) + vertical (top/bottom).
     pub const fn symmetric(x: f32, y: f32) -> Self {
-        Self { top: y, right: x, bottom: y, left: x }
+        Self {
+            top: y,
+            right: x,
+            bottom: y,
+            left: x,
+        }
     }
 }
 
 /// How a child is sized along the main axis.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub enum SizeMode {
     /// Fixed size in px.
     Fixed(f32),
     /// Size to content.
+    #[default]
     Hug,
     /// Grow to share leftover main-axis space.
     Fill,
-}
-
-impl Default for SizeMode {
-    fn default() -> Self {
-        SizeMode::Hug
-    }
 }
 
 struct Child<'a> {
@@ -214,7 +219,10 @@ impl<'a> AutoLayout<'a> {
 
     /// Add a child with an explicit main-axis [`SizeMode`].
     pub fn child(mut self, main: SizeMode, add: impl FnMut(&mut Ui) + 'a) -> Self {
-        self.children.push(Child { main, add: Box::new(add) });
+        self.children.push(Child {
+            main,
+            add: Box::new(add),
+        });
         self
     }
     /// Child sized to its content.
@@ -247,7 +255,9 @@ impl<'a> AutoLayout<'a> {
         let mut fill_count = 0usize;
         for (i, child) in self.children.iter_mut().enumerate() {
             let measured = measure(ui, dir, cross_bound, &mut child.add);
-            cross_nat[i] = dir.cross(measured).min(cross_bound.max(dir.cross(measured)));
+            cross_nat[i] = dir
+                .cross(measured)
+                .min(cross_bound.max(dir.cross(measured)));
             main_nat[i] = match child.main {
                 SizeMode::Fixed(v) => v,
                 SizeMode::Hug => dir.main(measured),
@@ -262,8 +272,12 @@ impl<'a> AutoLayout<'a> {
             Gap::Fixed(g) => g,
             Gap::Auto => 0.0,
         };
-        let content_main: f32 =
-            main_nat.iter().sum::<f32>() + if n > 1 { fixed_gap * (n as f32 - 1.0) } else { 0.0 };
+        let content_main: f32 = main_nat.iter().sum::<f32>()
+            + if n > 1 {
+                fixed_gap * (n as f32 - 1.0)
+            } else {
+                0.0
+            };
         let content_cross = cross_nat.iter().cloned().fold(0.0_f32, f32::max);
 
         // ── Container sizing ──
@@ -317,11 +331,21 @@ impl<'a> AutoLayout<'a> {
 }
 
 /// Measure a child's natural size by rendering it once into an invisible sizing-pass ui.
-fn measure(ui: &mut Ui, dir: LayoutDirection, cross_bound: f32, add: &mut dyn FnMut(&mut Ui)) -> Vec2 {
+fn measure(
+    ui: &mut Ui,
+    dir: LayoutDirection,
+    cross_bound: f32,
+    add: &mut dyn FnMut(&mut Ui),
+) -> Vec2 {
     // Large on the main axis (don't constrain Hug), bounded on the cross axis.
     let big = dir.rect(0.0, 0.0, 100_000.0, cross_bound.max(1.0)).size();
     let max_rect = Rect::from_min_size(ui.next_widget_position(), big);
-    let mut child = ui.new_child(UiBuilder::new().invisible().sizing_pass().max_rect(max_rect));
+    let mut child = ui.new_child(
+        UiBuilder::new()
+            .invisible()
+            .sizing_pass()
+            .max_rect(max_rect),
+    );
     add(&mut child);
     child.min_rect().size()
 }
