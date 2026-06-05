@@ -6,9 +6,7 @@
 //!
 //! Run: `cargo run --example storybook`
 
-use egui::{
-    vec2, Color32, CornerRadius, RichText, Sense, Stroke, StrokeKind, Ui,
-};
+use egui::{vec2, Color32, CornerRadius, RichText, Sense, Stroke, StrokeKind, Ui};
 use egui_phosphor::light;
 use ouroboros_ui::auto_layout::{AutoLayout, CrossAlign, MainAlign};
 use ouroboros_ui::theme::typography;
@@ -17,6 +15,7 @@ use ouroboros_ui::{Mode, Theme};
 
 fn main() -> eframe::Result<()> {
     let mut installed = false;
+    let mut mode = Mode::Dark;
     eframe::run_ui_native(
         "ouroboros-ui storybook",
         eframe::NativeOptions::default(),
@@ -24,22 +23,40 @@ fn main() -> eframe::Result<()> {
             if !installed {
                 // `set_fonts` only takes effect next frame — install, then skip rendering
                 // this frame so the named Iosevka families exist before we reference them.
-                Theme::install(ui.ctx(), Mode::Dark);
+                Theme::install(ui.ctx(), mode);
                 installed = true;
                 ui.ctx().request_repaint();
                 return;
             }
             let theme = Theme::get(ui);
+            // Paint the window background with the token directly — egui's own clear
+            // color follows its internal Dark/Light theme, not our semantic tokens.
+            ui.painter()
+                .rect_filled(ui.clip_rect(), 0.0, theme.background);
 
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.set_max_width(880.0);
                 ui.add_space(core::SPACE_4);
                 title(ui, "ouroboros-ui", &theme);
-                ui.label(
-                    RichText::new("foundation — tokens · Iosevka · Phosphor Light")
-                        .font(typography::body().font_id())
-                        .color(theme.muted_foreground),
-                );
+                ui.horizontal(|ui| {
+                    ui.label(
+                        RichText::new("foundation — tokens · Iosevka · Phosphor Light")
+                            .font(typography::body().font_id())
+                            .color(theme.muted_foreground),
+                    );
+                    let label = match mode {
+                        Mode::Dark => "◐ Dark",
+                        Mode::Light => "◑ Light",
+                    };
+                    if ui.button(label).clicked() {
+                        mode = match mode {
+                            Mode::Dark => Mode::Light,
+                            Mode::Light => Mode::Dark,
+                        };
+                        Theme::apply(ui.ctx(), mode);
+                        ui.ctx().request_repaint();
+                    }
+                });
                 ui.add_space(core::SPACE_6);
 
                 section(ui, "Semantic — surfaces & text", &theme);
@@ -493,8 +510,10 @@ fn section(ui: &mut Ui, text: &str, theme: &Theme) {
             .font(typography::heading().font_id())
             .color(theme.foreground),
     );
-    let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width().min(880.0), 1.0), Sense::hover());
-    ui.painter().rect_filled(rect, CornerRadius::ZERO, theme.border);
+    let (rect, _) =
+        ui.allocate_exact_size(vec2(ui.available_width().min(880.0), 1.0), Sense::hover());
+    ui.painter()
+        .rect_filled(rect, CornerRadius::ZERO, theme.border);
     ui.add_space(core::SPACE_3);
 }
 

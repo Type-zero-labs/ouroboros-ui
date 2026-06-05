@@ -130,6 +130,50 @@ impl Theme {
             neutral_bg: tint(core::ZINC_500, STATUS_BG_ALPHA),
         }
     }
+
+    /// The light (zinc) palette — off-white surfaces, dark text & primary.
+    pub fn light() -> Self {
+        Self {
+            // Surfaces — off-white (zinc-50) / zinc-100.
+            background: core::ZINC_50,
+            foreground: core::ZINC_950,
+            card: core::ZINC_50,
+            card_foreground: core::ZINC_950,
+            popover: core::ZINC_50,
+            popover_foreground: core::ZINC_950,
+            muted: core::ZINC_100,
+            muted_foreground: core::ZINC_500,
+            disabled_foreground: core::ZINC_400,
+
+            // Interactive — dark neutral primary on light.
+            primary: core::ZINC_900,
+            primary_foreground: core::ZINC_50,
+            secondary: core::ZINC_100,
+            secondary_foreground: core::ZINC_900,
+            accent: core::ZINC_100,
+            accent_foreground: core::ZINC_900,
+            destructive: core::RED_500,
+            destructive_foreground: core::ZINC_50,
+
+            // Borders & focus.
+            border: core::ZINC_200,
+            border_strong: core::ZINC_300,
+            input: core::ZINC_200,
+            ring: core::ZINC_400,
+
+            // Status (same hues; soft bg tints).
+            success: core::GREEN_500,
+            success_bg: tint(core::GREEN_500, STATUS_BG_ALPHA),
+            warning: core::AMBER_500,
+            warning_bg: tint(core::AMBER_500, STATUS_BG_ALPHA),
+            error: core::RED_500,
+            error_bg: tint(core::RED_500, STATUS_BG_ALPHA),
+            info: core::BLUE_400,
+            info_bg: tint(core::BLUE_500, STATUS_BG_ALPHA),
+            neutral: core::ZINC_500,
+            neutral_bg: tint(core::ZINC_500, STATUS_BG_ALPHA),
+        }
+    }
 }
 
 impl Default for Theme {
