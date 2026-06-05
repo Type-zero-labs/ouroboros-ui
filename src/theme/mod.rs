@@ -24,19 +24,29 @@ impl Theme {
     pub fn resolve(mode: Mode) -> Self {
         match mode {
             Mode::Dark => Self::dark(),
-            // TODO light: populate a light zinc table; resolves to dark for now.
-            Mode::Light => Self::dark(),
+            Mode::Light => Self::light(),
         }
     }
 
-    /// Install fonts + the resolved theme into the egui context. Call once at startup
-    /// (or when the mode changes).
+    /// Install fonts + apply the resolved theme. Call once at startup.
     pub fn install(ctx: &egui::Context, mode: Mode) {
-        let theme = Self::resolve(mode);
-
         let mut fonts = FontDefinitions::default();
         typography::register(&mut fonts);
         ctx.set_fonts(fonts);
+        Self::apply(ctx, mode);
+    }
+
+    /// Apply the resolved theme (visuals + stored tokens + text styles) for `mode`,
+    /// without re-registering fonts. Use this to switch [`Mode`] at runtime.
+    pub fn apply(ctx: &egui::Context, mode: Mode) {
+        let theme = Self::resolve(mode);
+
+        // Switch egui's own Dark/Light theme so its built-in chrome (clear color,
+        // native widgets, scrollbars) follows the mode too.
+        ctx.set_theme(match mode {
+            Mode::Dark => egui::ThemePreference::Dark,
+            Mode::Light => egui::ThemePreference::Light,
+        });
 
         ctx.global_style_mut(|style| {
             style.visuals.dark_mode = matches!(mode, Mode::Dark);
@@ -67,7 +77,8 @@ impl Theme {
 
     /// Retrieve the installed theme from a [`Ui`](egui::Ui) (falls back to [`Default`]).
     pub fn get(ui: &egui::Ui) -> Self {
-        ui.data(|d| d.get_temp::<Self>(Id::NULL)).unwrap_or_default()
+        ui.data(|d| d.get_temp::<Self>(Id::NULL))
+            .unwrap_or_default()
     }
 
     /// Retrieve the installed theme from a [`Context`](egui::Context) directly.

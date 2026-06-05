@@ -51,13 +51,34 @@ fn mono(bold: bool) -> FontFamily {
 /// named family so [`TypeStyle`] can target a specific face.
 pub fn register(fonts: &mut FontDefinitions) {
     let faces: [(&str, &[u8]); 7] = [
-        (SANS_LIGHT, include_bytes!("../../assets/fonts/Iosevka-Light.ttf")),
-        (SANS_REGULAR, include_bytes!("../../assets/fonts/Iosevka-Regular.ttf")),
-        (SANS_MEDIUM, include_bytes!("../../assets/fonts/Iosevka-Medium.ttf")),
-        (SANS_SEMIBOLD, include_bytes!("../../assets/fonts/Iosevka-SemiBold.ttf")),
-        (SANS_BOLD, include_bytes!("../../assets/fonts/Iosevka-Bold.ttf")),
-        (MONO_REGULAR, include_bytes!("../../assets/fonts/IosevkaTerm-Regular.ttf")),
-        (MONO_BOLD, include_bytes!("../../assets/fonts/IosevkaTerm-Bold.ttf")),
+        (
+            SANS_LIGHT,
+            include_bytes!("../../assets/fonts/Iosevka-Light.ttf"),
+        ),
+        (
+            SANS_REGULAR,
+            include_bytes!("../../assets/fonts/Iosevka-Regular.ttf"),
+        ),
+        (
+            SANS_MEDIUM,
+            include_bytes!("../../assets/fonts/Iosevka-Medium.ttf"),
+        ),
+        (
+            SANS_SEMIBOLD,
+            include_bytes!("../../assets/fonts/Iosevka-SemiBold.ttf"),
+        ),
+        (
+            SANS_BOLD,
+            include_bytes!("../../assets/fonts/Iosevka-Bold.ttf"),
+        ),
+        (
+            MONO_REGULAR,
+            include_bytes!("../../assets/fonts/IosevkaTerm-Regular.ttf"),
+        ),
+        (
+            MONO_BOLD,
+            include_bytes!("../../assets/fonts/IosevkaTerm-Bold.ttf"),
+        ),
     ];
 
     for (name, bytes) in faces {
@@ -91,7 +112,13 @@ pub fn register(fonts: &mut FontDefinitions) {
     // icons resolve regardless of which TypeStyle (named family) renders them — not just
     // the default Proportional stack.
     const ALL_FACES: [&str; 7] = [
-        SANS_LIGHT, SANS_REGULAR, SANS_MEDIUM, SANS_SEMIBOLD, SANS_BOLD, MONO_REGULAR, MONO_BOLD,
+        SANS_LIGHT,
+        SANS_REGULAR,
+        SANS_MEDIUM,
+        SANS_SEMIBOLD,
+        SANS_BOLD,
+        MONO_REGULAR,
+        MONO_BOLD,
     ];
     for key in ALL_FACES {
         fonts
@@ -138,41 +165,91 @@ fn style(family: FontFamily, size: f32, leading: f32, tracking: f32) -> TypeStyl
 
 /// Largest title — Bold 30.
 pub fn display() -> TypeStyle {
-    style(sans(Weight::Bold), core::TEXT_3XL, core::LEADING_TIGHT, core::TRACKING_TIGHT)
+    style(
+        sans(Weight::Bold),
+        core::TEXT_3XL,
+        core::LEADING_TIGHT,
+        core::TRACKING_TIGHT,
+    )
 }
 /// H1 — SemiBold 24.
 pub fn h1() -> TypeStyle {
-    style(sans(Weight::SemiBold), core::TEXT_2XL, core::LEADING_TIGHT, core::TRACKING_NORMAL)
+    style(
+        sans(Weight::SemiBold),
+        core::TEXT_2XL,
+        core::LEADING_TIGHT,
+        core::TRACKING_NORMAL,
+    )
 }
 /// H2 — SemiBold 20.
 pub fn h2() -> TypeStyle {
-    style(sans(Weight::SemiBold), core::TEXT_XL, core::LEADING_TIGHT, core::TRACKING_NORMAL)
+    style(
+        sans(Weight::SemiBold),
+        core::TEXT_XL,
+        core::LEADING_TIGHT,
+        core::TRACKING_NORMAL,
+    )
 }
 /// Section heading — SemiBold 16.
 pub fn heading() -> TypeStyle {
-    style(sans(Weight::SemiBold), core::TEXT_LG, core::LEADING_TIGHT, core::TRACKING_NORMAL)
+    style(
+        sans(Weight::SemiBold),
+        core::TEXT_LG,
+        core::LEADING_TIGHT,
+        core::TRACKING_NORMAL,
+    )
 }
 /// Body — Regular 14.
 pub fn body() -> TypeStyle {
-    style(sans(Weight::Regular), core::TEXT_BASE, core::LEADING_NORMAL, core::TRACKING_NORMAL)
+    style(
+        sans(Weight::Regular),
+        core::TEXT_BASE,
+        core::LEADING_NORMAL,
+        core::TRACKING_NORMAL,
+    )
 }
 /// Emphasized body — Medium 14.
 pub fn body_strong() -> TypeStyle {
-    style(sans(Weight::Medium), core::TEXT_BASE, core::LEADING_NORMAL, core::TRACKING_NORMAL)
+    style(
+        sans(Weight::Medium),
+        core::TEXT_BASE,
+        core::LEADING_NORMAL,
+        core::TRACKING_NORMAL,
+    )
 }
 /// Label — Medium 13.
 pub fn label() -> TypeStyle {
-    style(sans(Weight::Medium), core::TEXT_SM, core::LEADING_NORMAL, core::TRACKING_NORMAL)
+    style(
+        sans(Weight::Medium),
+        core::TEXT_SM,
+        core::LEADING_NORMAL,
+        core::TRACKING_NORMAL,
+    )
 }
 /// Caption / small — Regular 12.
 pub fn caption() -> TypeStyle {
-    style(sans(Weight::Regular), core::TEXT_XS, core::LEADING_NORMAL, core::TRACKING_NORMAL)
+    style(
+        sans(Weight::Regular),
+        core::TEXT_XS,
+        core::LEADING_NORMAL,
+        core::TRACKING_NORMAL,
+    )
 }
 /// Inline code — IosevkaTerm Regular 13.
 pub fn code() -> TypeStyle {
-    style(mono(false), core::TEXT_SM, core::LEADING_NORMAL, core::TRACKING_NORMAL)
+    style(
+        mono(false),
+        core::TEXT_SM,
+        core::LEADING_NORMAL,
+        core::TRACKING_NORMAL,
+    )
 }
 /// Keyboard key — IosevkaTerm Bold 12 (mono Medium not vendored; Bold reads as a key cap).
 pub fn kbd() -> TypeStyle {
-    style(mono(true), core::TEXT_XS, core::LEADING_NORMAL, core::TRACKING_NORMAL)
+    style(
+        mono(true),
+        core::TEXT_XS,
+        core::LEADING_NORMAL,
+        core::TRACKING_NORMAL,
+    )
 }
