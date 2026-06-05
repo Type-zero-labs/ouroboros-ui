@@ -12,6 +12,11 @@ implementation in Rust that adopts the same vocabulary and visual grammar.
 
 ## Bundled fonts
 
-- **Geist Sans** — SIL Open Font License 1.1 (see `assets/fonts/OFL-Geist.txt`).
-- **Victor Mono** — SIL Open Font License 1.1 (see `assets/fonts/OFL-VictorMono.txt`).
+The UI and code faces are both from the **Iosevka** superfamily by Renzhi Li
+(Belleve Invis) — SIL Open Font License 1.1 (see `assets/fonts/OFL-Iosevka.txt`). The
+files are **subset** to Latin + punctuation + arrows + math + box-drawing/block/shape
+ranges (~103 KB/weight vs ~10 MB full).
+
+- **Iosevka** (monospace) — UI / body. Weights: Light, Regular, Medium, SemiBold, Bold.
+- **IosevkaTerm** (terminal monospace) — code / `kbd`. Weights: Regular, Bold.
 - **Phosphor Icons** — via the `egui-phosphor` crate (MIT).
