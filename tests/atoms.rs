@@ -18,6 +18,7 @@ use ouroboros_ui::molecules::{
     Alert, Breadcrumb, Card, CheckboxCard, Collapsible, ColorField, Field, FieldSeparator,
     FieldSet, InputGroup, RadioGroup, SearchField, Slot, Tabs, ToggleGroup, VectorField,
 };
+use ouroboros_ui::organisms::{Sidebar, TabView, Table, Toolbar, TreeItem, TreeView};
 use ouroboros_ui::tokens::core;
 use ouroboros_ui::{Mode, Theme};
 use std::cell::Cell;
@@ -389,6 +390,37 @@ fn list_item_selects() {
     harness.get_by_label("Cube").click();
     harness.run();
     assert!(clicked.get(), "clicking the list row should select it");
+}
+
+#[test]
+fn organisms_render() {
+    rendered(|ui| {
+        Toolbar::new().show(ui, |ui| {
+            let mut a = true;
+            ToolbarButton::new(&mut a, light::CURSOR).show(ui);
+        });
+        let mut t = 0;
+        TabView::new(&mut t).tabs(["A", "B"]).show(ui, |ui, i| {
+            Text::new(format!("panel {i}")).show(ui);
+        });
+        Table::new()
+            .headers(["N", "T"])
+            .widths([80.0, 80.0])
+            .row(["a", "b"])
+            .show(ui);
+        let mut s = 0;
+        TreeView::new(&mut s)
+            .items([
+                TreeItem::new("Root").expanded(true),
+                TreeItem::new("Child").depth(1),
+            ])
+            .show(ui);
+        let mut nav = 0;
+        Sidebar::new(&mut nav)
+            .item(light::HOUSE, "Home")
+            .text_item("Other")
+            .show(ui);
+    });
 }
 
 #[test]
