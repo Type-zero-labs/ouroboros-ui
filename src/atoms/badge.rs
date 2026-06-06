@@ -5,7 +5,7 @@
 
 use crate::theme::typography;
 use crate::tokens::component::BadgeTokens;
-use crate::tokens::core;
+use crate::tokens::core::{self, Size};
 use crate::Theme;
 use egui::{
     pos2, text::LayoutJob, text::TextFormat, vec2, CornerRadius, Response, Sense, Stroke,
@@ -32,6 +32,7 @@ pub struct Badge {
     text: String,
     variant: BadgeVariant,
     dot: bool,
+    size: Size,
 }
 
 impl Badge {
@@ -40,12 +41,23 @@ impl Badge {
             text: text.into(),
             variant: BadgeVariant::default(),
             dot: false,
+            size: Size::default(),
         }
     }
 
     pub fn variant(mut self, variant: BadgeVariant) -> Self {
         self.variant = variant;
         self
+    }
+    pub fn size(mut self, size: Size) -> Self {
+        self.size = size;
+        self
+    }
+    pub fn sm(self) -> Self {
+        self.size(Size::Sm)
+    }
+    pub fn lg(self) -> Self {
+        self.size(Size::Lg)
     }
     pub fn secondary(self) -> Self {
         self.variant(BadgeVariant::Secondary)
@@ -91,7 +103,12 @@ impl Badge {
             BadgeVariant::Info => BadgeTokens::info(&theme),
         };
 
-        let pad = vec2(core::SPACE_2, core::SPACE_1);
+        // Padding + text style scale with Size; Md preserves the original look.
+        let (pad, text_style) = match self.size {
+            Size::Sm => (vec2(core::SPACE_1, core::SPACE_1), typography::caption()),
+            Size::Md => (vec2(core::SPACE_2, core::SPACE_1), typography::caption()),
+            Size::Lg => (vec2(core::SPACE_3, core::SPACE_1), typography::label()),
+        };
         let gap = core::SPACE_1;
         let dot_d = core::SPACE_2;
 
@@ -100,8 +117,9 @@ impl Badge {
             &self.text,
             0.0,
             TextFormat {
-                font_id: typography::caption().font_id(),
+                font_id: text_style.font_id(),
                 color: bt.foreground,
+                extra_letter_spacing: text_style.tracking,
                 underline: if bt.underline {
                     Stroke::new(core::BORDER_THIN, bt.foreground)
                 } else {

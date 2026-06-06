@@ -5,7 +5,7 @@
 //! [`TypeStyle`] tokens (family + size + line-height + tracking) for the named roles
 //! (`display`/`h1`/…/`code`). Sizes and leadings come from [`core`](crate::tokens::core).
 
-use crate::tokens::core;
+use crate::tokens::core::{self, Size};
 use egui::{FontData, FontDefinitions, FontFamily, FontId};
 
 // Registration keys — one per vendored weight.
@@ -267,4 +267,17 @@ pub fn kbd() -> TypeStyle {
 /// proportional stack's icon fallback. Atoms call this instead of building a `FontId`.
 pub fn icon_font(size: f32) -> FontId {
     FontId::new(size, FontFamily::Proportional)
+}
+
+// The typography mapping for the shared control [`Size`] scale lives here (not in
+// `tokens::core`) so the token layer stays a leaf — `theme` may reference `tokens`,
+// not the other way around.
+impl Size {
+    /// Text style for a control at this size: emphasized body at `Lg`, label otherwise.
+    pub fn text_style(self) -> TypeStyle {
+        match self {
+            Size::Lg => body_strong(),
+            Size::Sm | Size::Md => label(),
+        }
+    }
 }

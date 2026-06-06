@@ -29,6 +29,7 @@ pub mod tokens;
 
 pub use theme::typography::{TypeStyle, Weight};
 pub use theme::Mode;
+pub use tokens::core::Size;
 pub use tokens::semantic::Theme;
 
 // Re-export the icon font crate so consumers reach glyphs without a separate dependency

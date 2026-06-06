@@ -142,6 +142,7 @@ impl<'a> InputGroup<'a> {
                                 let width = (ui.available_width() - reserve).max(0.0);
                                 let hint = RichText::new(placeholder)
                                     .font(body.font_id())
+                                    .extra_letter_spacing(body.tracking)
                                     .color(theme.muted_foreground);
                                 let mut edit = TextEdit::singleline(buf)
                                     .frame(egui::Frame::NONE)

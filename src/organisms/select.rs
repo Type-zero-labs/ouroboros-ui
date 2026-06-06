@@ -4,6 +4,7 @@
 
 use crate::atoms::{Button, ButtonVariant};
 use crate::cells::MenuItem;
+use crate::Size;
 use egui::{Response, Ui};
 use egui_phosphor::light;
 
@@ -12,6 +13,7 @@ pub struct Select<'a> {
     selected: &'a mut usize,
     options: Vec<String>,
     placeholder: String,
+    size: Size,
 }
 
 impl<'a> Select<'a> {
@@ -20,6 +22,7 @@ impl<'a> Select<'a> {
             selected,
             options: Vec::new(),
             placeholder: "Select…".to_owned(),
+            size: Size::default(),
         }
     }
     pub fn options<S: Into<String>>(mut self, options: impl IntoIterator<Item = S>) -> Self {
@@ -29,6 +32,17 @@ impl<'a> Select<'a> {
     pub fn placeholder(mut self, text: impl Into<String>) -> Self {
         self.placeholder = text.into();
         self
+    }
+    /// Trigger height follows the shared [`Size`] scale (hover animation lives in the Button).
+    pub fn size(mut self, size: Size) -> Self {
+        self.size = size;
+        self
+    }
+    pub fn sm(self) -> Self {
+        self.size(Size::Sm)
+    }
+    pub fn lg(self) -> Self {
+        self.size(Size::Lg)
     }
 
     pub fn show(self, ui: &mut Ui) -> Response {
@@ -41,6 +55,7 @@ impl<'a> Select<'a> {
         let response = Button::new(current)
             .variant(ButtonVariant::Outline)
             .icon_right(light::CARET_DOWN)
+            .size(self.size)
             .id_source("select_trigger")
             .show(ui);
         egui::Popup::menu(&response).show(|ui: &mut Ui| {

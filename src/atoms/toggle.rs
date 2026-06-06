@@ -62,16 +62,22 @@ impl<'a> Toggle<'a> {
             core::disabled_color(theme.foreground)
         };
 
-        let fmt = |font: egui::FontId| TextFormat {
+        let fmt = |font: egui::FontId, tracking: f32| TextFormat {
             font_id: font,
             color: fg,
             valign: Align::Center,
+            extra_letter_spacing: tracking,
             ..Default::default()
         };
+        let label_style = typography::body();
         let mut job = LayoutJob::default();
         job.wrap.max_width = f32::INFINITY;
         if let Some(glyph) = self.glyph {
-            job.append(glyph, 0.0, fmt(typography::icon_font(icon_size)));
+            job.append(
+                glyph,
+                0.0,
+                fmt(typography::icon_font(icon_size), core::TRACKING_NORMAL),
+            );
         }
         if let Some(label) = &self.label {
             let lead = if self.glyph.is_some() {
@@ -79,7 +85,7 @@ impl<'a> Toggle<'a> {
             } else {
                 0.0
             };
-            job.append(label, lead, fmt(typography::body().font_id()));
+            job.append(label, lead, fmt(label_style.font_id(), label_style.tracking));
         }
         let galley = ui.painter().layout_job(job);
         let content = galley.size();

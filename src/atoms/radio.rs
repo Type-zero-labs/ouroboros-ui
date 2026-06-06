@@ -6,7 +6,7 @@
 
 use crate::atoms::Text;
 use crate::theme::typography;
-use crate::tokens::core;
+use crate::tokens::core::{self, Size};
 use crate::Theme;
 use egui::{pos2, vec2, Color32, Id, Rect, Response, Sense, Stroke, Ui, UiBuilder};
 
@@ -17,6 +17,7 @@ pub struct Radio {
     label: Option<String>,
     enabled: bool,
     interactive: bool,
+    size: Size,
     id_source: Option<Id>,
 }
 
@@ -27,6 +28,7 @@ impl Radio {
             label: None,
             enabled: true,
             interactive: true,
+            size: Size::default(),
             id_source: None,
         }
     }
@@ -35,6 +37,17 @@ impl Radio {
     pub fn interactive(mut self, interactive: bool) -> Self {
         self.interactive = interactive;
         self
+    }
+
+    pub fn size(mut self, size: Size) -> Self {
+        self.size = size;
+        self
+    }
+    pub fn sm(self) -> Self {
+        self.size(Size::Sm)
+    }
+    pub fn lg(self) -> Self {
+        self.size(Size::Lg)
     }
 
     pub fn label(mut self, label: impl Into<String>) -> Self {
@@ -55,7 +68,7 @@ impl Radio {
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let theme = Theme::get(ui);
-        let size = core::ICON_MD;
+        let size = self.size.icon_size();
         let gap = core::SPACE_2;
         let style = typography::body();
 
@@ -64,7 +77,13 @@ impl Radio {
                 .layout_no_wrap(l.clone(), style.font_id(), theme.foreground)
                 .size()
         });
-        let label_w = label_size.map_or(0.0, |s| s.x);
+        // `layout_no_wrap` measures without letter-spacing, but the label is rendered by the
+        // Text atom *with* the role's tracking — reserve that extra width so it doesn't clip.
+        let label_w = label_size.map_or(0.0, |s| s.x)
+            + self
+                .label
+                .as_ref()
+                .map_or(0.0, |l| style.tracking * l.chars().count() as f32);
         let label_h = label_size.map_or(0.0, |s| s.y);
         let height = size.max(label_h);
         let width = size
@@ -110,6 +129,14 @@ impl Radio {
             theme.input
         };
         painter.circle_stroke(center, radius, Stroke::new(core::BORDER_THIN, dim(border)));
+
+        // Animated hover veil — gated on enabled + interactive.
+        let hovered = self.enabled && self.interactive && response.hovered();
+        let ht = core::hover_t(ui.ctx(), response.id, hovered);
+        if ht > 0.0 {
+            painter.circle_filled(center, radius, theme.hover_overlay.gamma_multiply(ht));
+        }
+
         if self.selected {
             painter.circle_filled(center, radius * 0.5, dim(theme.primary));
         }
