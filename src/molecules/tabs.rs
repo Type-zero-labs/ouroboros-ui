@@ -93,21 +93,24 @@ impl<'a> Tabs<'a> {
                     })
                     .response
             }
-            // Underline (shadcn radix `variant="line"`): ghost tabs, active gets a primary underline.
+            // Underline (shadcn radix `variant="line"`): ghost tabs, active gets a primary
+            // underline the *width of the tab* (not the whole row).
             TabsVariant::Line => {
                 ui.horizontal(|ui| {
                     for (i, (label, icon)) in tabs.iter().enumerate() {
                         let active = *selected == i;
                         ui.vertical(|ui| {
-                            if button(label, *icon, active, true, i).show(ui).clicked() {
+                            let resp = button(label, *icon, active, true, i).show(ui);
+                            if resp.clicked() {
                                 *selected = i;
                             }
+                            let w = resp.rect.width();
                             ui.add_space(core::SPACE_1);
-                            if active {
-                                Divider::horizontal().color(primary).thick().show(ui);
-                            } else {
-                                ui.add_space(core::BORDER_FOCUS);
-                            }
+                            ui.allocate_ui(egui::vec2(w, core::BORDER_FOCUS), |ui| {
+                                if active {
+                                    Divider::horizontal().color(primary).thick().show(ui);
+                                }
+                            });
                         });
                     }
                 })

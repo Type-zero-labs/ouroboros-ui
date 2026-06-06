@@ -15,7 +15,9 @@ use ouroboros_ui::atoms::{
     SurfaceFill, Switch, Text, TextRole, Textarea, Toggle, Tooltip,
 };
 use ouroboros_ui::auto_layout::{AutoLayout, CrossAlign, MainAlign};
-use ouroboros_ui::cells::{ListItem, MenuItem, PropertyRow, TableRow, ToolbarButton, TreeNode};
+use ouroboros_ui::cells::{
+    ListItem, MenuItem, PropertyRow, TableCell, TableRow, ToolbarButton, TreeNode,
+};
 use ouroboros_ui::molecules::{
     Alert, AlertVariant, Breadcrumb, Card, CheckboxCard, Collapsible, ColorField, Field,
     FieldSeparator, FieldSet, InputGroup, RadioCard, RadioGroup, SearchField, Slot, Tabs,
@@ -557,17 +559,40 @@ fn page_tab_view(ui: &mut Ui, _theme: &Theme) {
     ui.data_mut(|d| d.insert_temp(id, sel));
 }
 
-fn page_table(ui: &mut Ui, _theme: &Theme) {
-    caption(ui, "Data table");
-    ui.allocate_ui(vec2(360.0, 180.0), |ui| {
+fn page_table(ui: &mut Ui, theme: &Theme) {
+    caption(
+        ui,
+        "Framed table — muted header + zebra rows (legacy style)",
+    );
+    ui.allocate_ui(vec2(380.0, 200.0), |ui| {
         Table::new()
-            .id_source("demo_table")
             .headers(["Name", "Type", "Size"])
             .row(["hero.fbx", "Mesh", "2.1 MB"])
             .row(["grass.png", "Texture", "512 KB"])
             .row(["main.rs", "Script", "8 KB"])
+            .row(["sky.hdr", "Texture", "4.0 MB"])
             .show(ui);
     });
+    subhead(ui, "Rich cells — TableCell with a status dot");
+    let mut row = |a: &str, b: &str, status: Option<egui::Color32>, header: bool| {
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 0.0;
+            let mut c0 = TableCell::new(a);
+            let mut c1 = TableCell::new(b);
+            if header {
+                c0 = c0.header();
+                c1 = c1.header();
+            }
+            if let Some(s) = status {
+                c1 = c1.status(s);
+            }
+            c0.show(ui, 120.0);
+            c1.show(ui, 110.0);
+        });
+    };
+    row("Creature", "State", None, true);
+    row("Goblin", "Alive", Some(theme.success), false);
+    row("Skeleton", "Broken ref", Some(theme.error), false);
 }
 
 fn page_tree_view(ui: &mut Ui, _theme: &Theme) {
