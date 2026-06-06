@@ -17,6 +17,7 @@ serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]
 eframe = "0.34.1"
+egui_kittest = "0.34"
 
 [[example]]
 name = "storybook"

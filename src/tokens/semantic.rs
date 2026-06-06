@@ -72,6 +72,10 @@ pub struct Theme {
     pub input: Color32,
     /// Focus ring.
     pub ring: Color32,
+    /// Contrast veil for hover state (light veil on dark mode, dark veil on light mode).
+    pub hover_overlay: Color32,
+    /// Stronger contrast veil for the pressed state.
+    pub press_overlay: Color32,
 
     // ── Status (solid + soft bg) ─────────────────────────────
     pub success: Color32,
@@ -116,6 +120,8 @@ impl Theme {
             border_strong: core::ZINC_700,
             input: core::ZINC_800,
             ring: core::ZINC_300,
+            hover_overlay: Color32::from_white_alpha((core::HOVER_OVERLAY * 255.0) as u8),
+            press_overlay: Color32::from_white_alpha((core::PRESS_OVERLAY * 255.0) as u8),
 
             // Status.
             success: core::GREEN_500,
@@ -160,6 +166,8 @@ impl Theme {
             border_strong: core::ZINC_300,
             input: core::ZINC_200,
             ring: core::ZINC_400,
+            hover_overlay: Color32::from_black_alpha((core::HOVER_OVERLAY * 255.0) as u8),
+            press_overlay: Color32::from_black_alpha((core::PRESS_OVERLAY * 255.0) as u8),
 
             // Status (same hues; soft bg tints).
             success: core::GREEN_500,

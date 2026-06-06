@@ -253,3 +253,9 @@ pub fn kbd() -> TypeStyle {
         core::TRACKING_NORMAL,
     )
 }
+
+/// Font for an icon glyph at `size`. Phosphor glyphs (PUA codepoints) resolve via the
+/// proportional stack's icon fallback. Atoms call this instead of building a `FontId`.
+pub fn icon_font(size: f32) -> FontId {
+    FontId::new(size, FontFamily::Proportional)
+}
