@@ -405,11 +405,7 @@ fn organisms_render() {
         TabView::new(&mut t).tabs(["A", "B"]).show(ui, |ui, i| {
             Text::new(format!("panel {i}")).show(ui);
         });
-        Table::new()
-            .headers(["N", "T"])
-            .widths([80.0, 80.0])
-            .row(["a", "b"])
-            .show(ui);
+        Table::new().headers(["N", "T"]).row(["a", "b"]).show(ui);
         let mut s = 0;
         TreeView::new(&mut s)
             .items([

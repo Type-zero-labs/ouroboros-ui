@@ -5,6 +5,7 @@
 
 use crate::atoms::{Button, ButtonVariant, Divider, Surface};
 use crate::tokens::core;
+use crate::Theme;
 use egui::{Response, Ui};
 
 /// Tab bar look.
@@ -50,27 +51,28 @@ impl<'a> Tabs<'a> {
     pub fn show(self, ui: &mut Ui) -> Response {
         let selected = self.selected;
         let tabs = self.tabs;
-        let row = |ui: &mut Ui| {
-            for (i, (label, icon)) in tabs.iter().enumerate() {
-                let active = *selected == i;
-                let variant = if active {
-                    ButtonVariant::Secondary
-                } else {
-                    ButtonVariant::Ghost
-                };
-                let mut button = Button::new(label)
-                    .variant(variant)
-                    .sm()
-                    .id_source(("tab", i));
-                if let Some(glyph) = icon {
-                    button = button.icon_left(glyph);
-                }
-                if button.show(ui).clicked() {
-                    *selected = i;
-                }
+        let primary = Theme::get(ui).primary;
+        let button = |label: &str,
+                      icon: Option<&'static str>,
+                      active: bool,
+                      ghost_active: bool,
+                      i: usize| {
+            let variant = if active && !ghost_active {
+                ButtonVariant::Secondary
+            } else {
+                ButtonVariant::Ghost
+            };
+            let mut b = Button::new(label)
+                .variant(variant)
+                .sm()
+                .id_source(("tab", i));
+            if let Some(glyph) = icon {
+                b = b.icon_left(glyph);
             }
+            b
         };
         match self.variant {
+            // Pill-in-muted-container (shadcn radix default): active tab raised.
             TabsVariant::Container => {
                 Surface::new()
                     .muted()
@@ -78,14 +80,36 @@ impl<'a> Tabs<'a> {
                     .pad(core::SPACE_1)
                     .radius(core::RADIUS_MD)
                     .show(ui, |ui| {
-                        ui.horizontal(row);
+                        ui.horizontal(|ui| {
+                            for (i, (label, icon)) in tabs.iter().enumerate() {
+                                if button(label, *icon, *selected == i, false, i)
+                                    .show(ui)
+                                    .clicked()
+                                {
+                                    *selected = i;
+                                }
+                            }
+                        });
                     })
                     .response
             }
+            // Underline (shadcn radix `variant="line"`): ghost tabs, active gets a primary underline.
             TabsVariant::Line => {
-                ui.vertical(|ui| {
-                    ui.horizontal(row);
-                    Divider::horizontal().show(ui);
+                ui.horizontal(|ui| {
+                    for (i, (label, icon)) in tabs.iter().enumerate() {
+                        let active = *selected == i;
+                        ui.vertical(|ui| {
+                            if button(label, *icon, active, true, i).show(ui).clicked() {
+                                *selected = i;
+                            }
+                            ui.add_space(core::SPACE_1);
+                            if active {
+                                Divider::horizontal().color(primary).thick().show(ui);
+                            } else {
+                                ui.add_space(core::BORDER_FOCUS);
+                            }
+                        });
+                    }
                 })
                 .response
             }

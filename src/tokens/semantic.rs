@@ -105,9 +105,9 @@ impl Theme {
             muted_foreground: core::ZINC_400,
             disabled_foreground: core::ZINC_600,
 
-            // Interactive — neutral primary, no brand accent.
-            primary: core::ZINC_50,
-            primary_foreground: core::ZINC_900,
+            // Interactive — Ouroboros turquoise primary (dark text reads on light teal).
+            primary: core::TEAL_300,
+            primary_foreground: core::ZINC_950,
             secondary: core::ZINC_800,
             secondary_foreground: core::ZINC_50,
             accent: core::ZINC_800,
@@ -151,9 +151,9 @@ impl Theme {
             muted_foreground: core::ZINC_500,
             disabled_foreground: core::ZINC_400,
 
-            // Interactive — dark neutral primary on light.
-            primary: core::ZINC_900,
-            primary_foreground: core::ZINC_50,
+            // Interactive — Ouroboros turquoise primary (dark text on teal).
+            primary: core::TEAL_500,
+            primary_foreground: core::ZINC_950,
             secondary: core::ZINC_100,
             secondary_foreground: core::ZINC_900,
             accent: core::ZINC_100,
@@ -181,6 +181,24 @@ impl Theme {
             neutral: core::ZINC_500,
             neutral_bg: tint(core::ZINC_500, STATUS_BG_ALPHA),
         }
+    }
+
+    /// Dark with the original **neutral zinc** primary (no brand hue) — preserves the
+    /// pre-Ouroboros look for anyone who wants it.
+    pub fn zinc_dark() -> Self {
+        let mut t = Self::dark();
+        t.primary = core::ZINC_50;
+        t.primary_foreground = core::ZINC_900;
+        t.ring = core::ZINC_300;
+        t
+    }
+    /// Light with the original neutral zinc primary.
+    pub fn zinc_light() -> Self {
+        let mut t = Self::light();
+        t.primary = core::ZINC_900;
+        t.primary_foreground = core::ZINC_50;
+        t.ring = core::ZINC_400;
+        t
     }
 }
 

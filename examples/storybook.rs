@@ -559,10 +559,10 @@ fn page_tab_view(ui: &mut Ui, _theme: &Theme) {
 
 fn page_table(ui: &mut Ui, _theme: &Theme) {
     caption(ui, "Data table");
-    ui.allocate_ui(vec2(320.0, 180.0), |ui| {
+    ui.allocate_ui(vec2(360.0, 180.0), |ui| {
         Table::new()
+            .id_source("demo_table")
             .headers(["Name", "Type", "Size"])
-            .widths([130.0, 80.0, 70.0])
             .row(["hero.fbx", "Mesh", "2.1 MB"])
             .row(["grass.png", "Texture", "512 KB"])
             .row(["main.rs", "Script", "8 KB"])

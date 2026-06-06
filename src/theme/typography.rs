@@ -169,7 +169,7 @@ pub fn display() -> TypeStyle {
         sans(Weight::Bold),
         core::TEXT_3XL,
         core::LEADING_TIGHT,
-        core::TRACKING_WIDE,
+        core::TRACKING_NORMAL,
     )
 }
 /// H1 — SemiBold 24.
@@ -178,7 +178,7 @@ pub fn h1() -> TypeStyle {
         sans(Weight::SemiBold),
         core::TEXT_2XL,
         core::LEADING_TIGHT,
-        core::TRACKING_WIDE,
+        core::TRACKING_NORMAL,
     )
 }
 /// H2 — SemiBold 20.
@@ -187,7 +187,7 @@ pub fn h2() -> TypeStyle {
         sans(Weight::SemiBold),
         core::TEXT_XL,
         core::LEADING_TIGHT,
-        core::TRACKING_WIDE,
+        core::TRACKING_NORMAL,
     )
 }
 /// Section heading — SemiBold 16.
@@ -196,7 +196,7 @@ pub fn heading() -> TypeStyle {
         sans(Weight::SemiBold),
         core::TEXT_LG,
         core::LEADING_TIGHT,
-        core::TRACKING_WIDE,
+        core::TRACKING_SM,
     )
 }
 /// Body — Regular 14.
@@ -205,7 +205,7 @@ pub fn body() -> TypeStyle {
         sans(Weight::Regular),
         core::TEXT_BASE,
         core::LEADING_NORMAL,
-        core::TRACKING_NORMAL,
+        core::TRACKING_MD,
     )
 }
 /// Emphasized body — Medium 14.
@@ -214,7 +214,7 @@ pub fn body_strong() -> TypeStyle {
         sans(Weight::Medium),
         core::TEXT_BASE,
         core::LEADING_NORMAL,
-        core::TRACKING_NORMAL,
+        core::TRACKING_MD,
     )
 }
 /// Label — Medium 13.
@@ -223,7 +223,7 @@ pub fn label() -> TypeStyle {
         sans(Weight::Medium),
         core::TEXT_SM,
         core::LEADING_NORMAL,
-        core::TRACKING_NORMAL,
+        core::TRACKING_LG,
     )
 }
 /// Caption / small — Regular 12.
@@ -232,7 +232,7 @@ pub fn caption() -> TypeStyle {
         sans(Weight::Regular),
         core::TEXT_XS,
         core::LEADING_NORMAL,
-        core::TRACKING_NORMAL,
+        core::TRACKING_WIDE,
     )
 }
 /// Inline code — IosevkaTerm Regular 13.
@@ -241,7 +241,7 @@ pub fn code() -> TypeStyle {
         mono(false),
         core::TEXT_SM,
         core::LEADING_NORMAL,
-        core::TRACKING_NORMAL,
+        core::TRACKING_LG,
     )
 }
 /// Keyboard key — IosevkaTerm Bold 12 (mono Medium not vendored; Bold reads as a key cap).
@@ -250,7 +250,7 @@ pub fn kbd() -> TypeStyle {
         mono(true),
         core::TEXT_XS,
         core::LEADING_NORMAL,
-        core::TRACKING_NORMAL,
+        core::TRACKING_WIDE,
     )
 }
 

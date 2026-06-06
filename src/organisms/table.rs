@@ -1,60 +1,71 @@
-//! Table organism — a header + data rows at fixed columns. [shadcn Table / Unity Multi-column]
+//! Table organism — a header + data rows. [shadcn Table / Unity Multi-column]
+//!
+//! Built on [`egui::Grid`] (reliable column layout + zebra striping) with [`Text`] atom cells.
+//! Cells can be plain strings or, for the engine's rich tables, carry a status dot.
 
-use crate::atoms::Divider;
-use crate::cells::TableRow;
-use crate::tokens::core;
-use egui::{Response, Ui};
+use crate::atoms::Text;
+use egui::{Grid, Id, Response, Ui};
 
-/// A data table. Composes [`TableRow`] cells under a header rule, scrollable.
+/// A data table. Rows are strings; the header row is styled as muted labels.
 pub struct Table {
+    id: Id,
     headers: Vec<String>,
-    widths: Vec<f32>,
     rows: Vec<Vec<String>>,
+    striped: bool,
 }
 
 impl Table {
     pub fn new() -> Self {
         Self {
+            id: Id::new("table"),
             headers: Vec::new(),
-            widths: Vec::new(),
             rows: Vec::new(),
+            striped: true,
         }
+    }
+    pub fn id_source(mut self, id: impl std::hash::Hash) -> Self {
+        self.id = Id::new(id);
+        self
     }
     pub fn headers<S: Into<String>>(mut self, headers: impl IntoIterator<Item = S>) -> Self {
         self.headers = headers.into_iter().map(Into::into).collect();
-        self
-    }
-    pub fn widths(mut self, widths: impl IntoIterator<Item = f32>) -> Self {
-        self.widths = widths.into_iter().collect();
         self
     }
     pub fn row<S: Into<String>>(mut self, row: impl IntoIterator<Item = S>) -> Self {
         self.rows.push(row.into_iter().map(Into::into).collect());
         self
     }
+    pub fn striped(mut self, striped: bool) -> Self {
+        self.striped = striped;
+        self
+    }
 
     pub fn show(self, ui: &mut Ui) -> Response {
-        let widths = self.widths;
         let headers = self.headers;
         let rows = self.rows;
-        let row_count = rows.len();
-        // No internal ScrollArea — nesting one inside the host's scroll collapses it. The
-        // consumer wraps the table in a `ScrollArea` if it needs scrolling.
-        ui.vertical(|ui| {
-            if !headers.is_empty() {
-                TableRow::new(headers).header().show(ui, &widths);
-                ui.add_space(core::SPACE_1);
-                Divider::horizontal().show(ui);
-                ui.add_space(core::SPACE_1);
-            }
-            for (r, row) in rows.into_iter().enumerate() {
-                TableRow::new(row).show(ui, &widths);
-                if r + 1 != row_count {
-                    ui.add_space(core::SPACE_1);
+        Grid::new(self.id)
+            .striped(self.striped)
+            .num_columns(
+                headers
+                    .len()
+                    .max(rows.first().map_or(0, |r| r.len()))
+                    .max(1),
+            )
+            .show(ui, |ui| {
+                if !headers.is_empty() {
+                    for header in &headers {
+                        Text::new(header).label().muted().show(ui);
+                    }
+                    ui.end_row();
                 }
-            }
-        })
-        .response
+                for row in &rows {
+                    for cell in row {
+                        Text::new(cell).show(ui);
+                    }
+                    ui.end_row();
+                }
+            })
+            .response
     }
 }
 
