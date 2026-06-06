@@ -9,7 +9,7 @@ use crate::atoms::{Button, Icon, Surface, Text, Textarea};
 use crate::theme::typography;
 use crate::tokens::core;
 use crate::Theme;
-use egui::{Id, Response, RichText, TextEdit, Ui};
+use egui::{vec2, Align, Id, Layout, Response, RichText, TextEdit, Ui};
 
 /// Addon position in an [`InputGroup`]. [shadcn align: inline-start/end, block-start/end]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -114,7 +114,7 @@ impl<'a> InputGroup<'a> {
 
         Surface::new()
             .muted()
-            .pad(core::SPACE_2)
+            .pad(core::SPACE_1)
             .radius(core::RADIUS_MD)
             .show(ui, |ui| {
                 ui.vertical(|ui| {
@@ -126,30 +126,37 @@ impl<'a> InputGroup<'a> {
                         }
                         ta.show(ui)
                     } else {
-                        ui.horizontal(|ui| {
-                            render_slot(ui, &mut addons, Slot::LeadingInline);
-                            let reserve = addons
-                                .iter()
-                                .filter(|a| a.slot == Slot::TrailingInline)
-                                .count() as f32
-                                * (core::CONTROL_MD + core::SPACE_2);
-                            let width = (ui.available_width() - reserve).max(0.0);
-                            let hint = RichText::new(placeholder)
-                                .font(body.font_id())
-                                .color(theme.muted_foreground);
-                            let mut edit = TextEdit::singleline(buf)
-                                .frame(egui::Frame::NONE)
-                                .hint_text(hint)
-                                .font(body.font_id())
-                                .text_color(theme.foreground)
-                                .desired_width(width);
-                            if let Some(id) = id_source {
-                                edit = edit.id(id);
-                            }
-                            let response = ui.add(edit);
-                            render_slot(ui, &mut addons, Slot::TrailingInline);
-                            response
-                        })
+                        // Fixed-height, vertically-centered inline row so the leading icon /
+                        // placeholder / addons all sit on the same centerline.
+                        let full = ui.available_width();
+                        ui.allocate_ui_with_layout(
+                            vec2(full, core::CONTROL_MD),
+                            Layout::left_to_right(Align::Center),
+                            |ui| {
+                                render_slot(ui, &mut addons, Slot::LeadingInline);
+                                let reserve = addons
+                                    .iter()
+                                    .filter(|a| a.slot == Slot::TrailingInline)
+                                    .count() as f32
+                                    * (core::CONTROL_MD + core::SPACE_2);
+                                let width = (ui.available_width() - reserve).max(0.0);
+                                let hint = RichText::new(placeholder)
+                                    .font(body.font_id())
+                                    .color(theme.muted_foreground);
+                                let mut edit = TextEdit::singleline(buf)
+                                    .frame(egui::Frame::NONE)
+                                    .hint_text(hint)
+                                    .font(body.font_id())
+                                    .text_color(theme.foreground)
+                                    .desired_width(width);
+                                if let Some(id) = id_source {
+                                    edit = edit.id(id);
+                                }
+                                let response = ui.add(edit);
+                                render_slot(ui, &mut addons, Slot::TrailingInline);
+                                response
+                            },
+                        )
                         .inner
                     };
                     slot_row(ui, &mut addons, Slot::BlockEnd);

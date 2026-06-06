@@ -1,7 +1,8 @@
 //! TreeView organism — a hierarchy of [`TreeNode`] cells. [Unity/O3DE Tree View]
 
 use crate::cells::TreeNode;
-use egui::{ScrollArea, Ui};
+use egui::{Id, Ui};
+use std::collections::HashSet;
 
 /// One row of a [`TreeView`].
 pub struct TreeItem {
@@ -35,10 +36,13 @@ impl TreeItem {
     }
 }
 
-/// A tree of items bound to a `&mut usize` selection. `show` returns the index clicked, if any.
+/// A tree of items bound to a `&mut usize` selection. Expand/collapse state is kept in egui
+/// memory; clicking an expandable node toggles it (and hides its descendants). `show` returns
+/// the index clicked, if any. (Wrap in a `ScrollArea` for scrolling.)
 pub struct TreeView<'a> {
     selected: &'a mut usize,
     items: Vec<TreeItem>,
+    id: Id,
 }
 
 impl<'a> TreeView<'a> {
@@ -46,37 +50,71 @@ impl<'a> TreeView<'a> {
         Self {
             selected,
             items: Vec::new(),
+            id: Id::new("tree_view"),
         }
     }
     pub fn items(mut self, items: impl IntoIterator<Item = TreeItem>) -> Self {
         self.items = items.into_iter().collect();
         self
     }
+    pub fn id_source(mut self, id: impl std::hash::Hash) -> Self {
+        self.id = Id::new(id);
+        self
+    }
 
     pub fn show(self, ui: &mut Ui) -> Option<usize> {
         let selected = self.selected;
         let items = self.items;
-        ScrollArea::vertical()
-            .show(ui, |ui| {
-                let mut clicked = None;
-                for (i, item) in items.into_iter().enumerate() {
-                    let mut node = TreeNode::new(item.label)
-                        .depth(item.depth)
-                        .selected(*selected == i)
-                        .id_source(("tree", i));
-                    if let Some(glyph) = item.icon {
-                        node = node.icon(glyph);
-                    }
-                    if let Some(open) = item.expanded {
-                        node = node.expandable(open);
-                    }
-                    if node.show(ui).clicked() {
-                        *selected = i;
-                        clicked = Some(i);
+        let id = self.id;
+        // Expanded-node indices, persisted; first frame seeds from each item's default.
+        let mut expanded: HashSet<usize> = ui.data(|d| d.get_temp(id)).unwrap_or_else(|| {
+            items
+                .iter()
+                .enumerate()
+                .filter(|(_, it)| it.expanded == Some(true))
+                .map(|(i, _)| i)
+                .collect()
+        });
+
+        let mut clicked = None;
+        // While inside a collapsed subtree, skip nodes deeper than the collapse threshold.
+        let mut collapse_until: Option<usize> = None;
+        for (i, item) in items.iter().enumerate() {
+            if let Some(thresh) = collapse_until {
+                if item.depth > thresh {
+                    continue;
+                }
+                collapse_until = None;
+            }
+            let expandable = item.expanded.is_some();
+            let is_open = expanded.contains(&i);
+            let mut node = TreeNode::new(item.label.clone())
+                .depth(item.depth)
+                .selected(*selected == i)
+                .id_source((id, "node", i));
+            if let Some(glyph) = item.icon {
+                node = node.icon(glyph);
+            }
+            if expandable {
+                node = node.expandable(is_open);
+            }
+            if node.show(ui).clicked() {
+                *selected = i;
+                clicked = Some(i);
+                if expandable {
+                    if is_open {
+                        expanded.remove(&i);
+                    } else {
+                        expanded.insert(i);
                     }
                 }
-                clicked
-            })
-            .inner
+            }
+            if expandable && !expanded.contains(&i) {
+                collapse_until = Some(item.depth);
+            }
+        }
+
+        ui.data_mut(|d| d.insert_temp(id, expanded));
+        clicked
     }
 }

@@ -66,6 +66,7 @@ impl Heading {
         let rich = RichText::new(self.content)
             .font(style.font_id())
             .line_height(Some(style.line_height))
+            .extra_letter_spacing(style.tracking)
             .color(theme.foreground);
         ui.add(
             Label::new(rich)

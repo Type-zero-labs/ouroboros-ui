@@ -119,7 +119,7 @@ impl Theme {
             border: core::ZINC_800,
             border_strong: core::ZINC_700,
             input: core::ZINC_800,
-            ring: core::ZINC_300,
+            ring: core::TEAL_400,
             hover_overlay: Color32::from_white_alpha((core::HOVER_OVERLAY * 255.0) as u8),
             press_overlay: Color32::from_white_alpha((core::PRESS_OVERLAY * 255.0) as u8),
 
@@ -165,7 +165,7 @@ impl Theme {
             border: core::ZINC_200,
             border_strong: core::ZINC_300,
             input: core::ZINC_200,
-            ring: core::ZINC_400,
+            ring: core::TEAL_500,
             hover_overlay: Color32::from_black_alpha((core::HOVER_OVERLAY * 255.0) as u8),
             press_overlay: Color32::from_black_alpha((core::PRESS_OVERLAY * 255.0) as u8),
 
