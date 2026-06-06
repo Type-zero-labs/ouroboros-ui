@@ -33,6 +33,7 @@ pub const ZINC_950: Color32 = Color32::from_rgb(9, 9, 11);
 // pure-zinc theme stays available.
 // ─────────────────────────────────────────────────────────────────────────────
 
+pub const TEAL_200: Color32 = Color32::from_rgb(153, 246, 228);
 pub const TEAL_300: Color32 = Color32::from_rgb(94, 234, 212);
 pub const TEAL_400: Color32 = Color32::from_rgb(45, 212, 191);
 pub const TEAL_500: Color32 = Color32::from_rgb(20, 184, 166);

@@ -105,8 +105,8 @@ impl Theme {
             muted_foreground: core::ZINC_400,
             disabled_foreground: core::ZINC_600,
 
-            // Interactive — Ouroboros turquoise primary (dark text reads on light teal).
-            primary: core::TEAL_300,
+            // Interactive — Ouroboros turquoise primary (lighter; dark text reads on it).
+            primary: core::TEAL_200,
             primary_foreground: core::ZINC_950,
             secondary: core::ZINC_800,
             secondary_foreground: core::ZINC_50,
@@ -119,7 +119,7 @@ impl Theme {
             border: core::ZINC_800,
             border_strong: core::ZINC_700,
             input: core::ZINC_800,
-            ring: core::TEAL_400,
+            ring: core::TEAL_300,
             hover_overlay: Color32::from_white_alpha((core::HOVER_OVERLAY * 255.0) as u8),
             press_overlay: Color32::from_white_alpha((core::PRESS_OVERLAY * 255.0) as u8),
 
@@ -151,8 +151,8 @@ impl Theme {
             muted_foreground: core::ZINC_500,
             disabled_foreground: core::ZINC_400,
 
-            // Interactive — Ouroboros turquoise primary (dark text on teal).
-            primary: core::TEAL_500,
+            // Interactive — Ouroboros turquoise primary (lighter; dark text on teal).
+            primary: core::TEAL_400,
             primary_foreground: core::ZINC_950,
             secondary: core::ZINC_100,
             secondary_foreground: core::ZINC_900,
@@ -165,7 +165,7 @@ impl Theme {
             border: core::ZINC_200,
             border_strong: core::ZINC_300,
             input: core::ZINC_200,
-            ring: core::TEAL_500,
+            ring: core::TEAL_400,
             hover_overlay: Color32::from_black_alpha((core::HOVER_OVERLAY * 255.0) as u8),
             press_overlay: Color32::from_black_alpha((core::PRESS_OVERLAY * 255.0) as u8),
 

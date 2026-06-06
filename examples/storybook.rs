@@ -864,7 +864,14 @@ fn page_tabs(ui: &mut Ui, _theme: &Theme) {
     let id2 = egui::Id::new("tabs_line");
     let mut s2 = ui.data(|d| d.get_temp::<usize>(id2).unwrap_or(0));
     Tabs::new(&mut s2)
-        .tabs(["Overview", "Stats", "Notes"])
+        .tabs([
+            "Overview",
+            "Stats",
+            "Geometry",
+            "Materials",
+            "Physics",
+            "Notes",
+        ])
         .line()
         .show(ui);
     ui.data_mut(|d| d.insert_temp(id2, s2));
