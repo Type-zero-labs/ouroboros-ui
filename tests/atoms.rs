@@ -9,10 +9,12 @@ use egui_kittest::kittest::Queryable;
 use egui_kittest::Harness;
 use ouroboros_ui::atoms::{
     Avatar, Badge, BadgeVariant, Button, Checkbox, Divider, Heading, HeadingLevel, Icon, Input,
-    Radio, Spinner, Surface, Switch, Text, TextRole, Tooltip,
+    Radio, Spinner, Surface, Switch, Text, TextRole, Textarea, Tooltip,
 };
 use ouroboros_ui::egui_phosphor::light;
-use ouroboros_ui::molecules::{Card, CheckboxCard, Field, InputGroup, RadioGroup};
+use ouroboros_ui::molecules::{
+    Card, CheckboxCard, Field, FieldSeparator, FieldSet, InputGroup, RadioGroup, Slot,
+};
 use ouroboros_ui::{Mode, Theme};
 use std::cell::Cell;
 use std::rc::Rc;
@@ -253,14 +255,49 @@ fn surface_and_field_render() {
 #[test]
 fn card_and_input_group_render() {
     rendered(|ui| {
-        Card::new().title("T").description("d").show(ui, |ui| {
-            Text::new("body").show(ui);
-        });
+        Card::new()
+            .title("T")
+            .description("d")
+            .action(|ui| {
+                Button::new("x").show(ui);
+            })
+            .sm()
+            .show(ui, |ui| {
+                Text::new("body").show(ui);
+            });
         let mut s = String::new();
         InputGroup::new(&mut s)
-            .leading(light::MAGNIFYING_GLASS)
+            .leading_icon(light::MAGNIFYING_GLASS)
+            .leading_text("$")
+            .button(Slot::TrailingInline, light::X, || {})
             .placeholder("search")
             .show(ui);
+        let mut n = String::new();
+        InputGroup::new(&mut n)
+            .text(Slot::BlockStart, "Note")
+            .multiline(2)
+            .show(ui);
+    });
+}
+
+#[test]
+fn textarea_and_field_orientations_render() {
+    rendered(|ui| {
+        let mut s = String::from("multi\nline");
+        Textarea::new(&mut s).rows(3).placeholder("note").show(ui);
+        let mut name = String::new();
+        Field::new("Name")
+            .required()
+            .hint("h")
+            .show(ui, |ui| Input::new(&mut name).show(ui));
+        let mut on = true;
+        Field::new("Vsync")
+            .horizontal()
+            .show(ui, |ui| Switch::new(&mut on).show(ui));
+        FieldSet::new().legend("Group").show(ui, |ui| {
+            Text::new("inside").show(ui);
+        });
+        FieldSeparator::new().label("OR").show(ui);
     });
 }
 

@@ -11,10 +11,12 @@ use egui::{vec2, Align, Color32, CornerRadius, Layout, Sense, Stroke, StrokeKind
 use egui_phosphor::light;
 use ouroboros_ui::atoms::{
     Avatar, AvatarSize, Badge, BadgeVariant, Button, ButtonVariant, Checkbox, Divider, Heading,
-    Icon, Input, Radio, Spinner, Surface, SurfaceFill, Switch, Text, TextRole, Tooltip,
+    Icon, Input, Radio, Spinner, Surface, SurfaceFill, Switch, Text, TextRole, Textarea, Tooltip,
 };
 use ouroboros_ui::auto_layout::{AutoLayout, CrossAlign, MainAlign};
-use ouroboros_ui::molecules::{Card, CheckboxCard, Field, InputGroup, RadioCard, RadioGroup};
+use ouroboros_ui::molecules::{
+    Card, CheckboxCard, Field, FieldSeparator, FieldSet, InputGroup, RadioCard, RadioGroup, Slot,
+};
 use ouroboros_ui::theme::typography;
 use ouroboros_ui::tokens::{core, layout};
 use ouroboros_ui::{Mode, Theme};
@@ -45,6 +47,7 @@ enum Page {
     Avatar,
     Tooltip,
     Surface,
+    Textarea,
     Field,
     RadioGroup,
     Card,
@@ -80,6 +83,7 @@ impl Page {
             Page::Avatar => "Avatar",
             Page::Tooltip => "Tooltip",
             Page::Surface => "Surface",
+            Page::Textarea => "Textarea",
             Page::Field => "Field",
             Page::RadioGroup => "RadioGroup",
             Page::Card => "Card",
@@ -122,6 +126,7 @@ const NAV: &[(&str, &[Page])] = &[
             Page::Avatar,
             Page::Tooltip,
             Page::Surface,
+            Page::Textarea,
         ],
     ),
     (
@@ -295,6 +300,7 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::Avatar => page_avatar(ui, theme),
         Page::Tooltip => page_tooltip(ui, theme),
         Page::Surface => page_surface(ui, theme),
+        Page::Textarea => page_textarea(ui, theme),
         Page::Field => page_field(ui, theme),
         Page::RadioGroup => page_radio_group(ui, theme),
         Page::Card => page_card(ui, theme),
@@ -328,8 +334,26 @@ fn page_surface(ui: &mut Ui, _theme: &Theme) {
         });
 }
 
+fn page_textarea(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Multi-line · rows · error");
+    let id = egui::Id::new("ta_demo");
+    let mut s = ui.data(|d| d.get_temp::<String>(id).unwrap_or_default());
+    ui.allocate_ui(vec2(360.0, 90.0), |ui| {
+        Textarea::new(&mut s)
+            .rows(3)
+            .placeholder("Write a note…")
+            .show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id, s));
+    ui.add_space(core::SPACE_4);
+    let mut e = String::from("too short");
+    ui.allocate_ui(vec2(360.0, 70.0), |ui| {
+        Textarea::new(&mut e).rows(2).error(true).show(ui);
+    });
+}
+
 fn page_field(ui: &mut Ui, _theme: &Theme) {
-    caption(ui, "Label + control + hint/error (wraps any control)");
+    caption(ui, "Vertical (default) — label + control + hint/error");
     let id = egui::Id::new("fld_a");
     let mut s = ui.data(|d| d.get_temp::<String>(id).unwrap_or_default());
     ui.allocate_ui(vec2(360.0, 80.0), |ui| {
@@ -341,13 +365,36 @@ fn page_field(ui: &mut Ui, _theme: &Theme) {
             });
     });
     ui.data_mut(|d| d.insert_temp(id, s));
-    ui.add_space(core::SPACE_4);
     let mut e = String::new();
     ui.allocate_ui(vec2(360.0, 80.0), |ui| {
         Field::new("Username")
             .error("Already taken")
             .show(ui, |ui| Input::new(&mut e).error(true).show(ui));
     });
+
+    subhead(ui, "Horizontal (label ↔ control)");
+    let id2 = egui::Id::new("fld_sw");
+    let mut on = ui.data(|d| d.get_temp::<bool>(id2).unwrap_or(true));
+    ui.allocate_ui(vec2(420.0, 40.0), |ui| {
+        Field::new("Vsync")
+            .horizontal()
+            .show(ui, |ui| Switch::new(&mut on).show(ui));
+    });
+    ui.data_mut(|d| d.insert_temp(id2, on));
+
+    subhead(ui, "FieldSet + legend, FieldSeparator");
+    ui.allocate_ui(vec2(360.0, 120.0), |ui| {
+        FieldSet::new().legend("Display").show(ui, |ui| {
+            let id3 = egui::Id::new("fld_res");
+            let mut sel = ui.data(|d| d.get_temp::<usize>(id3).unwrap_or(0));
+            RadioGroup::new(&mut sel)
+                .options(["Windowed", "Fullscreen"])
+                .show(ui);
+            ui.data_mut(|d| d.insert_temp(id3, sel));
+        });
+    });
+    ui.add_space(core::SPACE_3);
+    FieldSeparator::new().label("OR").show(ui);
 }
 
 fn page_radio_group(ui: &mut Ui, _theme: &Theme) {
@@ -361,10 +408,20 @@ fn page_radio_group(ui: &mut Ui, _theme: &Theme) {
 }
 
 fn page_card(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Header + action + content + footer");
     ui.allocate_ui(vec2(360.0, 220.0), |ui| {
         Card::new()
             .title("Project settings")
             .description("Manage your project preferences")
+            .action(|ui| {
+                Button::new("")
+                    .icon_left(light::DOTS_THREE)
+                    .icon_only()
+                    .ghost()
+                    .sm()
+                    .id_source("card_menu")
+                    .show(ui);
+            })
             .footer(|ui| {
                 ui.horizontal(|ui| {
                     Button::new("Save").id_source("card_save").show(ui);
@@ -378,6 +435,12 @@ fn page_card(ui: &mut Ui, _theme: &Theme) {
             .show(ui, |ui| {
                 Text::new("Card body content goes here.").show(ui);
             });
+    });
+    subhead(ui, "size = sm");
+    ui.allocate_ui(vec2(300.0, 90.0), |ui| {
+        Card::new().sm().title("Compact").show(ui, |ui| {
+            Text::new("Tighter spacing.").show(ui);
+        });
     });
 }
 
@@ -421,18 +484,45 @@ fn page_radio_card(ui: &mut Ui, _theme: &Theme) {
 }
 
 fn page_input_group(ui: &mut Ui, _theme: &Theme) {
-    caption(ui, "Leading / trailing addons");
-    let id = egui::Id::new("ig_demo");
+    let row_h = core::CONTROL_MD + 2.0 * core::SPACE_2 + core::SPACE_2;
+    caption(ui, "Icon addons (inline)");
+    let id = egui::Id::new("ig_search");
     let mut s = ui.data(|d| d.get_temp::<String>(id).unwrap_or_default());
-    ui.allocate_ui(vec2(360.0, core::CONTROL_MD + core::SPACE_4), |ui| {
+    ui.allocate_ui(vec2(360.0, row_h), |ui| {
         InputGroup::new(&mut s)
-            .leading(light::MAGNIFYING_GLASS)
-            .trailing(light::X)
+            .leading_icon(light::MAGNIFYING_GLASS)
+            .button(Slot::TrailingInline, light::X, || {})
             .placeholder("Search…")
-            .id_source("ig")
+            .id_source("ig_search")
             .show(ui);
     });
     ui.data_mut(|d| d.insert_temp(id, s));
+
+    subhead(ui, "Text addon ($ / .com)");
+    let id2 = egui::Id::new("ig_price");
+    let mut p = ui.data(|d| d.get_temp::<String>(id2).unwrap_or_default());
+    ui.allocate_ui(vec2(360.0, row_h), |ui| {
+        InputGroup::new(&mut p)
+            .leading_text("$")
+            .text(Slot::TrailingInline, "USD")
+            .placeholder("0.00")
+            .id_source("ig_price")
+            .show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id2, p));
+
+    subhead(ui, "Block addon + multiline (textarea)");
+    let id3 = egui::Id::new("ig_note");
+    let mut n = ui.data(|d| d.get_temp::<String>(id3).unwrap_or_default());
+    ui.allocate_ui(vec2(360.0, 110.0), |ui| {
+        InputGroup::new(&mut n)
+            .text(Slot::BlockStart, "Description")
+            .multiline(3)
+            .placeholder("Markdown supported…")
+            .id_source("ig_note")
+            .show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id3, n));
 }
 
 fn page_switch(ui: &mut Ui, _theme: &Theme) {

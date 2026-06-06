@@ -20,6 +20,7 @@ pub mod spinner;
 pub mod surface;
 pub mod switch;
 pub mod text;
+pub mod textarea;
 pub mod tooltip;
 
 pub use avatar::{Avatar, AvatarSize};
@@ -35,4 +36,5 @@ pub use spinner::Spinner;
 pub use surface::{Surface, SurfaceBorder, SurfaceFill};
 pub use switch::Switch;
 pub use text::{Text, TextRole};
+pub use textarea::Textarea;
 pub use tooltip::Tooltip;
