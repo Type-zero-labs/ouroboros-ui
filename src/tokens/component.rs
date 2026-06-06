@@ -65,3 +65,56 @@ impl ButtonTokens {
         t
     }
 }
+
+/// Resolved paint values for a badge variant. Mirrors the shadcn badge variants
+/// (default/secondary/destructive/outline/ghost/link) plus our domain status badges
+/// (success/warning/info) as soft tinted pills.
+#[derive(Clone, Copy, Debug)]
+pub struct BadgeTokens {
+    pub fill: Color32,
+    pub foreground: Color32,
+    pub border: Color32,
+    pub underline: bool,
+}
+
+impl BadgeTokens {
+    fn base(fill: Color32, foreground: Color32, border: Color32) -> Self {
+        Self {
+            fill,
+            foreground,
+            border,
+            underline: false,
+        }
+    }
+
+    pub fn default_(theme: &Theme) -> Self {
+        Self::base(theme.primary, theme.primary_foreground, NONE)
+    }
+    pub fn secondary(theme: &Theme) -> Self {
+        Self::base(theme.secondary, theme.secondary_foreground, NONE)
+    }
+    pub fn destructive(theme: &Theme) -> Self {
+        Self::base(theme.destructive, theme.destructive_foreground, NONE)
+    }
+    pub fn outline(theme: &Theme) -> Self {
+        Self::base(NONE, theme.foreground, theme.border_strong)
+    }
+    pub fn ghost(theme: &Theme) -> Self {
+        Self::base(NONE, theme.muted_foreground, NONE)
+    }
+    pub fn link(theme: &Theme) -> Self {
+        let mut t = Self::base(NONE, theme.primary, NONE);
+        t.underline = true;
+        t
+    }
+    // ── domain status (soft tinted pill: status bg + status fg) ──
+    pub fn success(theme: &Theme) -> Self {
+        Self::base(theme.success_bg, theme.success, NONE)
+    }
+    pub fn warning(theme: &Theme) -> Self {
+        Self::base(theme.warning_bg, theme.warning, NONE)
+    }
+    pub fn info(theme: &Theme) -> Self {
+        Self::base(theme.info_bg, theme.info, NONE)
+    }
+}

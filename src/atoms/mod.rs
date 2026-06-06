@@ -7,14 +7,30 @@
 //!
 //! Wave 1 (proof): text, heading, icon, divider, button. Form/feedback atoms follow.
 
+pub mod avatar;
+pub mod badge;
 pub mod button;
+pub mod checkbox;
 pub mod divider;
 pub mod heading;
 pub mod icon;
+pub mod input;
+pub mod radio;
+pub mod spinner;
+pub mod switch;
 pub mod text;
+pub mod tooltip;
 
+pub use avatar::{Avatar, AvatarSize};
+pub use badge::{Badge, BadgeVariant};
 pub use button::{Button, ButtonSize, ButtonVariant};
+pub use checkbox::Checkbox;
 pub use divider::{Axis, Divider};
 pub use heading::{Heading, HeadingLevel};
 pub use icon::Icon;
+pub use input::Input;
+pub use radio::Radio;
+pub use spinner::Spinner;
+pub use switch::Switch;
 pub use text::{Text, TextRole};
+pub use tooltip::Tooltip;

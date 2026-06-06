@@ -9,7 +9,10 @@
 
 use egui::{vec2, Align, Color32, CornerRadius, Layout, Sense, Stroke, StrokeKind, Ui};
 use egui_phosphor::light;
-use ouroboros_ui::atoms::{Button, ButtonVariant, Divider, Heading, Icon, Text, TextRole};
+use ouroboros_ui::atoms::{
+    Avatar, AvatarSize, Badge, BadgeVariant, Button, ButtonVariant, Checkbox, Divider, Heading,
+    Icon, Input, Radio, Spinner, Switch, Text, TextRole, Tooltip,
+};
 use ouroboros_ui::auto_layout::{AutoLayout, CrossAlign, MainAlign};
 use ouroboros_ui::theme::typography;
 use ouroboros_ui::tokens::{core, layout};
@@ -32,6 +35,14 @@ enum Page {
     Icon,
     Divider,
     Button,
+    Checkbox,
+    Radio,
+    Switch,
+    Input,
+    Badge,
+    Spinner,
+    Avatar,
+    Tooltip,
 }
 
 impl Page {
@@ -52,6 +63,14 @@ impl Page {
             Page::Icon => "Icon",
             Page::Divider => "Divider",
             Page::Button => "Button",
+            Page::Checkbox => "Checkbox",
+            Page::Radio => "Radio",
+            Page::Switch => "Switch",
+            Page::Input => "Input",
+            Page::Badge => "Badge",
+            Page::Spinner => "Spinner",
+            Page::Avatar => "Avatar",
+            Page::Tooltip => "Tooltip",
         }
     }
 }
@@ -79,6 +98,14 @@ const NAV: &[(&str, &[Page])] = &[
             Page::Icon,
             Page::Divider,
             Page::Button,
+            Page::Checkbox,
+            Page::Radio,
+            Page::Switch,
+            Page::Input,
+            Page::Badge,
+            Page::Spinner,
+            Page::Avatar,
+            Page::Tooltip,
         ],
     ),
 ];
@@ -232,7 +259,163 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::Icon => page_icon(ui, theme),
         Page::Divider => page_divider(ui, theme),
         Page::Button => page_button(ui, theme),
+        Page::Checkbox => page_checkbox(ui, theme),
+        Page::Radio => page_radio(ui, theme),
+        Page::Switch => page_switch(ui, theme),
+        Page::Input => page_input(ui, theme),
+        Page::Badge => page_badge(ui, theme),
+        Page::Spinner => page_spinner(ui, theme),
+        Page::Avatar => page_avatar(ui, theme),
+        Page::Tooltip => page_tooltip(ui, theme),
     }
+}
+
+fn page_switch(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "States");
+    let id = egui::Id::new("demo_switch");
+    let mut on = ui.data(|d| d.get_temp::<bool>(id).unwrap_or(true));
+    ui.horizontal(|ui| {
+        Switch::new(&mut on).show(ui);
+        ui.add_space(core::SPACE_2);
+        Text::new(if on { "on" } else { "off" }).muted().show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id, on));
+    ui.add_space(core::SPACE_3);
+    let mut t = true;
+    let mut f = false;
+    ui.horizontal(|ui| {
+        Switch::new(&mut t).disabled().show(ui);
+        ui.add_space(core::SPACE_2);
+        Switch::new(&mut f).disabled().show(ui);
+        ui.add_space(core::SPACE_2);
+        Text::new("disabled").muted().show(ui);
+    });
+}
+
+fn page_input(ui: &mut Ui, _theme: &Theme) {
+    fn field(ui: &mut Ui, key: &str, render: impl FnOnce(&mut Ui, &mut String)) {
+        let id = egui::Id::new(key);
+        let mut s = ui.data(|d| d.get_temp::<String>(id).unwrap_or_default());
+        ui.allocate_ui(vec2(320.0, core::CONTROL_MD), |ui| render(ui, &mut s));
+        ui.data_mut(|d| d.insert_temp(id, s));
+        ui.add_space(core::SPACE_3);
+    }
+    caption(ui, "Default / placeholder");
+    field(ui, "in_a", |ui, s| {
+        Input::new(s).placeholder("Type here…").show(ui);
+    });
+    caption(ui, "Error");
+    field(ui, "in_b", |ui, s| {
+        Input::new(s).placeholder("Required").error(true).show(ui);
+    });
+    caption(ui, "Disabled");
+    field(ui, "in_c", |ui, s| {
+        Input::new(s).placeholder("Disabled").disabled().show(ui);
+    });
+}
+
+fn page_badge(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "shadcn variants");
+    ui.horizontal_wrapped(|ui| {
+        for (name, v) in [
+            ("Default", BadgeVariant::Default),
+            ("Secondary", BadgeVariant::Secondary),
+            ("Destructive", BadgeVariant::Destructive),
+            ("Outline", BadgeVariant::Outline),
+            ("Ghost", BadgeVariant::Ghost),
+            ("Link", BadgeVariant::Link),
+        ] {
+            Badge::new(name).variant(v).show(ui);
+            ui.add_space(core::SPACE_2);
+        }
+    });
+    subhead(ui, "Status (domain) — with dot");
+    ui.horizontal_wrapped(|ui| {
+        for (name, v) in [
+            ("Success", BadgeVariant::Success),
+            ("Warning", BadgeVariant::Warning),
+            ("Info", BadgeVariant::Info),
+        ] {
+            Badge::new(name).variant(v).dot().show(ui);
+            ui.add_space(core::SPACE_2);
+        }
+    });
+}
+
+fn page_spinner(ui: &mut Ui, theme: &Theme) {
+    caption(ui, "Sizes + color");
+    ui.horizontal(|ui| {
+        Spinner::new().sm().show(ui);
+        ui.add_space(core::SPACE_4);
+        Spinner::new().show(ui);
+        ui.add_space(core::SPACE_4);
+        Spinner::new().lg().show(ui);
+        ui.add_space(core::SPACE_4);
+        Spinner::new().lg().color(theme.primary).show(ui);
+    });
+}
+
+fn page_avatar(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Sizes");
+    ui.horizontal(|ui| {
+        Avatar::new("ab").size(AvatarSize::Sm).show(ui);
+        ui.add_space(core::SPACE_3);
+        Avatar::new("cd").show(ui);
+        ui.add_space(core::SPACE_3);
+        Avatar::new("ef").size(AvatarSize::Lg).show(ui);
+    });
+}
+
+fn page_tooltip(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Hover the button");
+    let resp = Button::new("Hover me")
+        .secondary()
+        .id_source("tt_btn")
+        .show(ui);
+    Tooltip::new("A token-styled tooltip").show(resp);
+}
+
+fn page_checkbox(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "States");
+    let id = egui::Id::new("demo_check_a");
+    let mut a = ui.data(|d| d.get_temp::<bool>(id).unwrap_or(true));
+    Checkbox::new(&mut a).label("Accept terms").show(ui);
+    ui.data_mut(|d| d.insert_temp(id, a));
+    ui.add_space(core::SPACE_2);
+    let mut off = false;
+    Checkbox::new(&mut off).label("Unchecked").show(ui);
+    ui.add_space(core::SPACE_2);
+    let mut on = true;
+    Checkbox::new(&mut on)
+        .label("Disabled checked")
+        .disabled()
+        .show(ui);
+    let mut un = false;
+    Checkbox::new(&mut un).label("Disabled").disabled().show(ui);
+}
+
+fn page_radio(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Single-select group (consumer-managed)");
+    let id = egui::Id::new("demo_radio");
+    let mut sel = ui.data(|d| d.get_temp::<usize>(id).unwrap_or(0));
+    for (i, label) in ["Option A", "Option B", "Option C"].iter().enumerate() {
+        if Radio::new(sel == i)
+            .label(*label)
+            .id_source(("r", i))
+            .show(ui)
+            .clicked()
+        {
+            sel = i;
+        }
+        ui.add_space(core::SPACE_1);
+    }
+    ui.data_mut(|d| d.insert_temp(id, sel));
+    ui.add_space(core::SPACE_2);
+    Radio::new(true)
+        .label("Disabled selected")
+        .disabled()
+        .show(ui);
+    Radio::new(false).label("Disabled").disabled().show(ui);
 }
 
 fn page_colors(ui: &mut Ui, theme: &Theme) {
