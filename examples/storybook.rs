@@ -22,7 +22,8 @@ use ouroboros_ui::molecules::{
     ToggleGroup, VectorField,
 };
 use ouroboros_ui::organisms::{
-    Dialog, DropdownMenu, Popover, Sidebar, TabView, Table, Toast, Toolbar, TreeItem, TreeView,
+    Accordion, Dialog, DropdownMenu, Menubar, Popover, Select, Sidebar, TabView, Table, Toast,
+    Toolbar, TreeItem, TreeView,
 };
 use ouroboros_ui::theme::typography;
 use ouroboros_ui::tokens::{core, layout};
@@ -91,6 +92,9 @@ enum Page {
     Toast,
     Popover,
     DropdownMenu,
+    Select,
+    Accordion,
+    Menubar,
 }
 
 impl Page {
@@ -157,6 +161,9 @@ impl Page {
             Page::Toast => "Toast",
             Page::Popover => "Popover",
             Page::DropdownMenu => "Dropdown menu",
+            Page::Select => "Select",
+            Page::Accordion => "Accordion",
+            Page::Menubar => "Menubar",
         }
     }
 }
@@ -245,6 +252,9 @@ const NAV: &[(&str, &[Page])] = &[
             Page::Toast,
             Page::Popover,
             Page::DropdownMenu,
+            Page::Select,
+            Page::Accordion,
+            Page::Menubar,
         ],
     ),
 ];
@@ -444,6 +454,56 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::Toast => page_toast(ui, theme),
         Page::Popover => page_popover(ui, theme),
         Page::DropdownMenu => page_dropdown_menu(ui, theme),
+        Page::Select => page_select(ui, theme),
+        Page::Accordion => page_accordion(ui, theme),
+        Page::Menubar => page_menubar(ui, theme),
+    }
+}
+
+fn page_select(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Dropdown single-select");
+    let id = egui::Id::new("select_demo");
+    let mut sel = ui.data(|d| d.get_temp::<usize>(id).unwrap_or(0));
+    Select::new(&mut sel)
+        .options(["Opaque", "Cutout", "Transparent", "Additive"])
+        .placeholder("Blend mode…")
+        .show(ui);
+    ui.data_mut(|d| d.insert_temp(id, sel));
+}
+
+fn page_accordion(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Stacked collapsible sections");
+    ui.allocate_ui(vec2(360.0, 200.0), |ui| {
+        Accordion::new().show(ui, |acc| {
+            acc.section("Transform", |ui| {
+                Text::new("Position / Rotation / Scale").muted().show(ui);
+            });
+            acc.section("Rendering", |ui| {
+                Text::new("Material, shadows, layers").muted().show(ui);
+            });
+            acc.section("Physics", |ui| {
+                Text::new("Collider, mass, drag").muted().show(ui);
+            });
+        });
+    });
+}
+
+fn page_menubar(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Application menu bar");
+    if let Some((m, i)) = Menubar::new()
+        .menu("File", ["New", "Open", "Save", "Quit"])
+        .menu("Edit", ["Undo", "Redo", "Preferences"])
+        .menu("View", ["Zoom in", "Zoom out", "Reset"])
+        .show(ui)
+    {
+        ui.data_mut(|d| d.insert_temp(egui::Id::new("mb_last"), (m, i)));
+    }
+    if let Some((m, i)) = ui.data(|d| d.get_temp::<(usize, usize)>(egui::Id::new("mb_last"))) {
+        ui.add_space(core::SPACE_2);
+        Text::new(format!("Chose menu {m}, item {i}"))
+            .muted()
+            .caption()
+            .show(ui);
     }
 }
 
