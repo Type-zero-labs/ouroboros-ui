@@ -12,15 +12,17 @@ use ouroboros_ui::atoms::{
     Icon, Input, Kbd, NumericField, Progress, Radio, Skeleton, Slider, Spinner, Surface, Switch,
     Text, TextRole, Textarea, Toggle, Tooltip,
 };
-use ouroboros_ui::cells::{ListItem, MenuItem, PropertyRow, TableRow, ToolbarButton, TreeNode};
+use ouroboros_ui::cells::{
+    ListItem, MenuItem, PropertyRow, TableCell, TableRow, ToolbarButton, TreeNode,
+};
 use ouroboros_ui::egui_phosphor::light;
 use ouroboros_ui::molecules::{
     Alert, Breadcrumb, Card, CheckboxCard, Collapsible, ColorField, Field, FieldSeparator,
     FieldSet, InputGroup, RadioGroup, SearchField, Slot, Tabs, ToggleGroup, VectorField,
 };
 use ouroboros_ui::organisms::{
-    Accordion, AppShell, Menubar, PanelSpec, Select, Sidebar, Splitter, TabView, Table, Toolbar,
-    TreeItem, TreeView,
+    Accordion, AppShell, Column, Menubar, PanelSpec, Select, Sidebar, Splitter, TabView, Table,
+    Toolbar, TreeItem, TreeView,
 };
 use ouroboros_ui::tokens::core;
 use ouroboros_ui::{Mode, Size, Theme};
@@ -387,7 +389,8 @@ fn cells_render() {
         ToolbarButton::new(&mut active, light::CURSOR)
             .tooltip("Select")
             .show(ui);
-        TableRow::new(["A", "B"]).header().show(ui, &[80.0, 80.0]);
+        TableCell::text("A").header().show(ui);
+        TableCell::text("B").status(egui::Color32::RED).show(ui);
     });
 }
 
@@ -424,7 +427,16 @@ fn organisms_render() {
         TabView::new(&mut t).tabs(["A", "B"]).show(ui, |ui, i| {
             Text::new(format!("panel {i}")).show(ui);
         });
-        Table::new().headers(["N", "T"]).row(["a", "b"]).show(ui);
+        Table::new()
+            .columns([Column::new("N"), Column::new("T").end()])
+            .rows([
+                TableRow::new([TableCell::text("a"), TableCell::text("b").end()]),
+                TableRow::new([TableCell::text("c"), TableCell::text("d").end()]),
+            ])
+            .striped(true)
+            .border(true)
+            .selectable(true)
+            .show(ui);
         let mut s = 0;
         TreeView::new(&mut s)
             .items([
