@@ -11,9 +11,10 @@ use egui::{vec2, Align, Color32, CornerRadius, Layout, Sense, Stroke, StrokeKind
 use egui_phosphor::light;
 use ouroboros_ui::atoms::{
     Avatar, AvatarSize, Badge, BadgeVariant, Button, ButtonVariant, Checkbox, Divider, Heading,
-    Icon, Input, Radio, Spinner, Switch, Text, TextRole, Tooltip,
+    Icon, Input, Radio, Spinner, Surface, SurfaceFill, Switch, Text, TextRole, Tooltip,
 };
 use ouroboros_ui::auto_layout::{AutoLayout, CrossAlign, MainAlign};
+use ouroboros_ui::molecules::{Card, CheckboxCard, Field, InputGroup, RadioCard, RadioGroup};
 use ouroboros_ui::theme::typography;
 use ouroboros_ui::tokens::{core, layout};
 use ouroboros_ui::{Mode, Theme};
@@ -43,6 +44,13 @@ enum Page {
     Spinner,
     Avatar,
     Tooltip,
+    Surface,
+    Field,
+    RadioGroup,
+    Card,
+    CheckboxCard,
+    RadioCard,
+    InputGroup,
 }
 
 impl Page {
@@ -71,6 +79,13 @@ impl Page {
             Page::Spinner => "Spinner",
             Page::Avatar => "Avatar",
             Page::Tooltip => "Tooltip",
+            Page::Surface => "Surface",
+            Page::Field => "Field",
+            Page::RadioGroup => "RadioGroup",
+            Page::Card => "Card",
+            Page::CheckboxCard => "Checkbox card",
+            Page::RadioCard => "Radio card",
+            Page::InputGroup => "Input group",
         }
     }
 }
@@ -106,6 +121,18 @@ const NAV: &[(&str, &[Page])] = &[
             Page::Spinner,
             Page::Avatar,
             Page::Tooltip,
+            Page::Surface,
+        ],
+    ),
+    (
+        "MOLECULES",
+        &[
+            Page::Field,
+            Page::RadioGroup,
+            Page::Card,
+            Page::CheckboxCard,
+            Page::RadioCard,
+            Page::InputGroup,
         ],
     ),
 ];
@@ -267,7 +294,145 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::Spinner => page_spinner(ui, theme),
         Page::Avatar => page_avatar(ui, theme),
         Page::Tooltip => page_tooltip(ui, theme),
+        Page::Surface => page_surface(ui, theme),
+        Page::Field => page_field(ui, theme),
+        Page::RadioGroup => page_radio_group(ui, theme),
+        Page::Card => page_card(ui, theme),
+        Page::CheckboxCard => page_checkbox_card(ui, theme),
+        Page::RadioCard => page_radio_card(ui, theme),
+        Page::InputGroup => page_input_group(ui, theme),
     }
+}
+
+fn page_surface(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Fills + border + elevation");
+    ui.horizontal(|ui| {
+        Surface::new().show(ui, |ui| {
+            Text::new("card + border").show(ui);
+        });
+        ui.add_space(core::SPACE_3);
+        Surface::new().muted().border_none().show(ui, |ui| {
+            Text::new("muted").show(ui);
+        });
+        ui.add_space(core::SPACE_3);
+        Surface::new().elevated().show(ui, |ui| {
+            Text::new("elevated").show(ui);
+        });
+    });
+    subhead(ui, "Fill none / interactive");
+    Surface::new()
+        .fill(SurfaceFill::None)
+        .border_strong()
+        .show(ui, |ui| {
+            Text::new("outline only").show(ui);
+        });
+}
+
+fn page_field(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Label + control + hint/error (wraps any control)");
+    let id = egui::Id::new("fld_a");
+    let mut s = ui.data(|d| d.get_temp::<String>(id).unwrap_or_default());
+    ui.allocate_ui(vec2(360.0, 80.0), |ui| {
+        Field::new("Email")
+            .required()
+            .hint("We never share it")
+            .show(ui, |ui| {
+                Input::new(&mut s).placeholder("you@example.com").show(ui)
+            });
+    });
+    ui.data_mut(|d| d.insert_temp(id, s));
+    ui.add_space(core::SPACE_4);
+    let mut e = String::new();
+    ui.allocate_ui(vec2(360.0, 80.0), |ui| {
+        Field::new("Username")
+            .error("Already taken")
+            .show(ui, |ui| Input::new(&mut e).error(true).show(ui));
+    });
+}
+
+fn page_radio_group(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Single-select");
+    let id = egui::Id::new("rg_demo");
+    let mut sel = ui.data(|d| d.get_temp::<usize>(id).unwrap_or(0));
+    RadioGroup::new(&mut sel)
+        .options(["Small", "Medium", "Large"])
+        .show(ui);
+    ui.data_mut(|d| d.insert_temp(id, sel));
+}
+
+fn page_card(ui: &mut Ui, _theme: &Theme) {
+    ui.allocate_ui(vec2(360.0, 220.0), |ui| {
+        Card::new()
+            .title("Project settings")
+            .description("Manage your project preferences")
+            .footer(|ui| {
+                ui.horizontal(|ui| {
+                    Button::new("Save").id_source("card_save").show(ui);
+                    ui.add_space(core::SPACE_2);
+                    Button::new("Cancel")
+                        .ghost()
+                        .id_source("card_cancel")
+                        .show(ui);
+                });
+            })
+            .show(ui, |ui| {
+                Text::new("Card body content goes here.").show(ui);
+            });
+    });
+}
+
+fn page_checkbox_card(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Selectable card (whole card toggles)");
+    let id = egui::Id::new("cc_demo");
+    let mut on = ui.data(|d| d.get_temp::<bool>(id).unwrap_or(true));
+    ui.allocate_ui(vec2(360.0, 64.0), |ui| {
+        CheckboxCard::new(&mut on, "Enable notifications")
+            .description("Email + in-app alerts")
+            .id_source("cc")
+            .show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id, on));
+}
+
+fn page_radio_card(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Radio cards (single-select, consumer-managed)");
+    let id = egui::Id::new("rc_demo");
+    let mut sel = ui.data(|d| d.get_temp::<usize>(id).unwrap_or(0));
+    for (i, (title, desc)) in [
+        ("Starter", "Up to 10 projects"),
+        ("Pro", "Unlimited projects"),
+    ]
+    .iter()
+    .enumerate()
+    {
+        ui.allocate_ui(vec2(360.0, 56.0), |ui| {
+            if RadioCard::new(sel == i, *title)
+                .description(*desc)
+                .id_source(("rc", i))
+                .show(ui)
+                .clicked()
+            {
+                sel = i;
+            }
+        });
+        ui.add_space(core::SPACE_2);
+    }
+    ui.data_mut(|d| d.insert_temp(id, sel));
+}
+
+fn page_input_group(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Leading / trailing addons");
+    let id = egui::Id::new("ig_demo");
+    let mut s = ui.data(|d| d.get_temp::<String>(id).unwrap_or_default());
+    ui.allocate_ui(vec2(360.0, core::CONTROL_MD + core::SPACE_4), |ui| {
+        InputGroup::new(&mut s)
+            .leading(light::MAGNIFYING_GLASS)
+            .trailing(light::X)
+            .placeholder("Search…")
+            .id_source("ig")
+            .show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id, s));
 }
 
 fn page_switch(ui: &mut Ui, _theme: &Theme) {

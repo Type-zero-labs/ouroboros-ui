@@ -140,6 +140,8 @@ pub const ICON_XL: f32 = 24.0;
 pub const BORDER_THIN: f32 = 1.0;
 /// Focus-ring stroke.
 pub const BORDER_FOCUS: f32 = 2.0;
+/// Gap between a widget's edge and its focus ring.
+pub const RING_OFFSET: f32 = 2.0;
 /// Minimum interactive target.
 pub const HIT_MIN: f32 = 32.0;
 

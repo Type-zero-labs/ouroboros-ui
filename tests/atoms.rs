@@ -9,9 +9,10 @@ use egui_kittest::kittest::Queryable;
 use egui_kittest::Harness;
 use ouroboros_ui::atoms::{
     Avatar, Badge, BadgeVariant, Button, Checkbox, Divider, Heading, HeadingLevel, Icon, Input,
-    Radio, Spinner, Switch, Text, TextRole, Tooltip,
+    Radio, Spinner, Surface, Switch, Text, TextRole, Tooltip,
 };
 use ouroboros_ui::egui_phosphor::light;
+use ouroboros_ui::molecules::{Card, CheckboxCard, Field, InputGroup, RadioGroup};
 use ouroboros_ui::{Mode, Theme};
 use std::cell::Cell;
 use std::rc::Rc;
@@ -233,6 +234,81 @@ fn tooltip_attaches() {
         let resp = Button::new("hover").show(ui);
         Tooltip::new("tip").show(resp);
     });
+}
+
+#[test]
+fn surface_and_field_render() {
+    rendered(|ui| {
+        Surface::new().elevated().show(ui, |ui| {
+            Text::new("surface").show(ui);
+        });
+        let mut s = String::new();
+        Field::new("Label")
+            .required()
+            .hint("hint")
+            .show(ui, |ui| Input::new(&mut s).show(ui));
+    });
+}
+
+#[test]
+fn card_and_input_group_render() {
+    rendered(|ui| {
+        Card::new().title("T").description("d").show(ui, |ui| {
+            Text::new("body").show(ui);
+        });
+        let mut s = String::new();
+        InputGroup::new(&mut s)
+            .leading(light::MAGNIFYING_GLASS)
+            .placeholder("search")
+            .show(ui);
+    });
+}
+
+#[test]
+fn radio_group_selects() {
+    let selected = Rc::new(Cell::new(0usize));
+    let sink = selected.clone();
+    let mut installed = false;
+    let mut harness = Harness::new_ui(move |ui| {
+        if !installed {
+            Theme::install(ui.ctx(), Mode::Dark);
+            installed = true;
+            return;
+        }
+        let mut v = sink.get();
+        RadioGroup::new(&mut v).options(["A", "B", "C"]).show(ui);
+        sink.set(v);
+    });
+    harness.run();
+    harness.run();
+    harness
+        .get_by_role_and_label(egui::accesskit::Role::RadioButton, "C")
+        .click_accesskit();
+    harness.run();
+    assert_eq!(selected.get(), 2, "radio group should select option C");
+}
+
+#[test]
+fn checkbox_card_toggles() {
+    let state = Rc::new(Cell::new(false));
+    let sink = state.clone();
+    let mut installed = false;
+    let mut harness = Harness::new_ui(move |ui| {
+        if !installed {
+            Theme::install(ui.ctx(), Mode::Dark);
+            installed = true;
+            return;
+        }
+        let mut v = sink.get();
+        CheckboxCard::new(&mut v, "Enable").show(ui);
+        sink.set(v);
+    });
+    harness.run();
+    harness.run();
+    // The whole card is the click target; click the label text position.
+    harness.get_by_label("Enable").click();
+    harness.run();
+    assert!(state.get(), "clicking the card should toggle it");
 }
 
 #[test]
