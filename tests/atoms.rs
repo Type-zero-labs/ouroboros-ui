@@ -14,7 +14,8 @@ use ouroboros_ui::atoms::{
 };
 use ouroboros_ui::egui_phosphor::light;
 use ouroboros_ui::molecules::{
-    Card, CheckboxCard, Field, FieldSeparator, FieldSet, InputGroup, RadioGroup, Slot,
+    Alert, Breadcrumb, Card, CheckboxCard, Collapsible, ColorField, Field, FieldSeparator,
+    FieldSet, InputGroup, RadioGroup, SearchField, Slot, Tabs, ToggleGroup, VectorField,
 };
 use ouroboros_ui::tokens::core;
 use ouroboros_ui::{Mode, Theme};
@@ -293,6 +294,52 @@ fn toggle_toggles() {
         .click_accesskit();
     harness.run();
     assert!(state.get(), "toggle should turn on");
+}
+
+#[test]
+fn molecules_engine_render() {
+    rendered(|ui| {
+        let mut t = 0;
+        Tabs::new(&mut t).tabs(["A", "B"]).show(ui);
+        Collapsible::new("Sec").default_open(true).show(ui, |ui| {
+            Text::new("body").show(ui);
+        });
+        Alert::new("msg").warning().title("Heads up").show(ui);
+        let mut g = 0;
+        ToggleGroup::new(&mut g)
+            .options(["Local", "World"])
+            .show(ui);
+        Breadcrumb::new().items(["A", "B", "C"]).show(ui);
+        let mut v = [1.0_f32, 2.0, 3.0];
+        VectorField::new(&mut v).show(ui);
+        ColorField::new(core::BLUE_500).show(ui);
+        let mut s = String::new();
+        SearchField::new(&mut s).placeholder("x").show(ui);
+    });
+}
+
+#[test]
+fn tabs_selects() {
+    let selected = Rc::new(Cell::new(0usize));
+    let sink = selected.clone();
+    let mut installed = false;
+    let mut harness = Harness::new_ui(move |ui| {
+        if !installed {
+            Theme::install(ui.ctx(), Mode::Dark);
+            installed = true;
+            return;
+        }
+        let mut v = sink.get();
+        Tabs::new(&mut v).tabs(["Scene", "Game"]).show(ui);
+        sink.set(v);
+    });
+    harness.run();
+    harness.run();
+    harness
+        .get_by_role_and_label(egui::accesskit::Role::Button, "Game")
+        .click_accesskit();
+    harness.run();
+    assert_eq!(selected.get(), 1, "clicking the Game tab should select it");
 }
 
 #[test]
