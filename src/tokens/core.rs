@@ -133,10 +133,10 @@ pub const LEADING_RELAXED: f32 = 1.6;
 /// (heading→SM, body→MD, label/code→LG, caption/kbd→WIDE).
 pub const TRACKING_TIGHT: f32 = -0.25;
 pub const TRACKING_NORMAL: f32 = 0.0;
-pub const TRACKING_SM: f32 = 0.2;
-pub const TRACKING_MD: f32 = 0.3;
-pub const TRACKING_LG: f32 = 0.4;
-pub const TRACKING_WIDE: f32 = 0.5;
+pub const TRACKING_SM: f32 = 0.4;
+pub const TRACKING_MD: f32 = 0.6;
+pub const TRACKING_LG: f32 = 0.8;
+pub const TRACKING_WIDE: f32 = 1.0;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sizing — control heights, icon sizes, stroke widths, minimum hit target (px).

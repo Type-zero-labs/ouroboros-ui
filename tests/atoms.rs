@@ -316,7 +316,8 @@ fn molecules_engine_render() {
         Breadcrumb::new().items(["A", "B", "C"]).show(ui);
         let mut v = [1.0_f32, 2.0, 3.0];
         VectorField::new(&mut v).show(ui);
-        ColorField::new(core::BLUE_500).show(ui);
+        let mut col = core::BLUE_500;
+        ColorField::new(&mut col).show(ui);
         let mut s = String::new();
         SearchField::new(&mut s).placeholder("x").show(ui);
     });

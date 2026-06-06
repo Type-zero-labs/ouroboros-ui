@@ -960,12 +960,13 @@ fn page_vector_field(ui: &mut Ui, _theme: &Theme) {
 }
 
 fn page_color_field(ui: &mut Ui, _theme: &Theme) {
-    caption(ui, "Swatch + hex (picker popover later)");
-    ui.horizontal(|ui| {
-        ColorField::new(core::BLUE_500).show(ui);
+    caption(ui, "Editable hex · click the swatch → HSV/RGB picker");
+    let id = egui::Id::new("cf_demo");
+    let mut c = ui.data(|d| d.get_temp::<Color32>(id).unwrap_or(core::TEAL_400));
+    ui.allocate_ui(vec2(240.0, core::CONTROL_MD), |ui| {
+        ColorField::new(&mut c).id_source("cf1").show(ui);
     });
-    ui.add_space(core::SPACE_2);
-    ColorField::new(core::AMBER_500).show(ui);
+    ui.data_mut(|d| d.insert_temp(id, c));
 }
 
 fn page_search_field(ui: &mut Ui, _theme: &Theme) {
@@ -1080,6 +1081,13 @@ fn page_progress(ui: &mut Ui, _theme: &Theme) {
     subhead(ui, "Stepped");
     ui.allocate_ui(vec2(320.0, 8.0), |ui| {
         Progress::new(0.6).steps(5).show(ui);
+    });
+    subhead(ui, "Circular (determinate ring)");
+    ui.horizontal(|ui| {
+        for f in [0.25_f32, 0.6, 0.9] {
+            Progress::new(f).circular().show(ui);
+            ui.add_space(core::SPACE_4);
+        }
     });
 }
 
