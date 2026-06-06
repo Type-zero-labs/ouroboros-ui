@@ -16,7 +16,7 @@ pub mod tree_node;
 pub use list_item::ListItem;
 pub use menu_item::MenuItem;
 pub use property_row::PropertyRow;
-pub use table_cell::TableCell;
+pub use table_cell::{CellAlign, TableCell};
 pub use table_row::TableRow;
 pub use toolbar_button::ToolbarButton;
 pub use tree_node::TreeNode;

@@ -24,8 +24,8 @@ use ouroboros_ui::molecules::{
     ToggleGroup, VectorField,
 };
 use ouroboros_ui::organisms::{
-    Accordion, AppShell, Dialog, DropdownMenu, Menubar, PanelSpec, Popover, Select, Sidebar,
-    Splitter, TabView, Table, Toast, Toolbar, TreeItem, TreeView,
+    Accordion, AppShell, Column, Dialog, DropdownMenu, Menubar, PanelSpec, Popover, Select,
+    Sidebar, Splitter, TabView, Table, Toast, Toolbar, TreeItem, TreeView,
 };
 use ouroboros_ui::theme::typography;
 use ouroboros_ui::tokens::{core, layout};
@@ -708,37 +708,78 @@ fn page_tab_view(ui: &mut Ui, _theme: &Theme) {
 fn page_table(ui: &mut Ui, theme: &Theme) {
     caption(
         ui,
-        "Framed table — muted header + zebra rows (legacy style)",
+        "Column-defined · striped · border · selectable · sticky header (click a row)",
     );
-    ui.allocate_ui(vec2(380.0, 200.0), |ui| {
+    let data = [
+        ("hero.fbx", "Mesh", "2.1 MB", theme.success),
+        ("grass.png", "Texture", "512 KB", theme.success),
+        ("main.rs", "Script", "8 KB", theme.success),
+        ("sky.hdr", "Texture", "4.0 MB", theme.success),
+        ("orphan.mat", "Material", "1 KB", theme.error),
+        ("anim.act", "Animation", "320 KB", theme.success),
+    ];
+    ui.allocate_ui(vec2(460.0, 220.0), |ui| {
         Table::new()
-            .headers(["Name", "Type", "Size"])
-            .row(["hero.fbx", "Mesh", "2.1 MB"])
-            .row(["grass.png", "Texture", "512 KB"])
-            .row(["main.rs", "Script", "8 KB"])
-            .row(["sky.hdr", "Texture", "4.0 MB"])
+            .id_source("tbl_main")
+            .columns([
+                Column::new("Name"),
+                Column::new("Type").exact(110.0),
+                Column::new("Size").exact(90.0).end(),
+                Column::new("Status").exact(110.0),
+            ])
+            .rows(data.iter().map(|(n, t, s, c)| {
+                TableRow::new([
+                    TableCell::text(*n),
+                    TableCell::text(*t).muted(),
+                    TableCell::text(*s).end(),
+                    TableCell::text("ref").status(*c),
+                ])
+            }))
+            .striped(true)
+            .border(true)
+            .selectable(true)
+            .max_height(150.0)
             .show(ui);
     });
-    subhead(ui, "Rich cells — TableCell with a status dot");
-    let mut row = |a: &str, b: &str, status: Option<egui::Color32>, header: bool| {
-        ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = 0.0;
-            let mut c0 = TableCell::new(a);
-            let mut c1 = TableCell::new(b);
-            if header {
-                c0 = c0.header();
-                c1 = c1.header();
-            }
-            if let Some(s) = status {
-                c1 = c1.status(s);
-            }
-            c0.show(ui, 120.0);
-            c1.show(ui, 110.0);
+    subhead(ui, "Sizes (Sm / Md / Lg)");
+    for (key, mk) in [
+        ("tbl_sm", Size::Sm),
+        ("tbl_md", Size::Md),
+        ("tbl_lg", Size::Lg),
+    ] {
+        ui.allocate_ui(vec2(300.0, 90.0), |ui| {
+            Table::new()
+                .id_source(key)
+                .size(mk)
+                .border(true)
+                .columns([Column::new("Key"), Column::new("Value").end()])
+                .rows([
+                    TableRow::new([TableCell::text("width"), TableCell::text("1920").end()]),
+                    TableRow::new([TableCell::text("height"), TableCell::text("1080").end()]),
+                ])
+                .show(ui);
         });
-    };
-    row("Creature", "State", None, true);
-    row("Goblin", "Alive", Some(theme.success), false);
-    row("Skeleton", "Broken ref", Some(theme.error), false);
+        ui.add_space(core::SPACE_2);
+    }
+    subhead(ui, "Empty · loading");
+    ui.horizontal(|ui| {
+        ui.allocate_ui(vec2(220.0, 70.0), |ui| {
+            Table::new()
+                .border(true)
+                .columns([Column::new("Assets")])
+                .empty_text("No assets")
+                .show(ui);
+        });
+        ui.add_space(core::SPACE_4);
+        ui.allocate_ui(vec2(220.0, 70.0), |ui| {
+            Table::new()
+                .border(true)
+                .columns([Column::new("Assets")])
+                .rows([TableRow::new([TableCell::text("…")])])
+                .loading(true)
+                .show(ui);
+        });
+    });
 }
 
 fn page_tree_view(ui: &mut Ui, _theme: &Theme) {
@@ -1001,24 +1042,34 @@ fn page_toolbar_button(ui: &mut Ui, _theme: &Theme) {
     ui.data_mut(|d| d.insert_temp(id, state));
 }
 
-fn page_table_row(ui: &mut Ui, _theme: &Theme) {
-    caption(ui, "Table rows (fixed columns)");
-    let widths = [120.0_f32, 80.0, 80.0];
-    ui.allocate_ui(vec2(300.0, 140.0), |ui| {
-        TableRow::new(["Name", "Type", "Size"])
-            .header()
-            .show(ui, &widths);
-        ui.add_space(core::SPACE_1);
-        Divider::horizontal().show(ui);
-        ui.add_space(core::SPACE_1);
-        for row in [
-            ["hero.fbx", "Mesh", "2.1 MB"],
-            ["grass.png", "Texture", "512 KB"],
-            ["main.rs", "Script", "8 KB"],
-        ] {
-            TableRow::new(row).show(ui, &widths);
-        }
+fn page_table_row(ui: &mut Ui, theme: &Theme) {
+    caption(
+        ui,
+        "TableCell — cell vs header (weight), alignment, status dot",
+    );
+    // The cell fills the width it's given; demo it inside fixed-width boxes.
+    fn cell(ui: &mut Ui, w: f32, c: TableCell) {
+        ui.allocate_ui(vec2(w, core::CONTROL_MD), |ui| {
+            c.show(ui);
+        });
+    }
+    let widths = [140.0_f32, 90.0, 120.0];
+    ui.horizontal(|ui| {
+        cell(ui, widths[0], TableCell::text("Name").header());
+        cell(ui, widths[1], TableCell::text("Size").header().end());
+        cell(ui, widths[2], TableCell::text("Status").header());
     });
+    Divider::horizontal().show(ui);
+    for (n, s, label, color) in [
+        ("hero.fbx", "2.1 MB", "ref", theme.success),
+        ("orphan.mat", "1 KB", "broken", theme.error),
+    ] {
+        ui.horizontal(|ui| {
+            cell(ui, widths[0], TableCell::text(n));
+            cell(ui, widths[1], TableCell::text(s).end());
+            cell(ui, widths[2], TableCell::text(label).status(color));
+        });
+    }
 }
 
 fn page_tabs(ui: &mut Ui, _theme: &Theme) {

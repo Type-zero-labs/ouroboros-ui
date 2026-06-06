@@ -1,64 +1,42 @@
-//! TableRow cell — a row of [`TableCell`]s across fixed column widths.
-//! [legacy ouroboros-ui table style]
+//! TableRow cell — the row model for the [`Table`](crate::organisms::Table) organism.
 //!
-//! `header()` styles the cells as labels; `zebra()`/header give the row a muted background.
+//! Holds a row's [`TableCell`]s plus row-level state (selected / selectable / key). It is a
+//! *descriptor*, not a renderer: the Table organism lays the cells out across the column widths
+//! (via `egui_extras`) and reads this state to drive selection. Never paints.
 
-use crate::atoms::Surface;
 use crate::cells::TableCell;
-use crate::tokens::core;
-use egui::{Response, Ui};
 
-/// A table row. `show(ui, &widths)` lays each cell at its column width.
-pub struct TableRow {
-    cells: Vec<String>,
-    header: bool,
-    zebra: bool,
+/// A table row: its cells plus selection state.
+pub struct TableRow<'a> {
+    pub(crate) cells: Vec<TableCell<'a>>,
+    pub(crate) selected: bool,
+    pub(crate) selectable: bool,
+    pub(crate) key: Option<u64>,
 }
 
-impl TableRow {
-    pub fn new<S: Into<String>>(cells: impl IntoIterator<Item = S>) -> Self {
+impl<'a> TableRow<'a> {
+    pub fn new(cells: impl IntoIterator<Item = TableCell<'a>>) -> Self {
         Self {
-            cells: cells.into_iter().map(Into::into).collect(),
-            header: false,
-            zebra: false,
+            cells: cells.into_iter().collect(),
+            selected: false,
+            selectable: true,
+            key: None,
         }
-    }
-    pub fn header(mut self) -> Self {
-        self.header = true;
-        self
-    }
-    /// Give this row a muted background (alternating data rows).
-    pub fn zebra(mut self, zebra: bool) -> Self {
-        self.zebra = zebra;
-        self
     }
 
-    pub fn show(self, ui: &mut Ui, widths: &[f32]) -> Response {
-        let cells = self.cells;
-        let header = self.header;
-        let body = |ui: &mut Ui| {
-            ui.horizontal(|ui| {
-                ui.spacing_mut().item_spacing.x = core::SPACE_0;
-                for (i, text) in cells.iter().enumerate() {
-                    let width = widths.get(i).copied().unwrap_or(core::SPACE_12 * 2.0);
-                    let mut cell = TableCell::new(text.clone());
-                    if header {
-                        cell = cell.header();
-                    }
-                    cell.show(ui, width);
-                }
-            });
-        };
-        if header || self.zebra {
-            Surface::new()
-                .muted()
-                .border_none()
-                .radius(core::RADIUS_NONE)
-                .pad(core::SPACE_0)
-                .show(ui, body)
-                .response
-        } else {
-            ui.scope(body).response
-        }
+    /// Mark the row as selected (highlighted).
+    pub fn selected(mut self, selected: bool) -> Self {
+        self.selected = selected;
+        self
+    }
+    /// Whether the row may be selected (default `true`).
+    pub fn selectable(mut self, selectable: bool) -> Self {
+        self.selectable = selectable;
+        self
+    }
+    /// Stable identity for the row (selection/tree operations).
+    pub fn key(mut self, key: u64) -> Self {
+        self.key = Some(key);
+        self
     }
 }
