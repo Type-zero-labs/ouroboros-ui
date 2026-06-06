@@ -199,10 +199,10 @@ pub fn heading() -> TypeStyle {
         core::TRACKING_SM,
     )
 }
-/// Body — Regular 14.
+/// Body — Light 14 (the default text weight).
 pub fn body() -> TypeStyle {
     style(
-        sans(Weight::Regular),
+        sans(Weight::Light),
         core::TEXT_BASE,
         core::LEADING_NORMAL,
         core::TRACKING_MD,
@@ -217,8 +217,17 @@ pub fn body_strong() -> TypeStyle {
         core::TRACKING_MD,
     )
 }
-/// Label — Medium 13.
+/// Label — Light 13 (the default label weight).
 pub fn label() -> TypeStyle {
+    style(
+        sans(Weight::Light),
+        core::TEXT_SM,
+        core::LEADING_NORMAL,
+        core::TRACKING_LG,
+    )
+}
+/// Emphasized label — Medium 13 (where a label needs more weight).
+pub fn label_strong() -> TypeStyle {
     style(
         sans(Weight::Medium),
         core::TEXT_SM,

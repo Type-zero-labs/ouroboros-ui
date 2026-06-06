@@ -14,6 +14,7 @@ pub enum TextRole {
     Body,
     BodyStrong,
     Label,
+    LabelStrong,
     Caption,
     Code,
     Kbd,
@@ -25,6 +26,7 @@ impl TextRole {
             TextRole::Body => typography::body(),
             TextRole::BodyStrong => typography::body_strong(),
             TextRole::Label => typography::label(),
+            TextRole::LabelStrong => typography::label_strong(),
             TextRole::Caption => typography::caption(),
             TextRole::Code => typography::code(),
             TextRole::Kbd => typography::kbd(),
@@ -63,6 +65,9 @@ impl Text {
     }
     pub fn label(self) -> Self {
         self.role(TextRole::Label)
+    }
+    pub fn label_strong(self) -> Self {
+        self.role(TextRole::LabelStrong)
     }
     pub fn caption(self) -> Self {
         self.role(TextRole::Caption)

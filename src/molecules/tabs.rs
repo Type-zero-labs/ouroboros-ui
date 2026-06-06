@@ -72,11 +72,10 @@ impl<'a> Tabs<'a> {
             b
         };
         match self.variant {
-            // Pill-in-muted-container (shadcn radix default): active tab raised.
+            // Pill-in-container (shadcn radix default): active tab is a raised secondary button
+            // (lighter than the card container, so it reads like a real button).
             TabsVariant::Container => {
                 Surface::new()
-                    .muted()
-                    .border_none()
                     .pad(core::SPACE_1)
                     .radius(core::RADIUS_MD)
                     .show(ui, |ui| {
