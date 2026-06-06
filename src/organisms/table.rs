@@ -1,31 +1,24 @@
-//! Table organism — a header + data rows. [shadcn Table / Unity Multi-column]
+//! Table organism — framed data table. [legacy ouroboros-ui table style]
 //!
-//! Built on [`egui::Grid`] (reliable column layout + zebra striping) with [`Text`] atom cells.
-//! Cells can be plain strings or, for the engine's rich tables, carry a status dot.
+//! A card [`Surface`] holding a muted header row (bottom-bordered) over zebra-striped data
+//! rows, built from [`TableRow`]/[`TableCell`] cells. Columns are equal-width.
 
-use crate::atoms::Text;
-use egui::{Grid, Id, Response, Ui};
+use crate::atoms::{Divider, Surface};
+use crate::cells::TableRow;
+use egui::{Response, Ui};
 
-/// A data table. Rows are strings; the header row is styled as muted labels.
+/// A data table. `headers` + `row(..)` build it; the columns split the width equally.
 pub struct Table {
-    id: Id,
     headers: Vec<String>,
     rows: Vec<Vec<String>>,
-    striped: bool,
 }
 
 impl Table {
     pub fn new() -> Self {
         Self {
-            id: Id::new("table"),
             headers: Vec::new(),
             rows: Vec::new(),
-            striped: true,
         }
-    }
-    pub fn id_source(mut self, id: impl std::hash::Hash) -> Self {
-        self.id = Id::new(id);
-        self
     }
     pub fn headers<S: Into<String>>(mut self, headers: impl IntoIterator<Item = S>) -> Self {
         self.headers = headers.into_iter().map(Into::into).collect();
@@ -35,34 +28,26 @@ impl Table {
         self.rows.push(row.into_iter().map(Into::into).collect());
         self
     }
-    pub fn striped(mut self, striped: bool) -> Self {
-        self.striped = striped;
-        self
-    }
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let headers = self.headers;
         let rows = self.rows;
-        Grid::new(self.id)
-            .striped(self.striped)
-            .num_columns(
-                headers
-                    .len()
-                    .max(rows.first().map_or(0, |r| r.len()))
-                    .max(1),
-            )
+        let ncols = headers
+            .len()
+            .max(rows.first().map_or(0, |r| r.len()))
+            .max(1);
+        // Card frame, full-bleed rows (no inner padding — the cells pad themselves).
+        Surface::new()
+            .pad(0.0)
             .show(ui, |ui| {
+                let avail = ui.available_width();
+                let widths = vec![avail / ncols as f32; ncols];
                 if !headers.is_empty() {
-                    for header in &headers {
-                        Text::new(header).label().muted().show(ui);
-                    }
-                    ui.end_row();
+                    TableRow::new(headers).header().show(ui, &widths);
+                    Divider::horizontal().show(ui);
                 }
-                for row in &rows {
-                    for cell in row {
-                        Text::new(cell).show(ui);
-                    }
-                    ui.end_row();
+                for (r, row) in rows.into_iter().enumerate() {
+                    TableRow::new(row).zebra(r % 2 == 1).show(ui, &widths);
                 }
             })
             .response

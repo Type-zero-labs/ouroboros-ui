@@ -52,6 +52,9 @@ pub const FIELD_HORIZONTAL_MIN: f32 = 480.0;
 /// Fixed label column for an inspector [`PropertyRow`](crate::cells::PropertyRow) (aligned rows).
 pub const PROPERTY_LABEL_WIDTH: f32 = 120.0;
 
+/// Row height for table cells/headers ([`TableCell`](crate::cells::TableCell)).
+pub const TABLE_ROW_HEIGHT: f32 = 28.0;
+
 /// Responsive size class derived from the available width.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SizeClass {
