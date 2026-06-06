@@ -163,7 +163,11 @@ impl Button {
         job.wrap.max_width = f32::INFINITY;
         let mut placed = false;
         if let Some(g) = self.icon_left {
-            job.append(g, 0.0, fmt(icon_font_id.clone(), false, core::TRACKING_NORMAL));
+            job.append(
+                g,
+                0.0,
+                fmt(icon_font_id.clone(), false, core::TRACKING_NORMAL),
+            );
             placed = true;
         }
         if has_text {

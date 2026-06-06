@@ -85,7 +85,11 @@ impl<'a> Toggle<'a> {
             } else {
                 0.0
             };
-            job.append(label, lead, fmt(label_style.font_id(), label_style.tracking));
+            job.append(
+                label,
+                lead,
+                fmt(label_style.font_id(), label_style.tracking),
+            );
         }
         let galley = ui.painter().layout_job(job);
         let content = galley.size();

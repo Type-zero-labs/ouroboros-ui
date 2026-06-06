@@ -166,9 +166,15 @@ impl<'a> Splitter<'a> {
         // ── Render panels + dividers along the main axis ──
         let cell = |start: f32, len: f32, cross_full: &Rect| -> Rect {
             if horizontal {
-                Rect::from_min_size(pos2(start, cross_full.top()), vec2(len, cross_full.height()))
+                Rect::from_min_size(
+                    pos2(start, cross_full.top()),
+                    vec2(len, cross_full.height()),
+                )
             } else {
-                Rect::from_min_size(pos2(cross_full.left(), start), vec2(cross_full.width(), len))
+                Rect::from_min_size(
+                    pos2(cross_full.left(), start),
+                    vec2(cross_full.width(), len),
+                )
             }
         };
         let main_start = if horizontal { rect.left() } else { rect.top() };
@@ -255,10 +261,7 @@ fn init_fracs(panels: &[Panel<'_>]) -> Vec<f32> {
     } else {
         0.0
     };
-    let raw: Vec<f32> = panels
-        .iter()
-        .map(|p| p.cfg.size.unwrap_or(each))
-        .collect();
+    let raw: Vec<f32> = panels.iter().map(|p| p.cfg.size.unwrap_or(each)).collect();
     let sum: f32 = raw.iter().sum();
     if sum > f32::EPSILON {
         raw.iter().map(|f| f / sum).collect()

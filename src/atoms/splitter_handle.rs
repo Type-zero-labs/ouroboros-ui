@@ -48,7 +48,11 @@ impl SplitterHandle {
         match self.line {
             Axis::Vertical => {
                 let x = rect.center().x;
-                painter.vline(x, rect.y_range(), Stroke::new(core::BORDER_THIN, theme.border));
+                painter.vline(
+                    x,
+                    rect.y_range(),
+                    Stroke::new(core::BORDER_THIN, theme.border),
+                );
                 if t > 0.0 {
                     painter.vline(
                         x,
@@ -59,7 +63,11 @@ impl SplitterHandle {
             }
             Axis::Horizontal => {
                 let y = rect.center().y;
-                painter.hline(rect.x_range(), y, Stroke::new(core::BORDER_THIN, theme.border));
+                painter.hline(
+                    rect.x_range(),
+                    y,
+                    Stroke::new(core::BORDER_THIN, theme.border),
+                );
                 if t > 0.0 {
                     painter.hline(
                         rect.x_range(),

@@ -164,8 +164,13 @@ impl<'a> Checkbox<'a> {
 
         if on {
             let fg = dim(theme.primary_foreground);
-            let glyph = if indeterminate { light::MINUS } else { light::CHECK };
-            let galley = painter.layout_no_wrap(glyph.to_owned(), typography::icon_font(box_size), fg);
+            let glyph = if indeterminate {
+                light::MINUS
+            } else {
+                light::CHECK
+            };
+            let galley =
+                painter.layout_no_wrap(glyph.to_owned(), typography::icon_font(box_size), fg);
             painter.galley(box_rect.center() - galley.size() * 0.5, galley, fg);
         }
         if response.has_focus() {

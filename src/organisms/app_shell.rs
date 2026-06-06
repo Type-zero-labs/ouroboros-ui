@@ -141,10 +141,8 @@ impl<'a> AppShell<'a> {
         }
 
         // ── Middle band: aside_left | main | aside_right as a horizontal Splitter ──
-        let middle = Rect::from_min_size(
-            pos2(rect.left(), middle_top),
-            vec2(rect.width(), middle_h),
-        );
+        let middle =
+            Rect::from_min_size(pos2(rect.left(), middle_top), vec2(rect.width(), middle_h));
         if middle.width() > 0.0 && middle.height() > 0.0 {
             let middle_w = middle.width();
             let frac = |w: f32| (w / middle_w).clamp(0.05, 0.45);

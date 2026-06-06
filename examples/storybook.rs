@@ -471,7 +471,10 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
 }
 
 fn page_splitter(ui: &mut Ui, _theme: &Theme) {
-    caption(ui, "Drag dividers · min/max · double-click to collapse · nested");
+    caption(
+        ui,
+        "Drag dividers · min/max · double-click to collapse · nested",
+    );
     let panel = |ui: &mut Ui, label: &str| {
         Surface::new().muted().show(ui, |ui| {
             ui.set_min_size(ui.available_size());
@@ -543,25 +546,33 @@ fn page_app_shell(ui: &mut Ui, _theme: &Theme) {
             .show(ui);
     });
 
-    demo(ui, "Aside-left + Main + Aside-right (drag the dividers)", &|ui| {
-        AppShell::new()
-            .id_source("shell_ama")
-            .aside_left(|ui| shell_slot(ui, "Aside L", true))
-            .main(|ui| shell_slot(ui, "Main", true))
-            .aside_right(|ui| shell_slot(ui, "Aside R", true))
-            .show(ui);
-    });
+    demo(
+        ui,
+        "Aside-left + Main + Aside-right (drag the dividers)",
+        &|ui| {
+            AppShell::new()
+                .id_source("shell_ama")
+                .aside_left(|ui| shell_slot(ui, "Aside L", true))
+                .main(|ui| shell_slot(ui, "Main", true))
+                .aside_right(|ui| shell_slot(ui, "Aside R", true))
+                .show(ui);
+        },
+    );
 
-    demo(ui, "Full: Header + Aside-L + Main + Aside-R + Footer", &|ui| {
-        AppShell::new()
-            .id_source("shell_full")
-            .header(|ui| shell_slot(ui, "Header", false))
-            .aside_left(|ui| shell_slot(ui, "Nav", true))
-            .main(|ui| shell_slot(ui, "Scene", true))
-            .aside_right(|ui| shell_slot(ui, "Inspector", true))
-            .footer(|ui| shell_slot(ui, "Status", false))
-            .show(ui);
-    });
+    demo(
+        ui,
+        "Full: Header + Aside-L + Main + Aside-R + Footer",
+        &|ui| {
+            AppShell::new()
+                .id_source("shell_full")
+                .header(|ui| shell_slot(ui, "Header", false))
+                .aside_left(|ui| shell_slot(ui, "Nav", true))
+                .main(|ui| shell_slot(ui, "Scene", true))
+                .aside_right(|ui| shell_slot(ui, "Inspector", true))
+                .footer(|ui| shell_slot(ui, "Status", false))
+                .show(ui);
+        },
+    );
 
     demo(ui, "Nested: an AppShell inside the main slot", &|ui| {
         AppShell::new()
@@ -589,7 +600,11 @@ fn page_select(ui: &mut Ui, _theme: &Theme) {
     ui.data_mut(|d| d.insert_temp(id, sel));
     subhead(ui, "Sizes (Sm / Md / Lg)");
     ui.horizontal(|ui| {
-        for (salt, mk) in [("sel_sm", Size::Sm), ("sel_md", Size::Md), ("sel_lg", Size::Lg)] {
+        for (salt, mk) in [
+            ("sel_sm", Size::Sm),
+            ("sel_md", Size::Md),
+            ("sel_lg", Size::Lg),
+        ] {
             let sid = egui::Id::new(salt);
             let mut s = ui.data(|d| d.get_temp::<usize>(sid).unwrap_or(0));
             ui.push_id(salt, |ui| {
@@ -1156,7 +1171,11 @@ fn page_slider(ui: &mut Ui, _theme: &Theme) {
     });
     ui.data_mut(|d| d.insert_temp(id2, s));
     subhead(ui, "Sizes (Sm / Md / Lg)");
-    for (key, mk) in [("sld_sm", Size::Sm), ("sld_md", Size::Md), ("sld_lg", Size::Lg)] {
+    for (key, mk) in [
+        ("sld_sm", Size::Sm),
+        ("sld_md", Size::Md),
+        ("sld_lg", Size::Lg),
+    ] {
         let id = egui::Id::new(key);
         let mut z = ui.data(|d| d.get_temp::<f32>(id).unwrap_or(0.5));
         ui.allocate_ui(vec2(320.0, 24.0), |ui| {
