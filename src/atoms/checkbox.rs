@@ -18,6 +18,7 @@ pub struct Checkbox<'a> {
     checked: &'a mut bool,
     label: Option<String>,
     enabled: bool,
+    interactive: bool,
     id_source: Option<Id>,
 }
 
@@ -27,8 +28,15 @@ impl<'a> Checkbox<'a> {
             checked,
             label: None,
             enabled: true,
+            interactive: true,
             id_source: None,
         }
+    }
+
+    /// Display-only (no click/toggle) — e.g. inside a clickable card.
+    pub fn interactive(mut self, interactive: bool) -> Self {
+        self.interactive = interactive;
+        self
     }
 
     pub fn label(mut self, label: impl Into<String>) -> Self {
@@ -68,13 +76,13 @@ impl<'a> Checkbox<'a> {
                 0.0
             };
 
-        let sense = if self.enabled {
+        let sense = if self.enabled && self.interactive {
             Sense::click()
         } else {
             Sense::hover()
         };
         let (rect, mut response) = ui.allocate_exact_size(vec2(width, height), sense);
-        if self.enabled && response.clicked() {
+        if self.enabled && self.interactive && response.clicked() {
             *self.checked = !*self.checked;
             response.mark_changed();
         }

@@ -16,6 +16,7 @@ pub struct Radio {
     selected: bool,
     label: Option<String>,
     enabled: bool,
+    interactive: bool,
     id_source: Option<Id>,
 }
 
@@ -25,8 +26,15 @@ impl Radio {
             selected,
             label: None,
             enabled: true,
+            interactive: true,
             id_source: None,
         }
+    }
+
+    /// Display-only (no click) — e.g. inside a clickable card.
+    pub fn interactive(mut self, interactive: bool) -> Self {
+        self.interactive = interactive;
+        self
     }
 
     pub fn label(mut self, label: impl Into<String>) -> Self {
@@ -66,7 +74,7 @@ impl Radio {
                 0.0
             };
 
-        let sense = if self.enabled {
+        let sense = if self.enabled && self.interactive {
             Sense::click()
         } else {
             Sense::hover()
