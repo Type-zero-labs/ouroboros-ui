@@ -116,7 +116,7 @@ impl Radio {
         if response.has_focus() {
             painter.circle_stroke(
                 center,
-                radius + 2.0,
+                radius + core::RING_OFFSET,
                 Stroke::new(core::BORDER_FOCUS, theme.ring),
             );
         }

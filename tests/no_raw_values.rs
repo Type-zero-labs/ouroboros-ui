@@ -56,5 +56,27 @@ fn scan_file(path: &Path, out: &mut Vec<String>) {
                 "FontId::new( — go through theme::typography (TypeStyle)",
             ));
         }
+        // Numeric-literal design values: a stroke width, radius, or ring offset built from a
+        // bare number instead of a token. (Tokens are named consts, so the arg starts with a
+        // letter / `(` — a leading digit means a raw value.)
+        for (pat, msg) in [
+            (
+                ".expand(",
+                "raw offset — use a token (e.g. core::RING_OFFSET)",
+            ),
+            ("Stroke::new(", "raw stroke width — use core::BORDER_*"),
+            ("CornerRadius::same(", "raw radius — use core::RADIUS_*"),
+        ] {
+            if let Some(rest) = code.split(pat).nth(1) {
+                if rest
+                    .trim_start()
+                    .chars()
+                    .next()
+                    .is_some_and(|c| c.is_ascii_digit())
+                {
+                    out.push(at(msg));
+                }
+            }
+        }
     }
 }

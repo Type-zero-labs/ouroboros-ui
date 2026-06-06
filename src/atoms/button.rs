@@ -261,7 +261,7 @@ impl Button {
         }
         if response.has_focus() {
             painter.rect_stroke(
-                rect.expand(2.0),
+                rect.expand(core::RING_OFFSET),
                 radius,
                 Stroke::new(core::BORDER_FOCUS, theme.ring),
                 StrokeKind::Outside,

@@ -134,7 +134,7 @@ impl<'a> Checkbox<'a> {
         }
         if response.has_focus() {
             painter.rect_stroke(
-                box_rect.expand(2.0),
+                box_rect.expand(core::RING_OFFSET),
                 radius,
                 Stroke::new(core::BORDER_FOCUS, theme.ring),
                 StrokeKind::Outside,

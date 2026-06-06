@@ -89,7 +89,7 @@ impl<'a> Switch<'a> {
 
         if response.has_focus() {
             painter.rect_stroke(
-                rect.expand(2.0),
+                rect.expand(core::RING_OFFSET),
                 pill,
                 Stroke::new(core::BORDER_FOCUS, theme.ring),
                 StrokeKind::Outside,
