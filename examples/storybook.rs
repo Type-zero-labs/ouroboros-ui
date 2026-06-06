@@ -10,8 +10,9 @@
 use egui::{vec2, Align, Color32, CornerRadius, Layout, Sense, Stroke, StrokeKind, Ui};
 use egui_phosphor::light;
 use ouroboros_ui::atoms::{
-    Avatar, AvatarSize, Badge, BadgeVariant, Button, ButtonVariant, Checkbox, Divider, Heading,
-    Icon, Input, Radio, Spinner, Surface, SurfaceFill, Switch, Text, TextRole, Textarea, Tooltip,
+    Avatar, AvatarSize, Badge, BadgeVariant, Button, ButtonVariant, Checkbox, ColorSwatch, Divider,
+    Heading, Icon, Input, Kbd, NumericField, Progress, Radio, Skeleton, Slider, Spinner, Surface,
+    SurfaceFill, Switch, Text, TextRole, Textarea, Toggle, Tooltip,
 };
 use ouroboros_ui::auto_layout::{AutoLayout, CrossAlign, MainAlign};
 use ouroboros_ui::molecules::{
@@ -48,6 +49,13 @@ enum Page {
     Tooltip,
     Surface,
     Textarea,
+    Slider,
+    NumericField,
+    ColorSwatch,
+    Progress,
+    Skeleton,
+    Toggle,
+    Kbd,
     Field,
     RadioGroup,
     Card,
@@ -84,6 +92,13 @@ impl Page {
             Page::Tooltip => "Tooltip",
             Page::Surface => "Surface",
             Page::Textarea => "Textarea",
+            Page::Slider => "Slider",
+            Page::NumericField => "Numeric field",
+            Page::ColorSwatch => "Color swatch",
+            Page::Progress => "Progress",
+            Page::Skeleton => "Skeleton",
+            Page::Toggle => "Toggle",
+            Page::Kbd => "Kbd",
             Page::Field => "Field",
             Page::RadioGroup => "RadioGroup",
             Page::Card => "Card",
@@ -127,6 +142,13 @@ const NAV: &[(&str, &[Page])] = &[
             Page::Tooltip,
             Page::Surface,
             Page::Textarea,
+            Page::Slider,
+            Page::NumericField,
+            Page::ColorSwatch,
+            Page::Progress,
+            Page::Skeleton,
+            Page::Toggle,
+            Page::Kbd,
         ],
     ),
     (
@@ -301,6 +323,13 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::Tooltip => page_tooltip(ui, theme),
         Page::Surface => page_surface(ui, theme),
         Page::Textarea => page_textarea(ui, theme),
+        Page::Slider => page_slider(ui, theme),
+        Page::NumericField => page_numeric_field(ui, theme),
+        Page::ColorSwatch => page_color_swatch(ui, theme),
+        Page::Progress => page_progress(ui, theme),
+        Page::Skeleton => page_skeleton(ui, theme),
+        Page::Toggle => page_toggle(ui, theme),
+        Page::Kbd => page_kbd(ui, theme),
         Page::Field => page_field(ui, theme),
         Page::RadioGroup => page_radio_group(ui, theme),
         Page::Card => page_card(ui, theme),
@@ -332,6 +361,106 @@ fn page_surface(ui: &mut Ui, _theme: &Theme) {
         .show(ui, |ui| {
             Text::new("outline only").show(ui);
         });
+}
+
+fn page_slider(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Drag or click · range/step");
+    let id = egui::Id::new("sld_a");
+    let mut v = ui.data(|d| d.get_temp::<f32>(id).unwrap_or(0.5));
+    ui.allocate_ui(vec2(320.0, 24.0), |ui| {
+        Slider::new(&mut v).show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id, v));
+    ui.add_space(core::SPACE_2);
+    Text::new(format!("value = {v:.2}"))
+        .muted()
+        .caption()
+        .show(ui);
+    let id2 = egui::Id::new("sld_b");
+    let mut s = ui.data(|d| d.get_temp::<f32>(id2).unwrap_or(50.0));
+    ui.allocate_ui(vec2(320.0, 24.0), |ui| {
+        Slider::new(&mut s).range(0.0, 100.0).step(5.0).show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id2, s));
+}
+
+fn page_numeric_field(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Scrub (drag) or type · suffix");
+    let id = egui::Id::new("num_a");
+    let mut v = ui.data(|d| d.get_temp::<f32>(id).unwrap_or(1.0));
+    ui.allocate_ui(vec2(160.0, core::CONTROL_MD), |ui| {
+        NumericField::new(&mut v).speed(0.05).suffix(" m").show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id, v));
+}
+
+fn page_color_swatch(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Square + circle");
+    ui.horizontal(|ui| {
+        for c in [
+            core::RED_500,
+            core::GREEN_500,
+            core::AMBER_500,
+            core::BLUE_500,
+        ] {
+            ColorSwatch::new(c).show(ui);
+            ui.add_space(core::SPACE_2);
+        }
+        ColorSwatch::new(core::BLUE_400).circle().show(ui);
+    });
+}
+
+fn page_progress(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Determinate");
+    for f in [0.15_f32, 0.5, 0.85] {
+        ui.allocate_ui(vec2(320.0, 8.0), |ui| {
+            Progress::new(f).show(ui);
+        });
+        ui.add_space(core::SPACE_2);
+    }
+}
+
+fn page_skeleton(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Loading placeholders (pulse)");
+    ui.allocate_ui(vec2(280.0, 20.0), |ui| {
+        Skeleton::new().height(core::SPACE_5).show(ui)
+    });
+    ui.add_space(core::SPACE_2);
+    ui.allocate_ui(vec2(200.0, 16.0), |ui| {
+        Skeleton::new().width(200.0).show(ui)
+    });
+    ui.add_space(core::SPACE_2);
+    Skeleton::new().width(140.0).still().show(ui);
+}
+
+fn page_toggle(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Two-state button (on = accent)");
+    let id = egui::Id::new("tg_demo");
+    let mut bold = ui.data(|d| d.get_temp::<bool>(id).unwrap_or(true));
+    ui.horizontal(|ui| {
+        Toggle::new(&mut bold)
+            .icon(light::TEXT_B)
+            .label("Bold")
+            .id_source("tg_b")
+            .show(ui);
+        ui.add_space(core::SPACE_2);
+        let mut italic = false;
+        Toggle::new(&mut italic)
+            .icon(light::TEXT_ITALIC)
+            .id_source("tg_i")
+            .show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id, bold));
+}
+
+fn page_kbd(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Keyboard keys");
+    ui.horizontal(|ui| {
+        for k in ["Ctrl", "Shift", "K", "Esc"] {
+            Kbd::new(k).show(ui);
+            ui.add_space(core::SPACE_2);
+        }
+    });
 }
 
 fn page_textarea(ui: &mut Ui, _theme: &Theme) {

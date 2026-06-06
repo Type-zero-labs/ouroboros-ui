@@ -8,13 +8,15 @@ use egui::Ui;
 use egui_kittest::kittest::Queryable;
 use egui_kittest::Harness;
 use ouroboros_ui::atoms::{
-    Avatar, Badge, BadgeVariant, Button, Checkbox, Divider, Heading, HeadingLevel, Icon, Input,
-    Radio, Spinner, Surface, Switch, Text, TextRole, Textarea, Tooltip,
+    Avatar, Badge, BadgeVariant, Button, Checkbox, ColorSwatch, Divider, Heading, HeadingLevel,
+    Icon, Input, Kbd, NumericField, Progress, Radio, Skeleton, Slider, Spinner, Surface, Switch,
+    Text, TextRole, Textarea, Toggle, Tooltip,
 };
 use ouroboros_ui::egui_phosphor::light;
 use ouroboros_ui::molecules::{
     Card, CheckboxCard, Field, FieldSeparator, FieldSet, InputGroup, RadioGroup, Slot,
 };
+use ouroboros_ui::tokens::core;
 use ouroboros_ui::{Mode, Theme};
 use std::cell::Cell;
 use std::rc::Rc;
@@ -236,6 +238,61 @@ fn tooltip_attaches() {
         let resp = Button::new("hover").show(ui);
         Tooltip::new("tip").show(resp);
     });
+}
+
+#[test]
+fn engine_atoms_render() {
+    rendered(|ui| {
+        let mut v = 0.5_f32;
+        Slider::new(&mut v).range(0.0, 1.0).step(0.1).show(ui);
+        let mut n = 1.0_f32;
+        NumericField::new(&mut n).speed(0.1).suffix(" m").show(ui);
+        ColorSwatch::new(core::RED_500).show(ui);
+        ColorSwatch::new(core::GREEN_500).circle().show(ui);
+        Progress::new(0.4).show(ui);
+        Kbd::new("Ctrl").show(ui);
+    });
+}
+
+#[test]
+fn skeleton_renders() {
+    // Pulse repaints, so use step() (like spinner).
+    let mut installed = false;
+    let mut harness = Harness::new_ui(move |ui| {
+        if !installed {
+            Theme::install(ui.ctx(), Mode::Dark);
+            installed = true;
+            return;
+        }
+        Skeleton::new().width(120.0).show(ui);
+    });
+    harness.step();
+    harness.step();
+    harness.step();
+}
+
+#[test]
+fn toggle_toggles() {
+    let state = Rc::new(Cell::new(false));
+    let sink = state.clone();
+    let mut installed = false;
+    let mut harness = Harness::new_ui(move |ui| {
+        if !installed {
+            Theme::install(ui.ctx(), Mode::Dark);
+            installed = true;
+            return;
+        }
+        let mut v = sink.get();
+        Toggle::new(&mut v).label("Bold").show(ui);
+        sink.set(v);
+    });
+    harness.run();
+    harness.run();
+    harness
+        .get_by_role_and_label(egui::accesskit::Role::Button, "Bold")
+        .click_accesskit();
+    harness.run();
+    assert!(state.get(), "toggle should turn on");
 }
 
 #[test]
