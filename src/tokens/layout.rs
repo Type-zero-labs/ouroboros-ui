@@ -49,6 +49,9 @@ pub const BREAKPOINT_WIDE: f32 = 1440.0;
 /// (label↔control) at/above this available width, else stacks.
 pub const FIELD_HORIZONTAL_MIN: f32 = 480.0;
 
+/// Fixed label column for an inspector [`PropertyRow`](crate::cells::PropertyRow) (aligned rows).
+pub const PROPERTY_LABEL_WIDTH: f32 = 120.0;
+
 /// Responsive size class derived from the available width.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SizeClass {
