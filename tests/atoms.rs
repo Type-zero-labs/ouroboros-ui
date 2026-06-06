@@ -7,7 +7,10 @@
 use egui::Ui;
 use egui_kittest::kittest::Queryable;
 use egui_kittest::Harness;
-use ouroboros_ui::atoms::{Button, Divider, Heading, HeadingLevel, Icon, Text, TextRole};
+use ouroboros_ui::atoms::{
+    Avatar, Badge, BadgeVariant, Button, Checkbox, Divider, Heading, HeadingLevel, Icon, Input,
+    Radio, Spinner, Switch, Text, TextRole, Tooltip,
+};
 use ouroboros_ui::egui_phosphor::light;
 use ouroboros_ui::{Mode, Theme};
 use std::cell::Cell;
@@ -102,6 +105,134 @@ fn button_click_fires() {
         .click_accesskit();
     harness.run();
     assert!(clicked.get(), "enabled button click should fire");
+}
+
+#[test]
+fn checkbox_toggles() {
+    let state = Rc::new(Cell::new(false));
+    let sink = state.clone();
+    let mut installed = false;
+    let mut harness = Harness::new_ui(move |ui| {
+        if !installed {
+            Theme::install(ui.ctx(), Mode::Dark);
+            installed = true;
+            return;
+        }
+        let mut v = sink.get();
+        Checkbox::new(&mut v).label("Accept").show(ui);
+        sink.set(v);
+    });
+    harness.run();
+    harness.run();
+    harness
+        .get_by_role_and_label(egui::accesskit::Role::CheckBox, "Accept")
+        .click_accesskit();
+    harness.run();
+    assert!(state.get(), "checkbox should toggle on");
+}
+
+#[test]
+fn radio_click_fires() {
+    let clicked = Rc::new(Cell::new(false));
+    let sink = clicked.clone();
+    let mut installed = false;
+    let mut harness = Harness::new_ui(move |ui| {
+        if !installed {
+            Theme::install(ui.ctx(), Mode::Dark);
+            installed = true;
+            return;
+        }
+        if Radio::new(false).label("Option A").show(ui).clicked() {
+            sink.set(true);
+        }
+    });
+    harness.run();
+    harness.run();
+    harness
+        .get_by_role_and_label(egui::accesskit::Role::RadioButton, "Option A")
+        .click_accesskit();
+    harness.run();
+    assert!(clicked.get(), "radio click should fire");
+}
+
+#[test]
+fn switch_toggles() {
+    let state = Rc::new(Cell::new(false));
+    let sink = state.clone();
+    let mut installed = false;
+    let mut harness = Harness::new_ui(move |ui| {
+        if !installed {
+            Theme::install(ui.ctx(), Mode::Dark);
+            installed = true;
+            return;
+        }
+        let mut v = sink.get();
+        Switch::new(&mut v).show(ui);
+        sink.set(v);
+    });
+    harness.run();
+    harness.run();
+    harness
+        .get_by_role(egui::accesskit::Role::CheckBox)
+        .click_accesskit();
+    harness.run();
+    assert!(state.get(), "switch should toggle on");
+}
+
+#[test]
+fn input_renders() {
+    rendered(|ui| {
+        let mut s = String::from("hello");
+        Input::new(&mut s).placeholder("type…").show(ui);
+        let mut e = String::new();
+        Input::new(&mut e).error(true).show(ui);
+    });
+}
+
+#[test]
+fn badge_renders_all_variants() {
+    rendered(|ui| {
+        for v in [
+            BadgeVariant::Default,
+            BadgeVariant::Secondary,
+            BadgeVariant::Destructive,
+            BadgeVariant::Outline,
+            BadgeVariant::Ghost,
+            BadgeVariant::Link,
+            BadgeVariant::Success,
+            BadgeVariant::Warning,
+            BadgeVariant::Info,
+        ] {
+            Badge::new("badge").variant(v).dot().show(ui);
+        }
+    });
+}
+
+#[test]
+fn spinner_and_avatar_render() {
+    // Spinner repaints every frame, so `run()` (which waits for stability) would exceed
+    // max_steps — use `step()` for a single frame.
+    let mut installed = false;
+    let mut harness = Harness::new_ui(move |ui| {
+        if !installed {
+            Theme::install(ui.ctx(), Mode::Dark);
+            installed = true;
+            return;
+        }
+        Spinner::new().lg().show(ui);
+        Avatar::new("ab").show(ui);
+    });
+    harness.step(); // install frame
+    harness.step(); // render frame (single steps; spinner keeps repainting)
+    harness.step();
+}
+
+#[test]
+fn tooltip_attaches() {
+    rendered(|ui| {
+        let resp = Button::new("hover").show(ui);
+        Tooltip::new("tip").show(resp);
+    });
 }
 
 #[test]
