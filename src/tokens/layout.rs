@@ -45,6 +45,10 @@ pub const BREAKPOINT_NORMAL: f32 = 1024.0;
 /// At/above this: wide (both side panels, roomy).
 pub const BREAKPOINT_WIDE: f32 = 1440.0;
 
+/// Component breakpoint: a responsive [`Field`](crate::molecules::Field) goes side-by-side
+/// (label↔control) at/above this available width, else stacks.
+pub const FIELD_HORIZONTAL_MIN: f32 = 480.0;
+
 /// Responsive size class derived from the available width.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SizeClass {

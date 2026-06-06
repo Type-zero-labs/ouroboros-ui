@@ -12,9 +12,9 @@ pub mod input_group;
 pub mod radio_card;
 pub mod radio_group;
 
-pub use card::Card;
+pub use card::{Card, CardSize};
 pub use checkbox_card::CheckboxCard;
-pub use field::Field;
-pub use input_group::InputGroup;
+pub use field::{Field, FieldGroup, FieldOrientation, FieldSeparator, FieldSet};
+pub use input_group::{InputGroup, Slot};
 pub use radio_card::RadioCard;
 pub use radio_group::RadioGroup;
