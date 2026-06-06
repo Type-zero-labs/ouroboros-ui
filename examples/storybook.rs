@@ -16,7 +16,9 @@ use ouroboros_ui::atoms::{
 };
 use ouroboros_ui::auto_layout::{AutoLayout, CrossAlign, MainAlign};
 use ouroboros_ui::molecules::{
-    Card, CheckboxCard, Field, FieldSeparator, FieldSet, InputGroup, RadioCard, RadioGroup, Slot,
+    Alert, AlertVariant, Breadcrumb, Card, CheckboxCard, Collapsible, ColorField, Field,
+    FieldSeparator, FieldSet, InputGroup, RadioCard, RadioGroup, SearchField, Slot, Tabs,
+    ToggleGroup, VectorField,
 };
 use ouroboros_ui::theme::typography;
 use ouroboros_ui::tokens::{core, layout};
@@ -62,6 +64,14 @@ enum Page {
     CheckboxCard,
     RadioCard,
     InputGroup,
+    Tabs,
+    Collapsible,
+    Alert,
+    ToggleGroup,
+    Breadcrumb,
+    VectorField,
+    ColorField,
+    SearchField,
 }
 
 impl Page {
@@ -105,6 +115,14 @@ impl Page {
             Page::CheckboxCard => "Checkbox card",
             Page::RadioCard => "Radio card",
             Page::InputGroup => "Input group",
+            Page::Tabs => "Tabs",
+            Page::Collapsible => "Collapsible",
+            Page::Alert => "Alert",
+            Page::ToggleGroup => "Toggle group",
+            Page::Breadcrumb => "Breadcrumb",
+            Page::VectorField => "Vector field",
+            Page::ColorField => "Color field",
+            Page::SearchField => "Search field",
         }
     }
 }
@@ -160,6 +178,14 @@ const NAV: &[(&str, &[Page])] = &[
             Page::CheckboxCard,
             Page::RadioCard,
             Page::InputGroup,
+            Page::Tabs,
+            Page::Collapsible,
+            Page::Alert,
+            Page::ToggleGroup,
+            Page::Breadcrumb,
+            Page::VectorField,
+            Page::ColorField,
+            Page::SearchField,
         ],
     ),
 ];
@@ -336,7 +362,105 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::CheckboxCard => page_checkbox_card(ui, theme),
         Page::RadioCard => page_radio_card(ui, theme),
         Page::InputGroup => page_input_group(ui, theme),
+        Page::Tabs => page_tabs(ui, theme),
+        Page::Collapsible => page_collapsible(ui, theme),
+        Page::Alert => page_alert(ui, theme),
+        Page::ToggleGroup => page_toggle_group(ui, theme),
+        Page::Breadcrumb => page_breadcrumb(ui, theme),
+        Page::VectorField => page_vector_field(ui, theme),
+        Page::ColorField => page_color_field(ui, theme),
+        Page::SearchField => page_search_field(ui, theme),
     }
+}
+
+fn page_tabs(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Single-select tab bar");
+    let id = egui::Id::new("tabs_demo");
+    let mut sel = ui.data(|d| d.get_temp::<usize>(id).unwrap_or(0));
+    Tabs::new(&mut sel)
+        .tabs(["Scene", "Game", "Asset Store"])
+        .show(ui);
+    ui.data_mut(|d| d.insert_temp(id, sel));
+    ui.add_space(core::SPACE_3);
+    Text::new(format!("Active panel: {sel}")).muted().show(ui);
+}
+
+fn page_collapsible(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Foldout (inspector section)");
+    ui.allocate_ui(vec2(360.0, 120.0), |ui| {
+        Collapsible::new("Transform")
+            .default_open(true)
+            .show(ui, |ui| {
+                Text::new("Position / Rotation / Scale").muted().show(ui);
+            });
+        ui.add_space(core::SPACE_2);
+        Collapsible::new("Rendering").show(ui, |ui| {
+            Text::new("Material, shadows…").muted().show(ui);
+        });
+    });
+}
+
+fn page_alert(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Status callouts");
+    ui.allocate_ui(vec2(420.0, 260.0), |ui| {
+        for (v, msg) in [
+            (AlertVariant::Info, "Build finished in 2.3s."),
+            (AlertVariant::Success, "All tests passed."),
+            (AlertVariant::Warning, "Mesh has no UVs."),
+            (AlertVariant::Error, "Shader failed to compile."),
+        ] {
+            Alert::new(msg).variant(v).title("Notice").show(ui);
+            ui.add_space(core::SPACE_2);
+        }
+    });
+}
+
+fn page_toggle_group(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Segmented single-select");
+    let id = egui::Id::new("tgg_demo");
+    let mut sel = ui.data(|d| d.get_temp::<usize>(id).unwrap_or(0));
+    ToggleGroup::new(&mut sel)
+        .options(["Local", "World"])
+        .show(ui);
+    ui.data_mut(|d| d.insert_temp(id, sel));
+}
+
+fn page_breadcrumb(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Path trail (click a crumb)");
+    Breadcrumb::new()
+        .items(["Assets", "Models", "Characters", "hero.fbx"])
+        .show(ui);
+}
+
+fn page_vector_field(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Vec3 (transform-style)");
+    let id = egui::Id::new("vec_demo");
+    let mut v = ui.data(|d| d.get_temp::<[f32; 3]>(id).unwrap_or([1.0, 0.0, -1.0]));
+    ui.allocate_ui(vec2(360.0, core::CONTROL_MD), |ui| {
+        VectorField::new(&mut v).speed(0.05).show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id, v));
+}
+
+fn page_color_field(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Swatch + hex (picker popover later)");
+    ui.horizontal(|ui| {
+        ColorField::new(core::BLUE_500).show(ui);
+    });
+    ui.add_space(core::SPACE_2);
+    ColorField::new(core::AMBER_500).show(ui);
+}
+
+fn page_search_field(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Search preset");
+    let id = egui::Id::new("search_demo");
+    let mut s = ui.data(|d| d.get_temp::<String>(id).unwrap_or_default());
+    ui.allocate_ui(vec2(300.0, core::CONTROL_MD + core::SPACE_4), |ui| {
+        SearchField::new(&mut s)
+            .placeholder("Search assets…")
+            .show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id, s));
 }
 
 fn page_surface(ui: &mut Ui, _theme: &Theme) {
