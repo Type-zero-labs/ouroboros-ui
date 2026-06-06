@@ -31,6 +31,6 @@ pub use input_group::{InputGroup, Slot};
 pub use radio_card::RadioCard;
 pub use radio_group::RadioGroup;
 pub use search_field::SearchField;
-pub use tabs::Tabs;
+pub use tabs::{Tabs, TabsVariant};
 pub use toggle_group::ToggleGroup;
 pub use vector_field::VectorField;

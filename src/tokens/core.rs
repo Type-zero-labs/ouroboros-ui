@@ -9,22 +9,29 @@
 use egui::{epaint::Shadow, Color32};
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Neutral base ramp — Zinc (cool-neutral). The temperature of every gray surface,
-// border and text token. Tailwind/shadcn `zinc` 50→950. The semantic layer picks
-// which steps mean background/card/border/foreground/etc.
+// Neutral base ramp — Ouroboros teal-tinted neutral. A cool-neutral gray ramp with
+// a *faint* turquoise cast (Ouroboros identity): g ≳ b > r by a hair, so every gray
+// surface/border/text reads subtly teal without being colorful. Light steps lean
+// "clinical lab white". 50→950; the semantic layer picks which steps mean what.
 // ─────────────────────────────────────────────────────────────────────────────
 
-pub const ZINC_50: Color32 = Color32::from_rgb(250, 250, 250);
-pub const ZINC_100: Color32 = Color32::from_rgb(244, 244, 245);
-pub const ZINC_200: Color32 = Color32::from_rgb(228, 228, 231);
-pub const ZINC_300: Color32 = Color32::from_rgb(212, 212, 216);
-pub const ZINC_400: Color32 = Color32::from_rgb(161, 161, 170);
-pub const ZINC_500: Color32 = Color32::from_rgb(113, 113, 122);
-pub const ZINC_600: Color32 = Color32::from_rgb(82, 82, 91);
-pub const ZINC_700: Color32 = Color32::from_rgb(63, 63, 70);
-pub const ZINC_800: Color32 = Color32::from_rgb(39, 39, 42);
-pub const ZINC_900: Color32 = Color32::from_rgb(24, 24, 27);
-pub const ZINC_950: Color32 = Color32::from_rgb(9, 9, 11);
+pub const ZINC_50: Color32 = Color32::from_rgb(248, 252, 251);
+pub const ZINC_100: Color32 = Color32::from_rgb(240, 246, 245);
+pub const ZINC_200: Color32 = Color32::from_rgb(224, 233, 231);
+pub const ZINC_300: Color32 = Color32::from_rgb(205, 217, 214);
+pub const ZINC_400: Color32 = Color32::from_rgb(154, 168, 165);
+pub const ZINC_500: Color32 = Color32::from_rgb(106, 121, 118);
+pub const ZINC_600: Color32 = Color32::from_rgb(76, 89, 87);
+pub const ZINC_700: Color32 = Color32::from_rgb(55, 67, 65);
+pub const ZINC_800: Color32 = Color32::from_rgb(33, 43, 42);
+pub const ZINC_900: Color32 = Color32::from_rgb(20, 28, 27);
+pub const ZINC_950: Color32 = Color32::from_rgb(8, 13, 12);
+
+// Turquoise accent — the Ouroboros brand hue. Used for focus rings / selection so the
+// identity shows where it matters, while surfaces stay near-neutral. Teal 400/500/600.
+pub const TEAL_400: Color32 = Color32::from_rgb(45, 212, 191);
+pub const TEAL_500: Color32 = Color32::from_rgb(20, 184, 166);
+pub const TEAL_600: Color32 = Color32::from_rgb(13, 148, 136);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status hues — Tailwind 500 (info uses blue-400 for text legibility on dark).
@@ -115,10 +122,11 @@ pub const LEADING_TIGHT: f32 = 1.2;
 pub const LEADING_NORMAL: f32 = 1.45;
 pub const LEADING_RELAXED: f32 = 1.6;
 
-/// Letter-spacing (px, extra per glyph). Iosevka is monospace so default is 0;
-/// large display sizes tighten slightly.
+/// Letter-spacing (px, extra per glyph). Iosevka at title sizes reads cramped, so
+/// headings open up with `TRACKING_WIDE`; body stays at 0.
 pub const TRACKING_TIGHT: f32 = -0.25;
 pub const TRACKING_NORMAL: f32 = 0.0;
+pub const TRACKING_WIDE: f32 = 0.5;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sizing — control heights, icon sizes, stroke widths, minimum hit target (px).

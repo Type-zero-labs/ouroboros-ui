@@ -74,7 +74,12 @@ impl<'a> Switch<'a> {
         let pill = CornerRadius::same((track_h / 2.0) as u8);
         let painter = ui.painter().clone();
 
-        let track = if on { theme.primary } else { theme.muted };
+        // Off-track uses `border_strong` (not `muted`) so the thumb stays legible in dark mode.
+        let track = if on {
+            theme.primary
+        } else {
+            theme.border_strong
+        };
         painter.rect_filled(rect, pill, dim(track));
 
         let thumb_r = thumb_d / 2.0;

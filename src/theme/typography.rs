@@ -169,7 +169,7 @@ pub fn display() -> TypeStyle {
         sans(Weight::Bold),
         core::TEXT_3XL,
         core::LEADING_TIGHT,
-        core::TRACKING_TIGHT,
+        core::TRACKING_WIDE,
     )
 }
 /// H1 — SemiBold 24.
@@ -178,7 +178,7 @@ pub fn h1() -> TypeStyle {
         sans(Weight::SemiBold),
         core::TEXT_2XL,
         core::LEADING_TIGHT,
-        core::TRACKING_NORMAL,
+        core::TRACKING_WIDE,
     )
 }
 /// H2 — SemiBold 20.
@@ -187,7 +187,7 @@ pub fn h2() -> TypeStyle {
         sans(Weight::SemiBold),
         core::TEXT_XL,
         core::LEADING_TIGHT,
-        core::TRACKING_NORMAL,
+        core::TRACKING_WIDE,
     )
 }
 /// Section heading — SemiBold 16.
@@ -196,7 +196,7 @@ pub fn heading() -> TypeStyle {
         sans(Weight::SemiBold),
         core::TEXT_LG,
         core::LEADING_TIGHT,
-        core::TRACKING_NORMAL,
+        core::TRACKING_WIDE,
     )
 }
 /// Body — Regular 14.

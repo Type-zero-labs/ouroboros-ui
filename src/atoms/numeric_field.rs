@@ -1,14 +1,17 @@
 //! NumericField atom — a scrubbable numeric input. [Unity Numeric Field]
 //!
 //! Token box wrapping an egui [`DragValue`](egui::DragValue): drag to scrub, click to type.
-//! The editing substrate is egui's; the casing is token.
+//! The value is right-aligned. `.stepper()` flanks it with `−`/`+` icon buttons; `.suffix()`
+//! appends a unit. The editing substrate is egui's; the casing is token.
 
+use crate::atoms::Button;
 use crate::tokens::core;
 use crate::Theme;
 use egui::{
     vec2, Align, Color32, CornerRadius, DragValue, Layout, Response, Sense, Stroke, StrokeKind, Ui,
     UiBuilder,
 };
+use egui_phosphor::light;
 
 /// A scrubbable numeric field bound to a `&mut f32`. Builder; `show` returns the [`Response`].
 pub struct NumericField<'a> {
@@ -16,7 +19,9 @@ pub struct NumericField<'a> {
     min: f32,
     max: f32,
     speed: f32,
+    step: Option<f32>,
     suffix: Option<String>,
+    stepper: bool,
     enabled: bool,
 }
 
@@ -27,7 +32,9 @@ impl<'a> NumericField<'a> {
             min: f32::NEG_INFINITY,
             max: f32::INFINITY,
             speed: 0.1,
+            step: None,
             suffix: None,
+            stepper: false,
             enabled: true,
         }
     }
@@ -39,6 +46,16 @@ impl<'a> NumericField<'a> {
     }
     pub fn speed(mut self, speed: f32) -> Self {
         self.speed = speed;
+        self
+    }
+    /// Increment used by the [`stepper`](Self::stepper) buttons (default `1.0`).
+    pub fn step(mut self, step: f32) -> Self {
+        self.step = Some(step);
+        self
+    }
+    /// Flank the value with `−`/`+` buttons.
+    pub fn stepper(mut self) -> Self {
+        self.stepper = true;
         self
     }
     pub fn suffix(mut self, suffix: impl Into<String>) -> Self {
@@ -58,8 +75,9 @@ impl<'a> NumericField<'a> {
         let height = core::CONTROL_MD;
         let width = ui.available_width();
         let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
+        let enabled = self.enabled;
         let dim = |c: Color32| {
-            if self.enabled {
+            if enabled {
                 c
             } else {
                 c.gamma_multiply(core::OPACITY_DISABLED)
@@ -70,18 +88,57 @@ impl<'a> NumericField<'a> {
         painter.rect_filled(rect, radius, dim(theme.muted));
 
         let inner = rect.shrink2(vec2(core::SPACE_2, 0.0));
-        let mut cui = ui.new_child(
-            UiBuilder::new()
-                .max_rect(inner)
-                .layout(Layout::left_to_right(Align::Center)),
-        );
-        let mut dv = DragValue::new(self.value)
-            .speed(self.speed)
-            .range(self.min..=self.max);
-        if let Some(suffix) = self.suffix {
-            dv = dv.suffix(suffix);
+        let step = self.step.unwrap_or(1.0);
+        let suffix = self.suffix;
+        let (min, max, speed) = (self.min, self.max, self.speed);
+        let value = self.value;
+        macro_rules! drag {
+            ($v:expr) => {{
+                let mut dv = DragValue::new($v).speed(speed).range(min..=max);
+                if let Some(suffix) = &suffix {
+                    dv = dv.suffix(suffix.clone());
+                }
+                dv
+            }};
         }
-        let resp = cui.add_enabled(self.enabled, dv);
+
+        let resp = if self.stepper {
+            let mut cui = ui.new_child(
+                UiBuilder::new()
+                    .max_rect(inner)
+                    .layout(Layout::left_to_right(Align::Center)),
+            );
+            let minus = Button::new("")
+                .icon_left(light::MINUS)
+                .icon_only()
+                .ghost()
+                .sm()
+                .show(&mut cui);
+            if enabled && minus.clicked() {
+                *value = (*value - step).clamp(min, max);
+            }
+            // `+` pinned right, value fills the remainder.
+            cui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                let plus = Button::new("")
+                    .icon_left(light::PLUS)
+                    .icon_only()
+                    .ghost()
+                    .sm()
+                    .show(ui);
+                if enabled && plus.clicked() {
+                    *value = (*value + step).clamp(min, max);
+                }
+                ui.add_enabled(enabled, drag!(value))
+            })
+            .inner
+        } else {
+            let mut cui = ui.new_child(
+                UiBuilder::new()
+                    .max_rect(inner)
+                    .layout(Layout::right_to_left(Align::Center)),
+            );
+            cui.add_enabled(enabled, drag!(value))
+        };
 
         let (border, w) = if resp.has_focus() {
             (theme.ring, core::BORDER_FOCUS)

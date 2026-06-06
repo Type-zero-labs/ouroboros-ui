@@ -3,13 +3,16 @@
 //! `show` gives a context whose `section(title, body)` adds a [`Collapsible`] divided from the
 //! next. Each section keeps its own open state (egui memory).
 
-use crate::atoms::Divider;
+use crate::atoms::{Divider, Surface};
 use crate::molecules::Collapsible;
 use crate::tokens::core;
 use egui::{Response, Ui};
 
-/// A group of collapsible sections.
-pub struct Accordion;
+/// A group of collapsible sections. `.card()` wraps the group in a card [`Surface`]. Each
+/// section's body is a free closure (put any content inside).
+pub struct Accordion {
+    card: bool,
+}
 
 /// Section builder handed to [`Accordion::show`].
 pub struct AccordionCtx<'u> {
@@ -31,14 +34,27 @@ impl AccordionCtx<'_> {
 
 impl Accordion {
     pub fn new() -> Self {
-        Self
+        Self { card: false }
+    }
+    /// Wrap the sections in a card surface.
+    pub fn card(mut self) -> Self {
+        self.card = true;
+        self
     }
     pub fn show(self, ui: &mut Ui, build: impl FnOnce(&mut AccordionCtx)) -> Response {
-        ui.vertical(|ui| {
+        let run = |ui: &mut Ui| {
             let mut ctx = AccordionCtx { ui, first: true };
             build(&mut ctx);
-        })
-        .response
+        };
+        if self.card {
+            Surface::new()
+                .show(ui, |ui| {
+                    ui.vertical(run);
+                })
+                .response
+        } else {
+            ui.vertical(run).response
+        }
     }
 }
 

@@ -472,20 +472,26 @@ fn page_select(ui: &mut Ui, _theme: &Theme) {
 }
 
 fn page_accordion(ui: &mut Ui, _theme: &Theme) {
-    caption(ui, "Stacked collapsible sections");
-    ui.allocate_ui(vec2(360.0, 200.0), |ui| {
-        Accordion::new().show(ui, |acc| {
+    caption(ui, "Card variant · free content (any widgets)");
+    let id = egui::Id::new("acc_bool");
+    let mut on = ui.data(|d| d.get_temp::<bool>(id).unwrap_or(true));
+    ui.allocate_ui(vec2(360.0, 220.0), |ui| {
+        Accordion::new().card().show(ui, |acc| {
             acc.section("Transform", |ui| {
-                Text::new("Position / Rotation / Scale").muted().show(ui);
+                let mut p = [1.0_f32, 0.0, -1.0];
+                VectorField::new(&mut p).speed(0.05).show(ui);
             });
             acc.section("Rendering", |ui| {
-                Text::new("Material, shadows, layers").muted().show(ui);
+                Field::new("Cast shadows")
+                    .horizontal()
+                    .show(ui, |ui| Switch::new(&mut on).show(ui));
             });
             acc.section("Physics", |ui| {
                 Text::new("Collider, mass, drag").muted().show(ui);
             });
         });
     });
+    ui.data_mut(|d| d.insert_temp(id, on));
 }
 
 fn page_menubar(ui: &mut Ui, _theme: &Theme) {
@@ -585,15 +591,26 @@ fn page_tree_view(ui: &mut Ui, _theme: &Theme) {
 }
 
 fn page_sidebar(ui: &mut Ui, _theme: &Theme) {
-    caption(ui, "Navigation list");
+    caption(ui, "Navigation list + icon rail");
     let id = egui::Id::new("sidebar_demo");
     let mut sel = ui.data(|d| d.get_temp::<usize>(id).unwrap_or(0));
-    ui.allocate_ui(vec2(200.0, 180.0), |ui| {
-        Sidebar::new(&mut sel)
-            .item(light::HOUSE, "Home")
-            .item(light::CUBE, "Assets")
-            .item(light::GEAR, "Settings")
-            .show(ui);
+    ui.horizontal(|ui| {
+        ui.allocate_ui(vec2(180.0, 180.0), |ui| {
+            Sidebar::new(&mut sel)
+                .item(light::HOUSE, "Home")
+                .item(light::CUBE, "Assets")
+                .item(light::GEAR, "Settings")
+                .show(ui);
+        });
+        ui.add_space(core::SPACE_4);
+        ui.allocate_ui(vec2(40.0, 180.0), |ui| {
+            Sidebar::new(&mut sel)
+                .item(light::HOUSE, "Home")
+                .item(light::CUBE, "Assets")
+                .item(light::GEAR, "Settings")
+                .icons_only()
+                .show(ui);
+        });
     });
     ui.data_mut(|d| d.insert_temp(id, sel));
 }
@@ -834,15 +851,23 @@ fn page_table_row(ui: &mut Ui, _theme: &Theme) {
 }
 
 fn page_tabs(ui: &mut Ui, _theme: &Theme) {
-    caption(ui, "Single-select tab bar");
+    caption(ui, "Container (default) + icons");
     let id = egui::Id::new("tabs_demo");
     let mut sel = ui.data(|d| d.get_temp::<usize>(id).unwrap_or(0));
     Tabs::new(&mut sel)
-        .tabs(["Scene", "Game", "Asset Store"])
+        .tab("Scene", light::CUBE)
+        .tab("Game", light::PLAY)
+        .tab("Assets", light::FOLDER)
         .show(ui);
     ui.data_mut(|d| d.insert_temp(id, sel));
-    ui.add_space(core::SPACE_3);
-    Text::new(format!("Active panel: {sel}")).muted().show(ui);
+    subhead(ui, "Line variant");
+    let id2 = egui::Id::new("tabs_line");
+    let mut s2 = ui.data(|d| d.get_temp::<usize>(id2).unwrap_or(0));
+    Tabs::new(&mut s2)
+        .tabs(["Overview", "Stats", "Notes"])
+        .line()
+        .show(ui);
+    ui.data_mut(|d| d.insert_temp(id2, s2));
 }
 
 fn page_collapsible(ui: &mut Ui, _theme: &Theme) {
@@ -969,13 +994,31 @@ fn page_slider(ui: &mut Ui, _theme: &Theme) {
 }
 
 fn page_numeric_field(ui: &mut Ui, _theme: &Theme) {
-    caption(ui, "Scrub (drag) or type · suffix");
+    caption(ui, "Right-aligned · suffix / no suffix");
     let id = egui::Id::new("num_a");
     let mut v = ui.data(|d| d.get_temp::<f32>(id).unwrap_or(1.0));
     ui.allocate_ui(vec2(160.0, core::CONTROL_MD), |ui| {
         NumericField::new(&mut v).speed(0.05).suffix(" m").show(ui);
     });
     ui.data_mut(|d| d.insert_temp(id, v));
+    ui.add_space(core::SPACE_2);
+    let id0 = egui::Id::new("num_plain");
+    let mut p = ui.data(|d| d.get_temp::<f32>(id0).unwrap_or(42.0));
+    ui.allocate_ui(vec2(160.0, core::CONTROL_MD), |ui| {
+        NumericField::new(&mut p).show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id0, p));
+    subhead(ui, "Stepper (−/+)");
+    let id2 = egui::Id::new("num_step");
+    let mut s = ui.data(|d| d.get_temp::<f32>(id2).unwrap_or(3.0));
+    ui.allocate_ui(vec2(160.0, core::CONTROL_MD), |ui| {
+        NumericField::new(&mut s)
+            .range(0.0, 10.0)
+            .step(1.0)
+            .stepper()
+            .show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id2, s));
 }
 
 fn page_color_swatch(ui: &mut Ui, _theme: &Theme) {
@@ -995,13 +1038,17 @@ fn page_color_swatch(ui: &mut Ui, _theme: &Theme) {
 }
 
 fn page_progress(ui: &mut Ui, _theme: &Theme) {
-    caption(ui, "Determinate");
+    caption(ui, "Continuous (rounded)");
     for f in [0.15_f32, 0.5, 0.85] {
         ui.allocate_ui(vec2(320.0, 8.0), |ui| {
             Progress::new(f).show(ui);
         });
         ui.add_space(core::SPACE_2);
     }
+    subhead(ui, "Stepped");
+    ui.allocate_ui(vec2(320.0, 8.0), |ui| {
+        Progress::new(0.6).steps(5).show(ui);
+    });
 }
 
 fn page_skeleton(ui: &mut Ui, _theme: &Theme) {

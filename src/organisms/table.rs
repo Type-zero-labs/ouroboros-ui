@@ -3,7 +3,7 @@
 use crate::atoms::Divider;
 use crate::cells::TableRow;
 use crate::tokens::core;
-use egui::{Response, ScrollArea, Ui};
+use egui::{Response, Ui};
 
 /// A data table. Composes [`TableRow`] cells under a header rule, scrollable.
 pub struct Table {
@@ -37,6 +37,9 @@ impl Table {
         let widths = self.widths;
         let headers = self.headers;
         let rows = self.rows;
+        let row_count = rows.len();
+        // No internal ScrollArea — nesting one inside the host's scroll collapses it. The
+        // consumer wraps the table in a `ScrollArea` if it needs scrolling.
         ui.vertical(|ui| {
             if !headers.is_empty() {
                 TableRow::new(headers).header().show(ui, &widths);
@@ -44,12 +47,12 @@ impl Table {
                 Divider::horizontal().show(ui);
                 ui.add_space(core::SPACE_1);
             }
-            ScrollArea::vertical().show(ui, |ui| {
-                for row in rows {
-                    TableRow::new(row).show(ui, &widths);
+            for (r, row) in rows.into_iter().enumerate() {
+                TableRow::new(row).show(ui, &widths);
+                if r + 1 != row_count {
                     ui.add_space(core::SPACE_1);
                 }
-            });
+            }
         })
         .response
     }
