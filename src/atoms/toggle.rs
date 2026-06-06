@@ -59,7 +59,7 @@ impl<'a> Toggle<'a> {
         let fg = if self.enabled {
             theme.foreground
         } else {
-            theme.foreground.gamma_multiply(core::OPACITY_DISABLED)
+            core::disabled_color(theme.foreground)
         };
 
         let fmt = |font: egui::FontId| TextFormat {

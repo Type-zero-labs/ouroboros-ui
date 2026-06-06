@@ -60,6 +60,8 @@ pub const BLUE_500: Color32 = Color32::from_rgb(59, 130, 246);
 // 1–6 then 8/10/12 for the larger gaps. Used for padding, gaps, margins.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Zero spacing — the semantic "no gap / no padding" sentinel (tight tables, full-bleed).
+pub const SPACE_0: f32 = 0.0;
 pub const SPACE_1: f32 = 4.0;
 pub const SPACE_2: f32 = 8.0;
 pub const SPACE_3: f32 = 12.0;
@@ -74,6 +76,8 @@ pub const SPACE_12: f32 = 48.0;
 // Corner radius — shadcn classic base (0.5rem). FULL is the pill/circle sentinel.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Zero radius — the semantic "square corners" sentinel (full-bleed rows, flush panels).
+pub const RADIUS_NONE: f32 = 0.0;
 pub const RADIUS_SM: f32 = 4.0;
 pub const RADIUS_MD: f32 = 6.0;
 pub const RADIUS_LG: f32 = 8.0;
@@ -106,6 +110,18 @@ pub const SHADOW_LG: Shadow = Shadow {
     spread: 0,
     color: Color32::from_rgba_premultiplied(0, 0, 0, 48),
 };
+
+/// Parameterized shadow builder — for elevations beyond the fixed `SM`/`MD`/`LG` triples
+/// (custom blur/spread, directional offsets). `egui::epaint::Shadow` is foreign, so this is a
+/// free `const fn` rather than an inherent `Shadow::new`. `const`, usable in token context.
+pub const fn shadow(offset: [i8; 2], blur: u8, spread: u8, color: Color32) -> Shadow {
+    Shadow {
+        offset,
+        blur,
+        spread,
+        color,
+    }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typography — raw primitives only. The theme/typography layer composes these into
@@ -173,6 +189,10 @@ pub const DURATION_FAST: f32 = 0.10;
 pub const DURATION_NORMAL: f32 = 0.18;
 pub const DURATION_SLOW: f32 = 0.30;
 
+/// Stagger/hold before an animation starts (seconds) — e.g. tooltip dwell, toast settle.
+pub const DURATION_DELAY_SHORT: f32 = 0.15;
+pub const DURATION_DELAY_LONG: f32 = 0.50;
+
 /// Easing curve applied to a normalized progress `t` in `0..=1`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum Easing {
@@ -182,6 +202,10 @@ pub enum Easing {
     EaseOut,
     /// Accelerate then decelerate — for moves/reorders.
     EaseInOut,
+    /// Overshoot then settle (ease-out-back) — playful enters, springy toggles.
+    Spring,
+    /// Settle with a few decaying bounces (ease-out-bounce) — drops, attention pulls.
+    Bounce,
 }
 
 impl Easing {
@@ -196,6 +220,30 @@ impl Easing {
                     2.0 * t * t
                 } else {
                     1.0 - (-2.0 * t + 2.0).powi(2) / 2.0
+                }
+            }
+            // ease-out-back: overshoots past 1 near the end, then settles.
+            Easing::Spring => {
+                const C1: f32 = 1.70158;
+                const C3: f32 = C1 + 1.0;
+                let u = t - 1.0;
+                1.0 + C3 * u * u * u + C1 * u * u
+            }
+            // ease-out-bounce: decaying parabolic bounces (standard 4-segment form).
+            Easing::Bounce => {
+                const N1: f32 = 7.5625;
+                const D1: f32 = 2.75;
+                if t < 1.0 / D1 {
+                    N1 * t * t
+                } else if t < 2.0 / D1 {
+                    let t = t - 1.5 / D1;
+                    N1 * t * t + 0.75
+                } else if t < 2.5 / D1 {
+                    let t = t - 2.25 / D1;
+                    N1 * t * t + 0.9375
+                } else {
+                    let t = t - 2.625 / D1;
+                    N1 * t * t + 0.984375
                 }
             }
         }
@@ -214,3 +262,9 @@ pub const PRESS_OVERLAY: f32 = 0.12;
 
 /// Backdrop scrim behind modals — black at 60%.
 pub const SCRIM: Color32 = Color32::from_rgba_premultiplied(0, 0, 0, 153);
+
+/// Blend a color to its disabled appearance — alpha × [`OPACITY_DISABLED`]. The single source
+/// for the disabled veil; atoms gate it behind their own `if !enabled` so it's applied once.
+pub fn disabled_color(c: Color32) -> Color32 {
+    c.gamma_multiply(OPACITY_DISABLED)
+}

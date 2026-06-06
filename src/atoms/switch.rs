@@ -5,7 +5,7 @@
 
 use crate::tokens::core;
 use crate::Theme;
-use egui::{pos2, vec2, Color32, CornerRadius, Id, Response, Sense, Stroke, StrokeKind, Ui};
+use egui::{pos2, vec2, Color32, CornerRadius, Id, Response, Sense, Ui};
 
 /// A switch bound to a `&mut bool`. Builder; `show` returns the [`Response`].
 pub struct Switch<'a> {
@@ -68,7 +68,7 @@ impl<'a> Switch<'a> {
             if self.enabled {
                 c
             } else {
-                c.gamma_multiply(core::OPACITY_DISABLED)
+                core::disabled_color(c)
             }
         };
         let pill = CornerRadius::same((track_h / 2.0) as u8);
@@ -93,12 +93,7 @@ impl<'a> Switch<'a> {
         );
 
         if response.has_focus() {
-            painter.rect_stroke(
-                rect.expand(core::RING_OFFSET),
-                pill,
-                Stroke::new(core::BORDER_FOCUS, theme.ring),
-                StrokeKind::Outside,
-            );
+            super::focus::focus_ring_rect(&painter, rect, pill, theme.ring);
         }
 
         response

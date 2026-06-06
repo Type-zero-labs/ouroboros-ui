@@ -165,7 +165,7 @@ impl Button {
         let fg = if self.enabled {
             bt.foreground
         } else {
-            bt.foreground.gamma_multiply(core::OPACITY_DISABLED)
+            core::disabled_color(bt.foreground)
         };
 
         // Content as a *single* galley: icon(s) + label on one baseline, each section
@@ -238,7 +238,7 @@ impl Button {
             if self.enabled {
                 c
             } else {
-                c.gamma_multiply(core::OPACITY_DISABLED)
+                core::disabled_color(c)
             }
         };
         let radius = CornerRadius::same(bt.radius as u8);
@@ -260,12 +260,7 @@ impl Button {
             );
         }
         if response.has_focus() {
-            painter.rect_stroke(
-                rect.expand(core::RING_OFFSET),
-                radius,
-                Stroke::new(core::BORDER_FOCUS, theme.ring),
-                StrokeKind::Outside,
-            );
+            super::focus::focus_ring_rect(&painter, rect, radius, theme.ring);
         }
 
         // Content galley, centered in the button.
