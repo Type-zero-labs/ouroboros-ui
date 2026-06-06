@@ -97,7 +97,7 @@ impl Radio {
             if self.enabled {
                 c
             } else {
-                c.gamma_multiply(core::OPACITY_DISABLED)
+                core::disabled_color(c)
             }
         };
         let center = pos2(rect.left() + size / 2.0, rect.center().y);
@@ -114,11 +114,7 @@ impl Radio {
             painter.circle_filled(center, radius * 0.5, dim(theme.primary));
         }
         if response.has_focus() {
-            painter.circle_stroke(
-                center,
-                radius + core::RING_OFFSET,
-                Stroke::new(core::BORDER_FOCUS, theme.ring),
-            );
+            super::focus::focus_ring_circle(&painter, center, radius, theme.ring);
         }
 
         if let Some(label) = self.label {

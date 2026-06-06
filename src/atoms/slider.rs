@@ -86,11 +86,7 @@ impl<'a> Slider<'a> {
             Stroke::new(core::BORDER_THIN, theme.background),
         );
         if response.has_focus() {
-            painter.circle_stroke(
-                pos2(thumb_x, cy),
-                thumb_r + core::RING_OFFSET,
-                Stroke::new(core::BORDER_FOCUS, theme.ring),
-            );
+            super::focus::focus_ring_circle(painter, pos2(thumb_x, cy), thumb_r, theme.ring);
         }
         response
     }

@@ -5,6 +5,7 @@
 
 use crate::atoms::{Divider, Surface};
 use crate::cells::TableRow;
+use crate::tokens::core;
 use egui::{Response, Ui};
 
 /// A data table. `headers` + `row(..)` build it; the columns split the width equally.
@@ -38,7 +39,7 @@ impl Table {
             .max(1);
         // Card frame, full-bleed rows (no inner padding — the cells pad themselves).
         Surface::new()
-            .pad(0.0)
+            .pad(core::SPACE_0)
             .show(ui, |ui| {
                 let avail = ui.available_width();
                 let widths = vec![avail / ncols as f32; ncols];

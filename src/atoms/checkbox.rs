@@ -103,7 +103,7 @@ impl<'a> Checkbox<'a> {
             if self.enabled {
                 c
             } else {
-                c.gamma_multiply(core::OPACITY_DISABLED)
+                core::disabled_color(c)
             }
         };
         let box_rect = Rect::from_min_size(
@@ -133,12 +133,7 @@ impl<'a> Checkbox<'a> {
             painter.galley(box_rect.center() - glyph.size() * 0.5, glyph, fg);
         }
         if response.has_focus() {
-            painter.rect_stroke(
-                box_rect.expand(core::RING_OFFSET),
-                radius,
-                Stroke::new(core::BORDER_FOCUS, theme.ring),
-                StrokeKind::Outside,
-            );
+            super::focus::focus_ring_rect(&painter, box_rect, radius, theme.ring);
         }
 
         if let Some(label) = self.label {

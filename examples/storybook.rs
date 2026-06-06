@@ -1622,6 +1622,11 @@ fn page_shadows(ui: &mut Ui, _theme: &Theme) {
                     ("sm", core::SHADOW_SM),
                     ("md", core::SHADOW_MD),
                     ("lg", core::SHADOW_LG),
+                    // Parameterized builder — custom offset/blur/spread beyond the fixed scale.
+                    (
+                        "custom",
+                        core::shadow([4, 6], 16, 2, egui::Color32::from_black_alpha(110)),
+                    ),
                 ] {
                     egui::Frame::default()
                         .fill(core::ZINC_50)
@@ -1719,6 +1724,16 @@ fn page_motion(ui: &mut Ui, theme: &Theme) {
             "slow 0.30  EaseInOut",
             core::DURATION_SLOW,
             core::Easing::EaseInOut,
+        ),
+        (
+            "slow 0.30  Spring",
+            core::DURATION_SLOW,
+            core::Easing::Spring,
+        ),
+        (
+            "slow 0.30  Bounce",
+            core::DURATION_SLOW,
+            core::Easing::Bounce,
         ),
     ] {
         let period = dur * 2.0 + 0.6;

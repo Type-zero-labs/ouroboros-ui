@@ -13,6 +13,7 @@ pub mod button;
 pub mod checkbox;
 pub mod color_swatch;
 pub mod divider;
+pub(crate) mod focus;
 pub mod heading;
 pub mod icon;
 pub mod input;

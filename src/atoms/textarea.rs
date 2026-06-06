@@ -71,7 +71,7 @@ impl<'a> Textarea<'a> {
             if self.enabled {
                 c
             } else {
-                c.gamma_multiply(core::OPACITY_DISABLED)
+                core::disabled_color(c)
             }
         };
         let radius = CornerRadius::same(core::RADIUS_MD as u8);

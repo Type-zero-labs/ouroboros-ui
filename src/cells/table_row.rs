@@ -38,7 +38,7 @@ impl TableRow {
         let header = self.header;
         let body = |ui: &mut Ui| {
             ui.horizontal(|ui| {
-                ui.spacing_mut().item_spacing.x = 0.0;
+                ui.spacing_mut().item_spacing.x = core::SPACE_0;
                 for (i, text) in cells.iter().enumerate() {
                     let width = widths.get(i).copied().unwrap_or(core::SPACE_12 * 2.0);
                     let mut cell = TableCell::new(text.clone());
@@ -53,8 +53,8 @@ impl TableRow {
             Surface::new()
                 .muted()
                 .border_none()
-                .radius(0.0)
-                .pad(0.0)
+                .radius(core::RADIUS_NONE)
+                .pad(core::SPACE_0)
                 .show(ui, body)
                 .response
         } else {
