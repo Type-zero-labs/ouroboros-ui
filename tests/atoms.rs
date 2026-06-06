@@ -18,7 +18,9 @@ use ouroboros_ui::molecules::{
     Alert, Breadcrumb, Card, CheckboxCard, Collapsible, ColorField, Field, FieldSeparator,
     FieldSet, InputGroup, RadioGroup, SearchField, Slot, Tabs, ToggleGroup, VectorField,
 };
-use ouroboros_ui::organisms::{Sidebar, TabView, Table, Toolbar, TreeItem, TreeView};
+use ouroboros_ui::organisms::{
+    Accordion, Menubar, Select, Sidebar, TabView, Table, Toolbar, TreeItem, TreeView,
+};
 use ouroboros_ui::tokens::core;
 use ouroboros_ui::{Mode, Theme};
 use std::cell::Cell;
@@ -419,6 +421,26 @@ fn organisms_render() {
         Sidebar::new(&mut nav)
             .item(light::HOUSE, "Home")
             .text_item("Other")
+            .show(ui);
+    });
+}
+
+#[test]
+fn organisms_forms_render() {
+    rendered(|ui| {
+        let mut s = 0;
+        Select::new(&mut s).options(["A", "B", "C"]).show(ui);
+        Accordion::new().show(ui, |acc| {
+            acc.section("S1", |ui| {
+                Text::new("x").show(ui);
+            });
+            acc.section("S2", |ui| {
+                Text::new("y").show(ui);
+            });
+        });
+        Menubar::new()
+            .menu("File", ["New", "Open"])
+            .menu("Edit", ["Undo"])
             .show(ui);
     });
 }
