@@ -21,6 +21,9 @@ use ouroboros_ui::molecules::{
     FieldSeparator, FieldSet, InputGroup, RadioCard, RadioGroup, SearchField, Slot, Tabs,
     ToggleGroup, VectorField,
 };
+use ouroboros_ui::organisms::{
+    Dialog, DropdownMenu, Popover, Sidebar, TabView, Table, Toast, Toolbar, TreeItem, TreeView,
+};
 use ouroboros_ui::theme::typography;
 use ouroboros_ui::tokens::{core, layout};
 use ouroboros_ui::{Mode, Theme};
@@ -79,6 +82,15 @@ enum Page {
     TreeNode,
     ToolbarButton,
     TableRow,
+    Toolbar,
+    TabView,
+    Table,
+    TreeView,
+    Sidebar,
+    Dialog,
+    Toast,
+    Popover,
+    DropdownMenu,
 }
 
 impl Page {
@@ -136,6 +148,15 @@ impl Page {
             Page::TreeNode => "Tree node",
             Page::ToolbarButton => "Toolbar button",
             Page::TableRow => "Table row",
+            Page::Toolbar => "Toolbar",
+            Page::TabView => "Tab view",
+            Page::Table => "Table",
+            Page::TreeView => "Tree view",
+            Page::Sidebar => "Sidebar",
+            Page::Dialog => "Dialog",
+            Page::Toast => "Toast",
+            Page::Popover => "Popover",
+            Page::DropdownMenu => "Dropdown menu",
         }
     }
 }
@@ -210,6 +231,20 @@ const NAV: &[(&str, &[Page])] = &[
             Page::TreeNode,
             Page::ToolbarButton,
             Page::TableRow,
+        ],
+    ),
+    (
+        "ORGANISMS",
+        &[
+            Page::Toolbar,
+            Page::TabView,
+            Page::Table,
+            Page::TreeView,
+            Page::Sidebar,
+            Page::Dialog,
+            Page::Toast,
+            Page::Popover,
+            Page::DropdownMenu,
         ],
     ),
 ];
@@ -400,6 +435,206 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::TreeNode => page_tree_node(ui, theme),
         Page::ToolbarButton => page_toolbar_button(ui, theme),
         Page::TableRow => page_table_row(ui, theme),
+        Page::Toolbar => page_toolbar(ui, theme),
+        Page::TabView => page_tab_view(ui, theme),
+        Page::Table => page_table(ui, theme),
+        Page::TreeView => page_tree_view(ui, theme),
+        Page::Sidebar => page_sidebar(ui, theme),
+        Page::Dialog => page_dialog(ui, theme),
+        Page::Toast => page_toast(ui, theme),
+        Page::Popover => page_popover(ui, theme),
+        Page::DropdownMenu => page_dropdown_menu(ui, theme),
+    }
+}
+
+fn page_toolbar(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Action bar (icon toggles + dividers)");
+    let id = egui::Id::new("toolbar_demo");
+    let mut s = ui.data(|d| d.get_temp::<[bool; 3]>(id).unwrap_or([true, false, false]));
+    Toolbar::new().show(ui, |ui| {
+        ToolbarButton::new(&mut s[0], light::CURSOR)
+            .tooltip("Select")
+            .id_source("tba")
+            .show(ui);
+        ToolbarButton::new(&mut s[1], light::ARROWS_OUT)
+            .tooltip("Move")
+            .id_source("tbb")
+            .show(ui);
+        ToolbarButton::new(&mut s[2], light::ARROWS_CLOCKWISE)
+            .tooltip("Rotate")
+            .id_source("tbc")
+            .show(ui);
+        Divider::vertical().show(ui);
+        Button::new("Play")
+            .icon_left(light::PLAY)
+            .sm()
+            .id_source("tb_play")
+            .show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id, s));
+}
+
+fn page_tab_view(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Tabs + active panel");
+    let id = egui::Id::new("tabview_demo");
+    let mut sel = ui.data(|d| d.get_temp::<usize>(id).unwrap_or(0));
+    TabView::new(&mut sel)
+        .tabs(["Scene", "Game", "Console"])
+        .show(ui, |ui, idx| {
+            let body = match idx {
+                0 => "3D scene viewport.",
+                1 => "Game preview.",
+                _ => "Log output…",
+            };
+            Text::new(body).muted().show(ui);
+        });
+    ui.data_mut(|d| d.insert_temp(id, sel));
+}
+
+fn page_table(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Data table");
+    ui.allocate_ui(vec2(320.0, 180.0), |ui| {
+        Table::new()
+            .headers(["Name", "Type", "Size"])
+            .widths([130.0, 80.0, 70.0])
+            .row(["hero.fbx", "Mesh", "2.1 MB"])
+            .row(["grass.png", "Texture", "512 KB"])
+            .row(["main.rs", "Script", "8 KB"])
+            .show(ui);
+    });
+}
+
+fn page_tree_view(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Scene hierarchy");
+    let id = egui::Id::new("treeview_demo");
+    let mut sel = ui.data(|d| d.get_temp::<usize>(id).unwrap_or(1));
+    ui.allocate_ui(vec2(260.0, 180.0), |ui| {
+        TreeView::new(&mut sel)
+            .items([
+                TreeItem::new("Scene").icon(light::FOLDER).expanded(true),
+                TreeItem::new("Player").depth(1).icon(light::CUBE),
+                TreeItem::new("Camera").depth(1).icon(light::CUBE),
+                TreeItem::new("Environment")
+                    .depth(1)
+                    .icon(light::FOLDER)
+                    .expanded(false),
+            ])
+            .show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id, sel));
+}
+
+fn page_sidebar(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Navigation list");
+    let id = egui::Id::new("sidebar_demo");
+    let mut sel = ui.data(|d| d.get_temp::<usize>(id).unwrap_or(0));
+    ui.allocate_ui(vec2(200.0, 180.0), |ui| {
+        Sidebar::new(&mut sel)
+            .item(light::HOUSE, "Home")
+            .item(light::CUBE, "Assets")
+            .item(light::GEAR, "Settings")
+            .show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id, sel));
+}
+
+fn page_dialog(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Modal dialog");
+    let id = egui::Id::new("dialog_open");
+    let mut open = ui.data(|d| d.get_temp::<bool>(id).unwrap_or(false));
+    if Button::new("Delete asset…")
+        .variant(ButtonVariant::Destructive)
+        .id_source("dlg_trigger")
+        .show(ui)
+        .clicked()
+    {
+        open = true;
+    }
+    if open {
+        let mut dismiss = false;
+        let close = Dialog::new("Delete asset?")
+            .description("This action cannot be undone.")
+            .show(ui.ctx(), |ui| {
+                ui.horizontal(|ui| {
+                    if Button::new("Delete")
+                        .variant(ButtonVariant::Destructive)
+                        .id_source("dlg_del")
+                        .show(ui)
+                        .clicked()
+                    {
+                        dismiss = true;
+                    }
+                    ui.add_space(core::SPACE_2);
+                    if Button::new("Cancel")
+                        .ghost()
+                        .id_source("dlg_cancel")
+                        .show(ui)
+                        .clicked()
+                    {
+                        dismiss = true;
+                    }
+                });
+            });
+        if close || dismiss {
+            open = false;
+        }
+    }
+    ui.data_mut(|d| d.insert_temp(id, open));
+}
+
+fn page_toast(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Transient notification (top-right)");
+    let id = egui::Id::new("toast_show");
+    let mut show = ui.data(|d| d.get_temp::<bool>(id).unwrap_or(false));
+    if Button::new(if show { "Hide toast" } else { "Show toast" })
+        .id_source("toast_btn")
+        .show(ui)
+        .clicked()
+    {
+        show = !show;
+    }
+    if show {
+        Toast::new("Build finished in 2.3s")
+            .success()
+            .show(ui.ctx());
+    }
+    ui.data_mut(|d| d.insert_temp(id, show));
+}
+
+fn page_popover(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Click to open anchored content");
+    let resp = Button::new("Open popover").id_source("pop_btn").show(ui);
+    Popover::new().show(&resp, |ui| {
+        Text::new("Popover content").body_strong().show(ui);
+        ui.add_space(core::SPACE_1);
+        Text::new("Anchored to the trigger.")
+            .muted()
+            .caption()
+            .show(ui);
+    });
+}
+
+fn page_dropdown_menu(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Menu from a trigger");
+    let resp = Button::new("Actions")
+        .icon_right(light::CARET_DOWN)
+        .id_source("dd_btn")
+        .show(ui);
+    if let Some(i) = DropdownMenu::new()
+        .item(light::COPY, "Copy")
+        .item(light::CLIPBOARD, "Paste")
+        .item(light::TRASH, "Delete")
+        .show(&resp)
+    {
+        ui.data_mut(|d| d.insert_temp(egui::Id::new("dd_last"), i));
+    }
+    let last = ui.data(|d| d.get_temp::<usize>(egui::Id::new("dd_last")));
+    if let Some(i) = last {
+        ui.add_space(core::SPACE_2);
+        Text::new(format!("Last action index: {i}"))
+            .muted()
+            .caption()
+            .show(ui);
     }
 }
 
