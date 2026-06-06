@@ -6,7 +6,7 @@
 
 use crate::atoms::Text;
 use crate::theme::typography;
-use crate::tokens::core;
+use crate::tokens::core::{self, Size};
 use crate::Theme;
 use egui::{
     pos2, vec2, Color32, CornerRadius, Id, Rect, Response, Sense, Stroke, StrokeKind, Ui, UiBuilder,
@@ -19,6 +19,8 @@ pub struct Checkbox<'a> {
     label: Option<String>,
     enabled: bool,
     interactive: bool,
+    indeterminate: bool,
+    size: Size,
     id_source: Option<Id>,
 }
 
@@ -29,6 +31,8 @@ impl<'a> Checkbox<'a> {
             label: None,
             enabled: true,
             interactive: true,
+            indeterminate: false,
+            size: Size::default(),
             id_source: None,
         }
     }
@@ -37,6 +41,24 @@ impl<'a> Checkbox<'a> {
     pub fn interactive(mut self, interactive: bool) -> Self {
         self.interactive = interactive;
         self
+    }
+
+    /// Show the mixed/indeterminate state (a dash) — takes visual precedence over `checked`.
+    /// Presentational only: the consumer clears it on the next interaction.
+    pub fn indeterminate(mut self, indeterminate: bool) -> Self {
+        self.indeterminate = indeterminate;
+        self
+    }
+
+    pub fn size(mut self, size: Size) -> Self {
+        self.size = size;
+        self
+    }
+    pub fn sm(self) -> Self {
+        self.size(Size::Sm)
+    }
+    pub fn lg(self) -> Self {
+        self.size(Size::Lg)
     }
 
     pub fn label(mut self, label: impl Into<String>) -> Self {
@@ -57,7 +79,7 @@ impl<'a> Checkbox<'a> {
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let theme = Theme::get(ui);
-        let box_size = core::ICON_MD;
+        let box_size = self.size.icon_size();
         let gap = core::SPACE_2;
         let style = typography::body();
 
@@ -66,7 +88,13 @@ impl<'a> Checkbox<'a> {
                 .layout_no_wrap(l.clone(), style.font_id(), theme.foreground)
                 .size()
         });
-        let label_w = label_size.map_or(0.0, |s| s.x);
+        // `layout_no_wrap` measures without letter-spacing, but the label is rendered by the
+        // Text atom *with* the role's tracking — reserve that extra width so it doesn't clip.
+        let label_w = label_size.map_or(0.0, |s| s.x)
+            + self
+                .label
+                .as_ref()
+                .map_or(0.0, |l| style.tracking * l.chars().count() as f32);
         let label_h = label_size.map_or(0.0, |s| s.y);
         let height = box_size.max(label_h);
         let width = box_size
@@ -87,6 +115,9 @@ impl<'a> Checkbox<'a> {
             response.mark_changed();
         }
         let checked = *self.checked;
+        let indeterminate = self.indeterminate;
+        // Filled appearance for both checked and mixed states; mixed takes precedence.
+        let on = checked || indeterminate;
 
         let info_label = self.label.clone().unwrap_or_default();
         let info_enabled = self.enabled;
@@ -94,7 +125,7 @@ impl<'a> Checkbox<'a> {
             egui::WidgetInfo::selected(
                 egui::WidgetType::Checkbox,
                 info_enabled,
-                checked,
+                on,
                 info_label.clone(),
             )
         });
@@ -113,24 +144,34 @@ impl<'a> Checkbox<'a> {
         let radius = CornerRadius::same(core::RADIUS_SM as u8);
         let painter = ui.painter().clone();
 
-        if checked {
+        if on {
             painter.rect_filled(box_rect, radius, dim(theme.primary));
         }
-        let border = if checked { theme.primary } else { theme.input };
+        let border = if on { theme.primary } else { theme.input };
         painter.rect_stroke(
             box_rect,
             radius,
             Stroke::new(core::BORDER_THIN, dim(border)),
             StrokeKind::Inside,
         );
-        if checked {
+
+        // Animated hover veil — gated on enabled + interactive.
+        let hovered = self.enabled && self.interactive && response.hovered();
+        let ht = core::hover_t(ui.ctx(), response.id, hovered);
+        if ht > 0.0 {
+            painter.rect_filled(box_rect, radius, theme.hover_overlay.gamma_multiply(ht));
+        }
+
+        if on {
             let fg = dim(theme.primary_foreground);
-            let glyph = painter.layout_no_wrap(
-                light::CHECK.to_owned(),
-                typography::icon_font(box_size),
-                fg,
-            );
-            painter.galley(box_rect.center() - glyph.size() * 0.5, glyph, fg);
+            let glyph = if indeterminate {
+                light::MINUS
+            } else {
+                light::CHECK
+            };
+            let galley =
+                painter.layout_no_wrap(glyph.to_owned(), typography::icon_font(box_size), fg);
+            painter.galley(box_rect.center() - galley.size() * 0.5, galley, fg);
         }
         if response.has_focus() {
             super::focus::focus_ring_rect(&painter, box_rect, radius, theme.ring);

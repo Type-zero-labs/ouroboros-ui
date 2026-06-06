@@ -6,7 +6,7 @@
 use crate::theme::typography::{self, TypeStyle};
 use crate::tokens::core;
 use crate::Theme;
-use egui::{vec2, Response, Sense, Ui};
+use egui::{text::LayoutJob, text::TextFormat, vec2, Response, Sense, Ui};
 
 /// Avatar size.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -67,11 +67,20 @@ impl Avatar {
         let painter = ui.painter().clone();
         painter.circle_filled(rect.center(), d / 2.0, theme.muted);
 
-        let galley = painter.layout_no_wrap(
-            self.initials.to_uppercase(),
-            self.size.style().font_id(),
-            theme.foreground,
+        let style = self.size.style();
+        let mut job = LayoutJob::default();
+        job.wrap.max_width = f32::INFINITY;
+        job.append(
+            &self.initials.to_uppercase(),
+            0.0,
+            TextFormat {
+                font_id: style.font_id(),
+                color: theme.foreground,
+                extra_letter_spacing: style.tracking,
+                ..Default::default()
+            },
         );
+        let galley = painter.layout_job(job);
         painter.galley(
             rect.center() - galley.size() * 0.5,
             galley,

@@ -5,7 +5,7 @@
 //! appends a unit. The editing substrate is egui's; the casing is token.
 
 use crate::atoms::Button;
-use crate::tokens::core;
+use crate::tokens::core::{self, Size};
 use crate::Theme;
 use egui::{
     vec2, Align, Color32, CornerRadius, DragValue, Layout, Response, Sense, Stroke, StrokeKind, Ui,
@@ -23,6 +23,8 @@ pub struct NumericField<'a> {
     suffix: Option<String>,
     stepper: bool,
     enabled: bool,
+    error: bool,
+    size: Size,
 }
 
 impl<'a> NumericField<'a> {
@@ -36,6 +38,8 @@ impl<'a> NumericField<'a> {
             suffix: None,
             stepper: false,
             enabled: true,
+            error: false,
+            size: Size::default(),
         }
     }
 
@@ -69,13 +73,28 @@ impl<'a> NumericField<'a> {
     pub fn disabled(self) -> Self {
         self.enabled(false)
     }
+    pub fn error(mut self, error: bool) -> Self {
+        self.error = error;
+        self
+    }
+    pub fn size(mut self, size: Size) -> Self {
+        self.size = size;
+        self
+    }
+    pub fn sm(self) -> Self {
+        self.size(Size::Sm)
+    }
+    pub fn lg(self) -> Self {
+        self.size(Size::Lg)
+    }
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let theme = Theme::get(ui);
-        let height = core::CONTROL_MD;
+        let height = self.size.height();
         let width = ui.available_width();
-        let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
+        let (rect, box_resp) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
         let enabled = self.enabled;
+        let error = self.error;
         let dim = |c: Color32| {
             if enabled {
                 c
@@ -86,6 +105,13 @@ impl<'a> NumericField<'a> {
         let radius = CornerRadius::same(core::RADIUS_MD as u8);
         let painter = ui.painter().clone();
         painter.rect_filled(rect, radius, dim(theme.muted));
+
+        // Animated hover veil — gated on enabled.
+        let hovered = enabled && ui.rect_contains_pointer(rect);
+        let ht = core::hover_t(ui.ctx(), box_resp.id, hovered);
+        if ht > 0.0 {
+            painter.rect_filled(rect, radius, theme.hover_overlay.gamma_multiply(ht));
+        }
 
         let inner = rect.shrink2(vec2(core::SPACE_2, 0.0));
         let step = self.step.unwrap_or(1.0);
@@ -140,7 +166,9 @@ impl<'a> NumericField<'a> {
             cui.add_enabled(enabled, drag!(value))
         };
 
-        let (border, w) = if resp.has_focus() {
+        let (border, w) = if error {
+            (theme.destructive, core::BORDER_THIN)
+        } else if resp.has_focus() {
             (theme.ring, core::BORDER_FOCUS)
         } else {
             (theme.input, core::BORDER_THIN)

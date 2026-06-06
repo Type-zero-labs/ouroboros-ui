@@ -2,9 +2,9 @@
 //!
 //! Track (`muted`) + filled portion (`primary`) + a `primary` thumb. Drag or click to set.
 
-use crate::tokens::core;
+use crate::tokens::core::{self, Size};
 use crate::Theme;
-use egui::{pos2, vec2, CornerRadius, Rect, Response, Sense, Stroke, Ui};
+use egui::{pos2, vec2, Color32, CornerRadius, Rect, Response, Sense, Stroke, Ui};
 
 /// A slider bound to a `&mut f32`. Builder; `show` returns the [`Response`].
 pub struct Slider<'a> {
@@ -12,6 +12,8 @@ pub struct Slider<'a> {
     min: f32,
     max: f32,
     step: Option<f32>,
+    enabled: bool,
+    size: Size,
 }
 
 impl<'a> Slider<'a> {
@@ -21,6 +23,8 @@ impl<'a> Slider<'a> {
             min: 0.0,
             max: 1.0,
             step: None,
+            enabled: true,
+            size: Size::default(),
         }
     }
 
@@ -33,13 +37,34 @@ impl<'a> Slider<'a> {
         self.step = Some(step);
         self
     }
+    pub fn enabled(mut self, enabled: bool) -> Self {
+        self.enabled = enabled;
+        self
+    }
+    pub fn disabled(self) -> Self {
+        self.enabled(false)
+    }
+    pub fn size(mut self, size: Size) -> Self {
+        self.size = size;
+        self
+    }
+    pub fn sm(self) -> Self {
+        self.size(Size::Sm)
+    }
+    pub fn lg(self) -> Self {
+        self.size(Size::Lg)
+    }
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let theme = Theme::get(ui);
-        let height = core::ICON_MD;
+        let height = self.size.icon_size();
         let width = ui.available_width();
-        let (rect, mut response) =
-            ui.allocate_exact_size(vec2(width, height), Sense::click_and_drag());
+        let sense = if self.enabled {
+            Sense::click_and_drag()
+        } else {
+            Sense::hover()
+        };
+        let (rect, mut response) = ui.allocate_exact_size(vec2(width, height), sense);
 
         let thumb_r = height / 2.0 - core::BORDER_THIN;
         let left = rect.left() + thumb_r;
@@ -47,7 +72,7 @@ impl<'a> Slider<'a> {
         let usable = (right - left).max(1.0);
         let span = (self.max - self.min).max(f32::EPSILON);
 
-        if response.dragged() || response.clicked() {
+        if self.enabled && (response.dragged() || response.clicked()) {
             if let Some(p) = response.interact_pointer_pos() {
                 let t = ((p.x - left) / usable).clamp(0.0, 1.0);
                 let mut v = self.min + t * span;
@@ -61,32 +86,51 @@ impl<'a> Slider<'a> {
             }
         }
 
+        let dim = |c: Color32| {
+            if self.enabled {
+                c
+            } else {
+                core::disabled_color(c)
+            }
+        };
         let t = ((*self.value - self.min) / span).clamp(0.0, 1.0);
         let cy = rect.center().y;
         let thumb_x = left + t * usable;
         let track_h = core::SPACE_1;
         let pill = CornerRadius::same((track_h / 2.0) as u8);
-        let painter = ui.painter();
+        let painter = ui.painter().clone();
 
         let track = Rect::from_min_max(
             pos2(left, cy - track_h / 2.0),
             pos2(right, cy + track_h / 2.0),
         );
-        painter.rect_filled(track, pill, theme.muted);
+        painter.rect_filled(track, pill, dim(theme.muted));
         let fill = Rect::from_min_max(
             pos2(left, cy - track_h / 2.0),
             pos2(thumb_x, cy + track_h / 2.0),
         );
-        painter.rect_filled(fill, pill, theme.primary);
+        painter.rect_filled(fill, pill, dim(theme.primary));
 
-        painter.circle_filled(pos2(thumb_x, cy), thumb_r, theme.primary);
+        painter.circle_filled(pos2(thumb_x, cy), thumb_r, dim(theme.primary));
         painter.circle_stroke(
             pos2(thumb_x, cy),
             thumb_r,
-            Stroke::new(core::BORDER_THIN, theme.background),
+            Stroke::new(core::BORDER_THIN, dim(theme.background)),
         );
-        if response.has_focus() {
-            super::focus::focus_ring_circle(painter, pos2(thumb_x, cy), thumb_r, theme.ring);
+
+        // Animated hover veil on the thumb — gated on enabled.
+        let hovered = self.enabled && response.hovered();
+        let ht = core::hover_t(ui.ctx(), response.id, hovered);
+        if ht > 0.0 {
+            painter.circle_filled(
+                pos2(thumb_x, cy),
+                thumb_r,
+                theme.hover_overlay.gamma_multiply(ht),
+            );
+        }
+
+        if self.enabled && response.has_focus() {
+            super::focus::focus_ring_circle(&painter, pos2(thumb_x, cy), thumb_r, theme.ring);
         }
         response
     }

@@ -24,12 +24,12 @@ use ouroboros_ui::molecules::{
     ToggleGroup, VectorField,
 };
 use ouroboros_ui::organisms::{
-    Accordion, Dialog, DropdownMenu, Menubar, Popover, Select, Sidebar, TabView, Table, Toast,
-    Toolbar, TreeItem, TreeView,
+    Accordion, AppShell, Dialog, DropdownMenu, Menubar, PanelSpec, Popover, Select, Sidebar,
+    Splitter, TabView, Table, Toast, Toolbar, TreeItem, TreeView,
 };
 use ouroboros_ui::theme::typography;
 use ouroboros_ui::tokens::{core, layout};
-use ouroboros_ui::{Mode, Theme};
+use ouroboros_ui::{Mode, Size, Theme};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Page {
@@ -97,6 +97,8 @@ enum Page {
     Select,
     Accordion,
     Menubar,
+    Splitter,
+    AppShell,
 }
 
 impl Page {
@@ -166,6 +168,8 @@ impl Page {
             Page::Select => "Select",
             Page::Accordion => "Accordion",
             Page::Menubar => "Menubar",
+            Page::Splitter => "Splitter",
+            Page::AppShell => "App shell",
         }
     }
 }
@@ -257,6 +261,8 @@ const NAV: &[(&str, &[Page])] = &[
             Page::Select,
             Page::Accordion,
             Page::Menubar,
+            Page::Splitter,
+            Page::AppShell,
         ],
     ),
 ];
@@ -459,7 +465,128 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::Select => page_select(ui, theme),
         Page::Accordion => page_accordion(ui, theme),
         Page::Menubar => page_menubar(ui, theme),
+        Page::Splitter => page_splitter(ui, theme),
+        Page::AppShell => page_app_shell(ui, theme),
     }
+}
+
+fn page_splitter(ui: &mut Ui, _theme: &Theme) {
+    caption(
+        ui,
+        "Drag dividers · min/max · double-click to collapse · nested",
+    );
+    let panel = |ui: &mut Ui, label: &str| {
+        Surface::new().muted().show(ui, |ui| {
+            ui.set_min_size(ui.available_size());
+            Text::new(label).muted().show(ui);
+        });
+    };
+    ui.allocate_ui(vec2(560.0, 320.0), |ui| {
+        Splitter::horizontal()
+            .id_source("sp_demo")
+            .panel(PanelSpec::new().min(120.0).max(280.0), |ui| {
+                panel(ui, "Hierarchy")
+            })
+            .panel(PanelSpec::new(), |ui| {
+                // Nested vertical split inside the center panel.
+                Splitter::vertical()
+                    .id_source("sp_demo_nested")
+                    .panel(PanelSpec::new(), |ui| panel(ui, "Viewport"))
+                    .panel(PanelSpec::new().size(0.3).collapsible(true), |ui| {
+                        panel(ui, "Console (collapsible)")
+                    })
+                    .show(ui);
+            })
+            .panel(PanelSpec::new().min(160.0).collapsible(true), |ui| {
+                panel(ui, "Inspector (collapsible)")
+            })
+            .show(ui);
+    });
+}
+
+/// One labeled box filling its cell — used as a slot's content in the AppShell demos.
+fn shell_slot(ui: &mut Ui, label: &str, muted: bool) {
+    let s = if muted {
+        Surface::new().muted()
+    } else {
+        Surface::new()
+    };
+    s.show(ui, |ui| {
+        ui.set_min_size(ui.available_size());
+        Text::new(label).muted().caption().show(ui);
+    });
+}
+
+fn page_app_shell(ui: &mut Ui, _theme: &Theme) {
+    caption(
+        ui,
+        "Slots: header · aside-left · main · aside-right · footer — asides are Splitter-resizable; shells nest",
+    );
+    // A small AppShell demo for each common layout. Each gets a stable id so its splitter
+    // state persists independently.
+    let demo = |ui: &mut Ui, title: &str, build: &dyn Fn(&mut Ui)| {
+        subhead(ui, title);
+        ui.allocate_ui(vec2(420.0, 150.0), |ui| build(ui));
+    };
+
+    demo(ui, "Header + Main", &|ui| {
+        AppShell::new()
+            .id_source("shell_hm")
+            .header(|ui| shell_slot(ui, "Header", false))
+            .main(|ui| shell_slot(ui, "Main", true))
+            .show(ui);
+    });
+
+    demo(ui, "Header + Main + Footer", &|ui| {
+        AppShell::new()
+            .id_source("shell_hmf")
+            .header(|ui| shell_slot(ui, "Header", false))
+            .main(|ui| shell_slot(ui, "Main", true))
+            .footer(|ui| shell_slot(ui, "Footer", false))
+            .show(ui);
+    });
+
+    demo(
+        ui,
+        "Aside-left + Main + Aside-right (drag the dividers)",
+        &|ui| {
+            AppShell::new()
+                .id_source("shell_ama")
+                .aside_left(|ui| shell_slot(ui, "Aside L", true))
+                .main(|ui| shell_slot(ui, "Main", true))
+                .aside_right(|ui| shell_slot(ui, "Aside R", true))
+                .show(ui);
+        },
+    );
+
+    demo(
+        ui,
+        "Full: Header + Aside-L + Main + Aside-R + Footer",
+        &|ui| {
+            AppShell::new()
+                .id_source("shell_full")
+                .header(|ui| shell_slot(ui, "Header", false))
+                .aside_left(|ui| shell_slot(ui, "Nav", true))
+                .main(|ui| shell_slot(ui, "Scene", true))
+                .aside_right(|ui| shell_slot(ui, "Inspector", true))
+                .footer(|ui| shell_slot(ui, "Status", false))
+                .show(ui);
+        },
+    );
+
+    demo(ui, "Nested: an AppShell inside the main slot", &|ui| {
+        AppShell::new()
+            .id_source("shell_outer")
+            .header(|ui| shell_slot(ui, "Outer header", false))
+            .main(|ui| {
+                AppShell::new()
+                    .id_source("shell_inner")
+                    .aside_left(|ui| shell_slot(ui, "Inner aside", true))
+                    .main(|ui| shell_slot(ui, "Inner main", true))
+                    .show(ui);
+            })
+            .show(ui);
+    });
 }
 
 fn page_select(ui: &mut Ui, _theme: &Theme) {
@@ -471,6 +598,25 @@ fn page_select(ui: &mut Ui, _theme: &Theme) {
         .placeholder("Blend mode…")
         .show(ui);
     ui.data_mut(|d| d.insert_temp(id, sel));
+    subhead(ui, "Sizes (Sm / Md / Lg)");
+    ui.horizontal(|ui| {
+        for (salt, mk) in [
+            ("sel_sm", Size::Sm),
+            ("sel_md", Size::Md),
+            ("sel_lg", Size::Lg),
+        ] {
+            let sid = egui::Id::new(salt);
+            let mut s = ui.data(|d| d.get_temp::<usize>(sid).unwrap_or(0));
+            ui.push_id(salt, |ui| {
+                Select::new(&mut s)
+                    .options(["Low", "Medium", "High"])
+                    .size(mk)
+                    .show(ui);
+            });
+            ui.data_mut(|d| d.insert_temp(sid, s));
+            ui.add_space(core::SPACE_2);
+        }
+    });
 }
 
 fn page_accordion(ui: &mut Ui, _theme: &Theme) {
@@ -1024,6 +1170,25 @@ fn page_slider(ui: &mut Ui, _theme: &Theme) {
         Slider::new(&mut s).range(0.0, 100.0).step(5.0).show(ui);
     });
     ui.data_mut(|d| d.insert_temp(id2, s));
+    subhead(ui, "Sizes (Sm / Md / Lg)");
+    for (key, mk) in [
+        ("sld_sm", Size::Sm),
+        ("sld_md", Size::Md),
+        ("sld_lg", Size::Lg),
+    ] {
+        let id = egui::Id::new(key);
+        let mut z = ui.data(|d| d.get_temp::<f32>(id).unwrap_or(0.5));
+        ui.allocate_ui(vec2(320.0, 24.0), |ui| {
+            Slider::new(&mut z).size(mk).show(ui);
+        });
+        ui.data_mut(|d| d.insert_temp(id, z));
+        ui.add_space(core::SPACE_2);
+    }
+    subhead(ui, "Disabled");
+    let mut d0 = 0.4;
+    ui.allocate_ui(vec2(320.0, 24.0), |ui| {
+        Slider::new(&mut d0).disabled().show(ui);
+    });
 }
 
 fn page_numeric_field(ui: &mut Ui, _theme: &Theme) {
@@ -1052,6 +1217,37 @@ fn page_numeric_field(ui: &mut Ui, _theme: &Theme) {
             .show(ui);
     });
     ui.data_mut(|d| d.insert_temp(id2, s));
+    subhead(ui, "Sizes (Sm / Md / Lg)");
+    let idz = egui::Id::new("num_sizes");
+    let mut z = ui.data(|d| d.get_temp::<f32>(idz).unwrap_or(5.0));
+    ui.horizontal(|ui| {
+        ui.allocate_ui(vec2(90.0, core::CONTROL_LG), |ui| {
+            NumericField::new(&mut z).sm().show(ui);
+        });
+        ui.add_space(core::SPACE_2);
+        ui.allocate_ui(vec2(90.0, core::CONTROL_LG), |ui| {
+            NumericField::new(&mut z).show(ui);
+        });
+        ui.add_space(core::SPACE_2);
+        ui.allocate_ui(vec2(90.0, core::CONTROL_LG), |ui| {
+            NumericField::new(&mut z).lg().show(ui);
+        });
+    });
+    ui.data_mut(|d| d.insert_temp(idz, z));
+    subhead(ui, "Error · disabled");
+    let ide = egui::Id::new("num_err");
+    let mut e = ui.data(|d| d.get_temp::<f32>(ide).unwrap_or(-1.0));
+    ui.horizontal(|ui| {
+        ui.allocate_ui(vec2(120.0, core::CONTROL_MD), |ui| {
+            NumericField::new(&mut e).error(true).show(ui);
+        });
+        ui.add_space(core::SPACE_2);
+        let mut d0 = 0.0;
+        ui.allocate_ui(vec2(120.0, core::CONTROL_MD), |ui| {
+            NumericField::new(&mut d0).disabled().show(ui);
+        });
+    });
+    ui.data_mut(|d| d.insert_temp(ide, e));
 }
 
 fn page_color_swatch(ui: &mut Ui, _theme: &Theme) {
@@ -1345,6 +1541,17 @@ fn page_switch(ui: &mut Ui, _theme: &Theme) {
         ui.add_space(core::SPACE_2);
         Text::new("disabled").muted().show(ui);
     });
+    subhead(ui, "Sizes (Sm / Md / Lg)");
+    ui.horizontal(|ui| {
+        let mut s = true;
+        Switch::new(&mut s).sm().id_source("sw_sm").show(ui);
+        ui.add_space(core::SPACE_3);
+        let mut m = true;
+        Switch::new(&mut m).id_source("sw_md").show(ui);
+        ui.add_space(core::SPACE_3);
+        let mut l = true;
+        Switch::new(&mut l).lg().id_source("sw_lg").show(ui);
+    });
 }
 
 fn page_input(ui: &mut Ui, _theme: &Theme) {
@@ -1367,6 +1574,20 @@ fn page_input(ui: &mut Ui, _theme: &Theme) {
     field(ui, "in_c", |ui, s| {
         Input::new(s).placeholder("Disabled").disabled().show(ui);
     });
+    subhead(ui, "Sizes (Sm / Md / Lg)");
+    for (key, mk) in [
+        ("in_sm", Size::Sm),
+        ("in_md", Size::Md),
+        ("in_lg", Size::Lg),
+    ] {
+        let id = egui::Id::new(key);
+        let mut s = ui.data(|d| d.get_temp::<String>(id).unwrap_or_default());
+        ui.allocate_ui(vec2(320.0, core::CONTROL_LG), |ui| {
+            Input::new(&mut s).placeholder(key).size(mk).show(ui);
+        });
+        ui.data_mut(|d| d.insert_temp(id, s));
+        ui.add_space(core::SPACE_2);
+    }
 }
 
 fn page_badge(ui: &mut Ui, _theme: &Theme) {
@@ -1394,6 +1615,14 @@ fn page_badge(ui: &mut Ui, _theme: &Theme) {
             Badge::new(name).variant(v).dot().show(ui);
             ui.add_space(core::SPACE_2);
         }
+    });
+    subhead(ui, "Sizes (Sm / Md / Lg)");
+    ui.horizontal(|ui| {
+        Badge::new("Small").sm().show(ui);
+        ui.add_space(core::SPACE_2);
+        Badge::new("Medium").show(ui);
+        ui.add_space(core::SPACE_2);
+        Badge::new("Large").lg().show(ui);
     });
 }
 
@@ -1447,6 +1676,24 @@ fn page_checkbox(ui: &mut Ui, _theme: &Theme) {
         .show(ui);
     let mut un = false;
     Checkbox::new(&mut un).label("Disabled").disabled().show(ui);
+    subhead(ui, "Indeterminate (mixed)");
+    let mut mixed = false;
+    Checkbox::new(&mut mixed)
+        .label("Some selected")
+        .indeterminate(true)
+        .id_source("cb_ind")
+        .show(ui);
+    subhead(ui, "Sizes (Sm / Md / Lg)");
+    ui.horizontal(|ui| {
+        let mut s = true;
+        Checkbox::new(&mut s).sm().id_source("cb_sm").show(ui);
+        ui.add_space(core::SPACE_3);
+        let mut m = true;
+        Checkbox::new(&mut m).id_source("cb_md").show(ui);
+        ui.add_space(core::SPACE_3);
+        let mut l = true;
+        Checkbox::new(&mut l).lg().id_source("cb_lg").show(ui);
+    });
 }
 
 fn page_radio(ui: &mut Ui, _theme: &Theme) {
@@ -1471,6 +1718,14 @@ fn page_radio(ui: &mut Ui, _theme: &Theme) {
         .disabled()
         .show(ui);
     Radio::new(false).label("Disabled").disabled().show(ui);
+    subhead(ui, "Sizes (Sm / Md / Lg)");
+    ui.horizontal(|ui| {
+        Radio::new(true).sm().id_source("rd_sm").show(ui);
+        ui.add_space(core::SPACE_3);
+        Radio::new(true).id_source("rd_md").show(ui);
+        ui.add_space(core::SPACE_3);
+        Radio::new(true).lg().id_source("rd_lg").show(ui);
+    });
 }
 
 fn page_colors(ui: &mut Ui, theme: &Theme) {
@@ -1987,6 +2242,27 @@ fn page_button(ui: &mut Ui, _theme: &Theme) {
         Button::new("Disabled")
             .disabled()
             .id_source("b_dis")
+            .show(ui);
+    });
+    subhead(ui, "Loading (width preserved, clicks ignored)");
+    ui.horizontal(|ui| {
+        Button::new("Saving")
+            .loading(true)
+            .id_source("b_load_primary")
+            .show(ui);
+        ui.add_space(core::SPACE_2);
+        Button::new("Loading")
+            .secondary()
+            .loading(true)
+            .id_source("b_load_secondary")
+            .show(ui);
+        ui.add_space(core::SPACE_2);
+        Button::new("")
+            .icon_only()
+            .icon_left(light::GEAR)
+            .outline()
+            .loading(true)
+            .id_source("b_load_icon")
             .show(ui);
     });
 }

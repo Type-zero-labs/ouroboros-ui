@@ -5,7 +5,7 @@
 //! default / focus / disabled / error. *(Size/leading-icon belong to a Field molecule.)*
 
 use crate::theme::typography;
-use crate::tokens::core;
+use crate::tokens::core::{self, Size};
 use crate::Theme;
 use egui::{
     vec2, Align, Color32, CornerRadius, Id, Layout, Response, RichText, Sense, Stroke, StrokeKind,
@@ -19,6 +19,7 @@ pub struct Input<'a> {
     placeholder: Option<String>,
     error: bool,
     enabled: bool,
+    size: Size,
     id_source: Option<Id>,
 }
 
@@ -29,6 +30,7 @@ impl<'a> Input<'a> {
             placeholder: None,
             error: false,
             enabled: true,
+            size: Size::default(),
             id_source: None,
         }
     }
@@ -40,6 +42,16 @@ impl<'a> Input<'a> {
     pub fn error(mut self, error: bool) -> Self {
         self.error = error;
         self
+    }
+    pub fn size(mut self, size: Size) -> Self {
+        self.size = size;
+        self
+    }
+    pub fn sm(self) -> Self {
+        self.size(Size::Sm)
+    }
+    pub fn lg(self) -> Self {
+        self.size(Size::Lg)
     }
     pub fn enabled(mut self, enabled: bool) -> Self {
         self.enabled = enabled;
@@ -55,11 +67,11 @@ impl<'a> Input<'a> {
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let theme = Theme::get(ui);
-        let height = core::CONTROL_MD;
-        let pad_x = core::SPACE_3;
+        let height = self.size.height();
+        let pad_x = self.size.pad_x();
         let width = ui.available_width();
 
-        let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
+        let (rect, box_resp) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
         let dim = |c: Color32| {
             if self.enabled {
                 c
@@ -71,10 +83,18 @@ impl<'a> Input<'a> {
         let painter = ui.painter().clone();
         painter.rect_filled(rect, radius, dim(theme.muted));
 
+        // Animated hover veil (same treatment as Button) — gated on enabled.
+        let hovered = self.enabled && ui.rect_contains_pointer(rect);
+        let ht = core::hover_t(ui.ctx(), box_resp.id, hovered);
+        if ht > 0.0 {
+            painter.rect_filled(rect, radius, theme.hover_overlay.gamma_multiply(ht));
+        }
+
         let inner = rect.shrink2(vec2(pad_x, 0.0));
         let body = typography::body();
         let hint = RichText::new(self.placeholder.unwrap_or_default())
             .font(body.font_id())
+            .extra_letter_spacing(body.tracking)
             .color(theme.muted_foreground);
         let mut cui = ui.new_child(
             UiBuilder::new()

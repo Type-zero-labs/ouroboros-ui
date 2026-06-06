@@ -66,7 +66,7 @@ impl<'a> Textarea<'a> {
         let height = self.rows as f32 * body.line_height + 2.0 * pad;
         let width = ui.available_width();
 
-        let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
+        let (rect, box_resp) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
         let dim = |c: Color32| {
             if self.enabled {
                 c
@@ -78,9 +78,17 @@ impl<'a> Textarea<'a> {
         let painter = ui.painter().clone();
         painter.rect_filled(rect, radius, dim(theme.muted));
 
+        // Animated hover veil — gated on enabled.
+        let hovered = self.enabled && ui.rect_contains_pointer(rect);
+        let ht = core::hover_t(ui.ctx(), box_resp.id, hovered);
+        if ht > 0.0 {
+            painter.rect_filled(rect, radius, theme.hover_overlay.gamma_multiply(ht));
+        }
+
         let inner = rect.shrink(pad);
         let hint = RichText::new(self.placeholder.unwrap_or_default())
             .font(body.font_id())
+            .extra_letter_spacing(body.tracking)
             .color(theme.muted_foreground);
         let mut cui = ui.new_child(UiBuilder::new().max_rect(inner));
         let edit = TextEdit::multiline(self.buf)

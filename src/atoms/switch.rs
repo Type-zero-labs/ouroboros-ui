@@ -3,7 +3,7 @@
 //! Pill track (`primary` on / `muted` off) + a thumb that slides with `animate_bool_with_time`.
 //! All dimensions derive from tokens; focus ring and disabled dim included.
 
-use crate::tokens::core;
+use crate::tokens::core::{self, Size};
 use crate::Theme;
 use egui::{pos2, vec2, Color32, CornerRadius, Id, Response, Sense, Ui};
 
@@ -11,6 +11,7 @@ use egui::{pos2, vec2, Color32, CornerRadius, Id, Response, Sense, Ui};
 pub struct Switch<'a> {
     on: &'a mut bool,
     enabled: bool,
+    size: Size,
     id_source: Option<Id>,
 }
 
@@ -19,6 +20,7 @@ impl<'a> Switch<'a> {
         Self {
             on,
             enabled: true,
+            size: Size::default(),
             id_source: None,
         }
     }
@@ -30,6 +32,16 @@ impl<'a> Switch<'a> {
     pub fn disabled(self) -> Self {
         self.enabled(false)
     }
+    pub fn size(mut self, size: Size) -> Self {
+        self.size = size;
+        self
+    }
+    pub fn sm(self) -> Self {
+        self.size(Size::Sm)
+    }
+    pub fn lg(self) -> Self {
+        self.size(Size::Lg)
+    }
     pub fn id_source(mut self, id: impl std::hash::Hash) -> Self {
         self.id_source = Some(Id::new(id));
         self
@@ -37,9 +49,13 @@ impl<'a> Switch<'a> {
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let theme = Theme::get(ui);
-        let track_h = core::ICON_LG;
+        // Track/thumb scale with Size; Md preserves the original dimensions.
+        let (track_h, thumb_d) = match self.size {
+            Size::Sm => (core::ICON_MD, core::ICON_SM),
+            Size::Md => (core::ICON_LG, core::ICON_MD),
+            Size::Lg => (core::ICON_XL, core::ICON_LG),
+        };
         let track_w = track_h + core::SPACE_4;
-        let thumb_d = core::ICON_MD;
         let inset = (track_h - thumb_d) / 2.0;
 
         let sense = if self.enabled {
@@ -81,6 +97,13 @@ impl<'a> Switch<'a> {
             theme.border_strong
         };
         painter.rect_filled(rect, pill, dim(track));
+
+        // Animated hover veil — gated on enabled.
+        let hovered = self.enabled && response.hovered();
+        let ht = core::hover_t(ui.ctx(), id, hovered);
+        if ht > 0.0 {
+            painter.rect_filled(rect, pill, theme.hover_overlay.gamma_multiply(ht));
+        }
 
         let thumb_r = thumb_d / 2.0;
         let left_x = rect.left() + inset + thumb_r;

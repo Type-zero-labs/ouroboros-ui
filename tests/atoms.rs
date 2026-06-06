@@ -19,10 +19,11 @@ use ouroboros_ui::molecules::{
     FieldSet, InputGroup, RadioGroup, SearchField, Slot, Tabs, ToggleGroup, VectorField,
 };
 use ouroboros_ui::organisms::{
-    Accordion, Menubar, Select, Sidebar, TabView, Table, Toolbar, TreeItem, TreeView,
+    Accordion, AppShell, Menubar, PanelSpec, Select, Sidebar, Splitter, TabView, Table, Toolbar,
+    TreeItem, TreeView,
 };
 use ouroboros_ui::tokens::core;
-use ouroboros_ui::{Mode, Theme};
+use ouroboros_ui::{Mode, Size, Theme};
 use std::cell::Cell;
 use std::rc::Rc;
 
@@ -39,6 +40,23 @@ fn rendered(mut content: impl FnMut(&mut Ui) + 'static) {
     });
     harness.run(); // install fonts (skips render)
     harness.run(); // paint with fonts available
+}
+
+/// Like [`rendered`] but uses fixed `step()`s — for content that repaints every frame (e.g. a
+/// loading spinner), where `run()` would exceed max_steps waiting for stability.
+fn rendered_stepped(mut content: impl FnMut(&mut Ui) + 'static) {
+    let mut installed = false;
+    let mut harness = Harness::new_ui(move |ui| {
+        if !installed {
+            Theme::install(ui.ctx(), Mode::Dark);
+            installed = true;
+            return;
+        }
+        content(ui);
+    });
+    harness.step(); // install frame
+    harness.step(); // render frame
+    harness.step();
 }
 
 #[test]
@@ -419,6 +437,91 @@ fn organisms_render() {
             .item(light::HOUSE, "Home")
             .text_item("Other")
             .show(ui);
+    });
+}
+
+#[test]
+fn new_states_render() {
+    // Button loading repaints (spinner), so step instead of run.
+    rendered_stepped(|ui| {
+        // Button: loading + sizes + icon-only.
+        Button::new("Saving").loading(true).show(ui);
+        Button::new("S").size(Size::Sm).show(ui);
+        Button::new("L").size(Size::Lg).show(ui);
+        Button::new("").icon_only().icon_left(light::GEAR).show(ui);
+        // Checkbox: indeterminate + sizes.
+        let mut c = false;
+        Checkbox::new(&mut c).indeterminate(true).show(ui);
+        let mut c2 = true;
+        Checkbox::new(&mut c2).sm().show(ui);
+        // Radio + switch sizes.
+        Radio::new(true).lg().show(ui);
+        let mut sw = true;
+        Switch::new(&mut sw).lg().show(ui);
+        // Slider: disabled + size.
+        let mut v = 0.5;
+        Slider::new(&mut v).disabled().show(ui);
+        let mut v2 = 0.5;
+        Slider::new(&mut v2).sm().show(ui);
+        // Numeric: error + size.
+        let mut n = 1.0;
+        NumericField::new(&mut n).error(true).show(ui);
+        let mut n2 = 2.0;
+        NumericField::new(&mut n2).lg().show(ui);
+        // Input size.
+        let mut s = String::new();
+        Input::new(&mut s).size(Size::Sm).show(ui);
+    });
+}
+
+#[test]
+fn splitter_renders() {
+    rendered(|ui| {
+        ui.allocate_ui(egui::vec2(400.0, 240.0), |ui| {
+            Splitter::horizontal()
+                .id_source("test_split")
+                .panel(PanelSpec::new().min(80.0).max(200.0), |ui| {
+                    Text::new("left").show(ui);
+                })
+                .panel(PanelSpec::new(), |ui| {
+                    Splitter::vertical()
+                        .id_source("test_split_nested")
+                        .panel(PanelSpec::new(), |ui| {
+                            Text::new("top").show(ui);
+                        })
+                        .panel(PanelSpec::new().collapsible(true), |ui| {
+                            Text::new("bottom").show(ui);
+                        })
+                        .show(ui);
+                })
+                .show(ui);
+        });
+    });
+}
+
+#[test]
+fn app_shell_renders() {
+    rendered(|ui| {
+        ui.allocate_ui(egui::vec2(480.0, 320.0), |ui| {
+            AppShell::new()
+                .id_source("test_shell")
+                .header(|ui| {
+                    Text::new("header").show(ui);
+                })
+                .aside_left(|ui| {
+                    Text::new("nav").show(ui);
+                })
+                .main(|ui| {
+                    Text::new("scene").show(ui);
+                })
+                .aside_right(|ui| {
+                    Text::new("inspector").show(ui);
+                })
+                .footer(|ui| {
+                    Text::new("footer").show(ui);
+                })
+                .show(ui);
+        });
     });
 }
 

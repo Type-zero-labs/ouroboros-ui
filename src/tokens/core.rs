@@ -179,6 +179,44 @@ pub const RING_OFFSET: f32 = 2.0;
 /// Minimum interactive target.
 pub const HIT_MIN: f32 = 32.0;
 
+/// Shared control size scale. One source of truth for every form control's footprint,
+/// so density (compact toolbar vs. roomy panel) is expressible uniformly. Numeric here
+/// (no semantic/theme dependency); the typography mapping lives in `theme::typography`
+/// as [`Size::text_style`] to keep this layer a leaf.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Size {
+    Sm,
+    #[default]
+    Md,
+    Lg,
+}
+
+impl Size {
+    /// Control height (px) — [`CONTROL_SM`]/[`CONTROL_MD`]/[`CONTROL_LG`].
+    pub fn height(self) -> f32 {
+        match self {
+            Size::Sm => CONTROL_SM,
+            Size::Md => CONTROL_MD,
+            Size::Lg => CONTROL_LG,
+        }
+    }
+    /// Icon box size (px) — [`ICON_SM`]/[`ICON_MD`]/[`ICON_LG`].
+    pub fn icon_size(self) -> f32 {
+        match self {
+            Size::Sm => ICON_SM,
+            Size::Md => ICON_MD,
+            Size::Lg => ICON_LG,
+        }
+    }
+    /// Horizontal padding (px) — tighter at `Sm`.
+    pub fn pad_x(self) -> f32 {
+        match self {
+            Size::Sm => SPACE_3,
+            Size::Md | Size::Lg => SPACE_4,
+        }
+    }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Motion — animation durations (seconds) + easing curves. egui drives hover/focus
 // transitions by duration (`ctx.animate_*`); [`Easing`] shapes the progress.
@@ -267,4 +305,13 @@ pub const SCRIM: Color32 = Color32::from_rgba_premultiplied(0, 0, 0, 153);
 /// for the disabled veil; atoms gate it behind their own `if !enabled` so it's applied once.
 pub fn disabled_color(c: Color32) -> Color32 {
     c.gamma_multiply(OPACITY_DISABLED)
+}
+
+/// Eased hover progress in `0..=1` for a widget. The single source for hover transitions:
+/// animates `hovered` over [`DURATION_FAST`] and shapes it with [`Easing::EaseOut`], so every
+/// atom fades its hover overlay/border identically. Pass a stable `id` (e.g. `response.id`);
+/// returns `0.0` when not hovering and settled.
+pub fn hover_t(ctx: &egui::Context, id: egui::Id, hovered: bool) -> f32 {
+    let raw = ctx.animate_bool_with_time(id.with("hover"), hovered, DURATION_FAST);
+    Easing::EaseOut.apply(raw)
 }
