@@ -19,6 +19,7 @@
 //! [egui]: https://github.com/emilk/egui
 //! [shadcn/ui]: https://ui.shadcn.com
 
+pub mod atoms;
 pub mod auto_layout;
 pub mod theme;
 pub mod tokens;
@@ -26,3 +27,7 @@ pub mod tokens;
 pub use theme::typography::{TypeStyle, Weight};
 pub use theme::Mode;
 pub use tokens::semantic::Theme;
+
+// Re-export the icon font crate so consumers reach glyphs without a separate dependency
+// (e.g. `ouroboros_ui::egui_phosphor::light::GEAR`).
+pub use egui_phosphor;

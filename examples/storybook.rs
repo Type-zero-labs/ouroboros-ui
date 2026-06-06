@@ -1,498 +1,790 @@
-//! Storybook — token gallery for ouroboros-ui.
+//! Storybook — organized gallery for ouroboros-ui, built with the DS itself.
 //!
-//! Renders the foundation's tokens so decisions can be validated by eye: semantic +
-//! core color swatches, the spacing / radius / shadow scales, the composite type scale,
-//! and a Phosphor-Light icon row. No components yet — this is the foundation surface.
+//! The chrome dogfoods the atoms: nav + toggle are [`Button`]s, every text run is a
+//! [`Text`]/[`Heading`], separators are [`Divider`]s, and all spacing/radius/color come
+//! from tokens. The only primitive painting is the token swatches/bars/shapes — the demo
+//! *of* a token must draw the token. Toggle ◐/◑ to compare light and dark.
 //!
 //! Run: `cargo run --example storybook`
 
-use egui::{vec2, Color32, CornerRadius, RichText, Sense, Stroke, StrokeKind, Ui};
+use egui::{vec2, Align, Color32, CornerRadius, Layout, Sense, Stroke, StrokeKind, Ui};
 use egui_phosphor::light;
+use ouroboros_ui::atoms::{Button, ButtonVariant, Divider, Heading, Icon, Text, TextRole};
 use ouroboros_ui::auto_layout::{AutoLayout, CrossAlign, MainAlign};
 use ouroboros_ui::theme::typography;
 use ouroboros_ui::tokens::{core, layout};
 use ouroboros_ui::{Mode, Theme};
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Page {
+    Colors,
+    Typography,
+    Spacing,
+    Radius,
+    Shadows,
+    Sizing,
+    Opacity,
+    Motion,
+    LayoutTokens,
+    AutoLayoutDemo,
+    Text,
+    Heading,
+    Icon,
+    Divider,
+    Button,
+}
+
+impl Page {
+    fn label(self) -> &'static str {
+        match self {
+            Page::Colors => "Colors",
+            Page::Typography => "Typography",
+            Page::Spacing => "Spacing",
+            Page::Radius => "Radius",
+            Page::Shadows => "Shadows",
+            Page::Sizing => "Sizing",
+            Page::Opacity => "Opacity & overlays",
+            Page::Motion => "Motion",
+            Page::LayoutTokens => "Layout & panels",
+            Page::AutoLayoutDemo => "Auto-layout (Figma)",
+            Page::Text => "Text",
+            Page::Heading => "Heading",
+            Page::Icon => "Icon",
+            Page::Divider => "Divider",
+            Page::Button => "Button",
+        }
+    }
+}
+
+const NAV: &[(&str, &[Page])] = &[
+    (
+        "TOKENS",
+        &[
+            Page::Colors,
+            Page::Typography,
+            Page::Spacing,
+            Page::Radius,
+            Page::Shadows,
+            Page::Sizing,
+            Page::Opacity,
+            Page::Motion,
+        ],
+    ),
+    ("LAYOUT", &[Page::LayoutTokens, Page::AutoLayoutDemo]),
+    (
+        "ATOMS",
+        &[
+            Page::Text,
+            Page::Heading,
+            Page::Icon,
+            Page::Divider,
+            Page::Button,
+        ],
+    ),
+];
+
 fn main() -> eframe::Result<()> {
     let mut installed = false;
     let mut mode = Mode::Dark;
+    let mut page = Page::Colors;
     eframe::run_ui_native(
         "ouroboros-ui storybook",
         eframe::NativeOptions::default(),
         move |ui, _frame| {
             if !installed {
-                // `set_fonts` only takes effect next frame — install, then skip rendering
-                // this frame so the named Iosevka families exist before we reference them.
+                // `set_fonts` only takes effect next frame — install, then skip this frame.
                 Theme::install(ui.ctx(), mode);
                 installed = true;
                 ui.ctx().request_repaint();
                 return;
             }
             let theme = Theme::get(ui);
-            // Paint the window background with the token directly — egui's own clear
-            // color follows its internal Dark/Light theme, not our semantic tokens.
             ui.painter()
                 .rect_filled(ui.clip_rect(), 0.0, theme.background);
 
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                ui.set_max_width(880.0);
-                ui.add_space(core::SPACE_4);
-                title(ui, "ouroboros-ui", &theme);
-                ui.horizontal(|ui| {
-                    ui.label(
-                        RichText::new("foundation — tokens · Iosevka · Phosphor Light")
-                            .font(typography::body().font_id())
-                            .color(theme.muted_foreground),
-                    );
-                    let label = match mode {
-                        Mode::Dark => "◐ Dark",
-                        Mode::Light => "◑ Light",
-                    };
-                    if ui.button(label).clicked() {
-                        mode = match mode {
-                            Mode::Dark => Mode::Light,
-                            Mode::Light => Mode::Dark,
-                        };
-                        Theme::apply(ui.ctx(), mode);
-                        ui.ctx().request_repaint();
-                    }
-                });
-                ui.add_space(core::SPACE_6);
-
-                section(ui, "Semantic — surfaces & text", &theme);
-                swatch_row(
-                    ui,
-                    &[
-                        ("background", theme.background),
-                        ("card", theme.card),
-                        ("popover", theme.popover),
-                        ("muted", theme.muted),
-                        ("border", theme.border),
-                        ("border_strong", theme.border_strong),
-                    ],
-                    &theme,
-                );
-                swatch_row(
-                    ui,
-                    &[
-                        ("foreground", theme.foreground),
-                        ("muted_foreground", theme.muted_foreground),
-                        ("disabled_foreground", theme.disabled_foreground),
-                        ("primary", theme.primary),
-                        ("ring", theme.ring),
-                    ],
-                    &theme,
-                );
-
-                section(ui, "Core — zinc ramp", &theme);
-                swatch_row(
-                    ui,
-                    &[
-                        ("50", core::ZINC_50),
-                        ("100", core::ZINC_100),
-                        ("200", core::ZINC_200),
-                        ("300", core::ZINC_300),
-                        ("400", core::ZINC_400),
-                        ("500", core::ZINC_500),
-                        ("600", core::ZINC_600),
-                        ("700", core::ZINC_700),
-                        ("800", core::ZINC_800),
-                        ("900", core::ZINC_900),
-                        ("950", core::ZINC_950),
-                    ],
-                    &theme,
-                );
-
-                section(ui, "Status", &theme);
-                swatch_row(
-                    ui,
-                    &[
-                        ("success", theme.success),
-                        ("warning", theme.warning),
-                        ("error", theme.error),
-                        ("info", theme.info),
-                        ("neutral", theme.neutral),
-                    ],
-                    &theme,
-                );
-
-                section(ui, "Spacing — base 4px", &theme);
-                for (name, w) in [
-                    ("SPACE_1", core::SPACE_1),
-                    ("SPACE_2", core::SPACE_2),
-                    ("SPACE_3", core::SPACE_3),
-                    ("SPACE_4", core::SPACE_4),
-                    ("SPACE_5", core::SPACE_5),
-                    ("SPACE_6", core::SPACE_6),
-                    ("SPACE_8", core::SPACE_8),
-                    ("SPACE_10", core::SPACE_10),
-                    ("SPACE_12", core::SPACE_12),
-                ] {
+            egui::Panel::top("header")
+                .frame(header_frame(&theme))
+                .show_inside(ui, |ui| {
                     ui.horizontal(|ui| {
-                        ui.allocate_ui(vec2(80.0, 16.0), |ui| {
-                            ui.label(
-                                RichText::new(name)
-                                    .font(typography::code().font_id())
-                                    .color(theme.muted_foreground),
-                            );
-                        });
-                        let (rect, _) = ui.allocate_exact_size(vec2(w, 14.0), Sense::hover());
-                        ui.painter()
-                            .rect_filled(rect, CornerRadius::same(2), theme.primary);
-                        ui.label(
-                            RichText::new(format!("{w}"))
-                                .font(typography::caption().font_id())
-                                .color(theme.muted_foreground),
-                        );
-                    });
-                }
-
-                section(ui, "Radius", &theme);
-                ui.horizontal(|ui| {
-                    for (name, r) in [
-                        ("SM 4", core::RADIUS_SM),
-                        ("MD 6", core::RADIUS_MD),
-                        ("LG 8", core::RADIUS_LG),
-                        ("XL 12", core::RADIUS_XL),
-                    ] {
-                        ui.vertical(|ui| {
-                            let (rect, _) =
-                                ui.allocate_exact_size(vec2(56.0, 56.0), Sense::hover());
-                            ui.painter()
-                                .rect_filled(rect, CornerRadius::same(r as u8), theme.muted);
-                            ui.painter().rect_stroke(
-                                rect,
-                                CornerRadius::same(r as u8),
-                                Stroke::new(1.0, theme.border_strong),
-                                StrokeKind::Inside,
-                            );
-                            ui.add_space(core::SPACE_1);
-                            ui.label(
-                                RichText::new(name)
-                                    .font(typography::caption().font_id())
-                                    .color(theme.muted_foreground),
-                            );
-                        });
-                        ui.add_space(core::SPACE_4);
-                    }
-                });
-
-                section(ui, "Shadows", &theme);
-                ui.label(
-                    RichText::new("shown on a light panel — dark-theme shadows are subtle by design (borders carry elevation)")
-                        .font(typography::caption().font_id())
-                        .color(theme.muted_foreground),
-                );
-                ui.add_space(core::SPACE_2);
-                // Light backdrop so the (black) shadow geometry is legible.
-                egui::Frame::default()
-                    .fill(core::ZINC_200)
-                    .corner_radius(CornerRadius::same(core::RADIUS_LG as u8))
-                    .inner_margin(core::SPACE_6)
-                    .show(ui, |ui| {
-                        ui.horizontal(|ui| {
-                            for (name, shadow) in [
-                                ("sm", core::SHADOW_SM),
-                                ("md", core::SHADOW_MD),
-                                ("lg", core::SHADOW_LG),
-                            ] {
-                                egui::Frame::default()
-                                    .fill(core::ZINC_50)
-                                    .corner_radius(CornerRadius::same(core::RADIUS_LG as u8))
-                                    .shadow(shadow)
-                                    .inner_margin(core::SPACE_4)
-                                    .show(ui, |ui| {
-                                        ui.label(
-                                            RichText::new(format!("shadow {name}"))
-                                                .font(typography::label().font_id())
-                                                .color(core::ZINC_900),
-                                        );
-                                    });
-                                ui.add_space(core::SPACE_8);
+                        Heading::new("ouroboros-ui").h2().show(ui);
+                        ui.add_space(core::SPACE_3);
+                        Text::new("design system").muted().show(ui);
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            let label = match mode {
+                                Mode::Dark => "◐ Dark",
+                                Mode::Light => "◑ Light",
+                            };
+                            if Button::new(label)
+                                .ghost()
+                                .sm()
+                                .id_source("toggle")
+                                .show(ui)
+                                .clicked()
+                            {
+                                mode = match mode {
+                                    Mode::Dark => Mode::Light,
+                                    Mode::Light => Mode::Dark,
+                                };
+                                Theme::apply(ui.ctx(), mode);
+                                ui.ctx().request_repaint();
                             }
                         });
                     });
+                });
 
-                section(ui, "Type scale", &theme);
-                for (name, style) in [
-                    ("display", typography::display()),
-                    ("h1", typography::h1()),
-                    ("h2", typography::h2()),
-                    ("heading", typography::heading()),
-                    ("body", typography::body()),
-                    ("body_strong", typography::body_strong()),
-                    ("label", typography::label()),
-                    ("caption", typography::caption()),
-                    ("code", typography::code()),
-                    ("kbd", typography::kbd()),
-                ] {
-                    ui.horizontal(|ui| {
-                        ui.allocate_ui(vec2(140.0, style.size), |ui| {
-                            ui.label(
-                                RichText::new(format!("{name} · {}px", style.size))
-                                    .font(typography::code().font_id())
-                                    .color(theme.muted_foreground),
-                            );
+            egui::Panel::left("nav")
+                .resizable(false)
+                .exact_size(190.0)
+                .frame(nav_frame(&theme))
+                .show_inside(ui, |ui| {
+                    egui::ScrollArea::vertical()
+                        .id_salt("nav_scroll")
+                        .show(ui, |ui| nav(ui, &theme, &mut page));
+                });
+
+            egui::CentralPanel::default()
+                .frame(content_frame(&theme))
+                .show_inside(ui, |ui| {
+                    egui::ScrollArea::vertical()
+                        .id_salt("content_scroll")
+                        .show(ui, |ui| {
+                            ui.set_max_width(760.0);
+                            Heading::new(page.label()).h1().show(ui);
+                            ui.add_space(core::SPACE_3);
+                            Divider::horizontal().show(ui);
+                            ui.add_space(core::SPACE_5);
+                            render_page(ui, &theme, page);
+                            ui.add_space(core::SPACE_8);
                         });
-                        ui.label(
-                            RichText::new("Ouroboros — the serpent renews")
-                                .font(style.font_id())
-                                .color(theme.foreground),
-                        );
-                    });
-                    ui.add_space(core::SPACE_1);
-                }
-
-                section(ui, "Icons — Phosphor Light", &theme);
-                ui.horizontal_wrapped(|ui| {
-                    for g in [
-                        light::GRID_FOUR,
-                        light::SQUARES_FOUR,
-                        light::CUBE,
-                        light::TERMINAL,
-                        light::GEAR,
-                        light::PALETTE,
-                        light::MAGNIFYING_GLASS,
-                        light::STAR,
-                        light::CHECK,
-                        light::WARNING,
-                        light::INFO,
-                        light::LIGHTBULB,
-                    ] {
-                        ui.label(
-                            RichText::new(g).size(22.0).color(theme.foreground),
-                        );
-                        ui.add_space(core::SPACE_3);
-                    }
                 });
-
-                section(ui, "Sizing — controls & icons", &theme);
-                ui.horizontal(|ui| {
-                    for (name, h) in [
-                        ("SM 26", core::CONTROL_SM),
-                        ("MD 32", core::CONTROL_MD),
-                        ("LG 38", core::CONTROL_LG),
-                    ] {
-                        let (rect, _) = ui.allocate_exact_size(vec2(96.0, h), Sense::hover());
-                        ui.painter()
-                            .rect_filled(rect, CornerRadius::same(core::RADIUS_MD as u8), theme.muted);
-                        ui.painter().rect_stroke(
-                            rect,
-                            CornerRadius::same(core::RADIUS_MD as u8),
-                            Stroke::new(core::BORDER_THIN, theme.border_strong),
-                            StrokeKind::Inside,
-                        );
-                        ui.painter().text(
-                            rect.center(),
-                            egui::Align2::CENTER_CENTER,
-                            name,
-                            typography::caption().font_id(),
-                            theme.muted_foreground,
-                        );
-                        ui.add_space(core::SPACE_3);
-                    }
-                });
-                ui.add_space(core::SPACE_2);
-                ui.horizontal(|ui| {
-                    for (g, sz, lbl) in [
-                        (light::CUBE, core::ICON_SM, "14"),
-                        (light::CUBE, core::ICON_MD, "16"),
-                        (light::CUBE, core::ICON_LG, "20"),
-                        (light::CUBE, core::ICON_XL, "24"),
-                    ] {
-                        ui.vertical(|ui| {
-                            ui.label(RichText::new(g).size(sz).color(theme.foreground));
-                            ui.label(
-                                RichText::new(lbl)
-                                    .font(typography::caption().font_id())
-                                    .color(theme.muted_foreground),
-                            );
-                        });
-                        ui.add_space(core::SPACE_4);
-                    }
-                });
-
-                section(ui, "Opacity & overlays", &theme);
-                ui.horizontal(|ui| {
-                    ui.label(
-                        RichText::new("enabled")
-                            .font(typography::body().font_id())
-                            .color(theme.foreground),
-                    );
-                    ui.add_space(core::SPACE_4);
-                    ui.label(
-                        RichText::new("disabled 0.5")
-                            .font(typography::body().font_id())
-                            .color(theme.foreground.gamma_multiply(core::OPACITY_DISABLED)),
-                    );
-                });
-                ui.add_space(core::SPACE_2);
-                ui.horizontal(|ui| {
-                    // scrim over a light tile
-                    overlay_tile(ui, "scrim 0.6", core::ZINC_200, core::SCRIM);
-                    ui.add_space(core::SPACE_4);
-                    overlay_tile(ui, "hover .06", theme.muted, Color32::from_white_alpha(15));
-                    ui.add_space(core::SPACE_4);
-                    overlay_tile(ui, "press .12", theme.muted, Color32::from_white_alpha(31));
-                });
-
-                section(ui, "Layout — panels & breakpoints", &theme);
-                for (name, w) in [
-                    ("SIDEBAR 240", layout::SIDEBAR_WIDTH),
-                    ("INSPECTOR 300", layout::INSPECTOR_WIDTH),
-                    ("PANEL_MIN 180", layout::PANEL_MIN),
-                    ("PANEL_MAX 480", layout::PANEL_MAX),
-                ] {
-                    ui.horizontal(|ui| {
-                        let (rect, _) = ui.allocate_exact_size(vec2(w, 14.0), Sense::hover());
-                        ui.painter()
-                            .rect_filled(rect, CornerRadius::same(2), theme.border_strong);
-                        ui.label(
-                            RichText::new(name)
-                                .font(typography::code().font_id())
-                                .color(theme.muted_foreground),
-                        );
-                    });
-                }
-                ui.add_space(core::SPACE_2);
-                ui.label(
-                    RichText::new("breakpoints  ·  compact <720  ·  normal <1024  ·  wide ≥1440")
-                        .font(typography::code().font_id())
-                        .color(theme.muted_foreground),
-                );
-
-                section(ui, "Motion — durations & easing", &theme);
-                let t = ui.input(|i| i.time) as f32;
-                for (name, dur, easing) in [
-                    ("fast 0.10  EaseOut", core::DURATION_FAST, core::Easing::EaseOut),
-                    ("normal 0.18  EaseOut", core::DURATION_NORMAL, core::Easing::EaseOut),
-                    ("slow 0.30  EaseInOut", core::DURATION_SLOW, core::Easing::EaseInOut),
-                ] {
-                    // Loop the dot across the track over (2*dur + pause), easing each leg.
-                    let period = dur * 2.0 + 0.6;
-                    let phase = (t % period) / period;
-                    let leg = if phase < 0.5 { phase * 2.0 } else { 1.0 - (phase - 0.5) * 2.0 };
-                    let e = easing.apply(leg.clamp(0.0, 1.0));
-                    ui.horizontal(|ui| {
-                        ui.allocate_ui(vec2(180.0, 16.0), |ui| {
-                            ui.label(
-                                RichText::new(name)
-                                    .font(typography::code().font_id())
-                                    .color(theme.muted_foreground),
-                            );
-                        });
-                        let (track, _) = ui.allocate_exact_size(vec2(240.0, 16.0), Sense::hover());
-                        ui.painter().rect_filled(track, CornerRadius::same(8), theme.muted);
-                        let r = 6.0;
-                        let x = track.left() + r + e * (track.width() - 2.0 * r);
-                        ui.painter()
-                            .circle_filled(egui::pos2(x, track.center().y), r, theme.primary);
-                    });
-                }
-                ui.ctx().request_repaint();
-
-                section(ui, "Auto-layout (Figma flow)", &theme);
-                let (p, pf) = (theme.primary, theme.primary_foreground);
-                let (mu, fg) = (theme.muted, theme.foreground);
-
-                ui.label(cap("gap Auto — space-between", &theme));
-                al_box(ui, &theme, |ui| {
-                    AutoLayout::horizontal()
-                        .gap_auto()
-                        .pad(core::SPACE_2)
-                        .cross_align(CrossAlign::Center)
-                        .hug(|ui| chip(ui, "A", p, pf))
-                        .hug(|ui| chip(ui, "B", mu, fg))
-                        .hug(|ui| chip(ui, "C", mu, fg))
-                        .show(ui);
-                });
-
-                ui.label(cap("Fill spacer — left group · spacer · right action", &theme));
-                al_box(ui, &theme, |ui| {
-                    AutoLayout::horizontal()
-                        .gap(core::SPACE_2)
-                        .pad(core::SPACE_2)
-                        .cross_align(CrossAlign::Center)
-                        .hug(|ui| chip(ui, "File", mu, fg))
-                        .hug(|ui| chip(ui, "Edit", mu, fg))
-                        .fill(|_ui| {})
-                        .hug(|ui| chip(ui, "Run", p, pf))
-                        .show(ui);
-                });
-
-                ui.label(cap("main_align Center", &theme));
-                al_box(ui, &theme, |ui| {
-                    AutoLayout::horizontal()
-                        .gap(core::SPACE_2)
-                        .pad(core::SPACE_2)
-                        .main_align(MainAlign::Center)
-                        .cross_align(CrossAlign::Center)
-                        .hug(|ui| chip(ui, "ok", p, pf))
-                        .hug(|ui| chip(ui, "cancel", mu, fg))
-                        .show(ui);
-                });
-
-                ui.label(cap("cross_align Center — mixed heights", &theme));
-                al_box(ui, &theme, |ui| {
-                    AutoLayout::horizontal()
-                        .gap(core::SPACE_3)
-                        .pad(core::SPACE_2)
-                        .cross_align(CrossAlign::Center)
-                        .hug(|ui| {
-                            ui.label(RichText::new(light::CUBE).size(28.0).color(p));
-                        })
-                        .hug(|ui| chip(ui, "label", mu, fg))
-                        .show(ui);
-                });
-
-                ui.label(cap("vertical stack — gap + padding", &theme));
-                al_box(ui, &theme, |ui| {
-                    AutoLayout::vertical()
-                        .gap(core::SPACE_2)
-                        .pad(core::SPACE_3)
-                        .cross_align(CrossAlign::Start)
-                        .hug(|ui| chip(ui, "row one", mu, fg))
-                        .hug(|ui| chip(ui, "row two", mu, fg))
-                        .hug(|ui| chip(ui, "row three", p, pf))
-                        .show(ui);
-                });
-
-                ui.add_space(core::SPACE_8);
-            });
         },
     )
 }
 
-fn title(ui: &mut Ui, text: &str, theme: &Theme) {
-    ui.label(
-        RichText::new(text)
-            .font(typography::display().font_id())
-            .color(theme.foreground),
+// ── Frames (token-driven) ─────────────────────────────────────────────────────
+
+fn header_frame(theme: &Theme) -> egui::Frame {
+    egui::Frame::default()
+        .fill(theme.background)
+        .inner_margin(egui::Margin::symmetric(
+            core::SPACE_5 as i8,
+            core::SPACE_3 as i8,
+        ))
+        .stroke(Stroke::new(core::BORDER_THIN, theme.border))
+}
+
+fn nav_frame(theme: &Theme) -> egui::Frame {
+    egui::Frame::default()
+        .fill(theme.card)
+        .inner_margin(core::SPACE_3)
+        .stroke(Stroke::new(core::BORDER_THIN, theme.border))
+}
+
+fn content_frame(theme: &Theme) -> egui::Frame {
+    egui::Frame::default()
+        .fill(theme.background)
+        .inner_margin(core::SPACE_6)
+}
+
+// ── Nav (dogfoods Button + Text) ──────────────────────────────────────────────
+
+fn nav(ui: &mut Ui, theme: &Theme, page: &mut Page) {
+    for (category, pages) in NAV {
+        ui.add_space(core::SPACE_3);
+        Text::new(*category).caption().muted().show(ui);
+        ui.add_space(core::SPACE_1);
+        for &p in *pages {
+            let variant = if *page == p {
+                ButtonVariant::Secondary
+            } else {
+                ButtonVariant::Ghost
+            };
+            if Button::new(p.label())
+                .variant(variant)
+                .sm()
+                .id_source(("nav", p.label()))
+                .show(ui)
+                .clicked()
+            {
+                *page = p;
+            }
+        }
+    }
+    let _ = theme;
+}
+
+// ── Pages ─────────────────────────────────────────────────────────────────────
+
+fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
+    match page {
+        Page::Colors => page_colors(ui, theme),
+        Page::Typography => page_typography(ui, theme),
+        Page::Spacing => page_spacing(ui, theme),
+        Page::Radius => page_radius(ui, theme),
+        Page::Shadows => page_shadows(ui, theme),
+        Page::Sizing => page_sizing(ui, theme),
+        Page::Opacity => page_opacity(ui, theme),
+        Page::Motion => page_motion(ui, theme),
+        Page::LayoutTokens => page_layout_tokens(ui, theme),
+        Page::AutoLayoutDemo => page_auto_layout(ui, theme),
+        Page::Text => page_text(ui, theme),
+        Page::Heading => page_heading(ui, theme),
+        Page::Icon => page_icon(ui, theme),
+        Page::Divider => page_divider(ui, theme),
+        Page::Button => page_button(ui, theme),
+    }
+}
+
+fn page_colors(ui: &mut Ui, theme: &Theme) {
+    caption(ui, "Semantic — surfaces & text");
+    swatch_row(
+        ui,
+        &[
+            ("background", theme.background),
+            ("card", theme.card),
+            ("popover", theme.popover),
+            ("muted", theme.muted),
+            ("border", theme.border),
+            ("border_strong", theme.border_strong),
+        ],
+        theme,
+    );
+    swatch_row(
+        ui,
+        &[
+            ("foreground", theme.foreground),
+            ("muted_foreground", theme.muted_foreground),
+            ("disabled_fg", theme.disabled_foreground),
+            ("primary", theme.primary),
+            ("ring", theme.ring),
+        ],
+        theme,
+    );
+    subhead(ui, "Core — zinc ramp");
+    swatch_row(
+        ui,
+        &[
+            ("50", core::ZINC_50),
+            ("100", core::ZINC_100),
+            ("200", core::ZINC_200),
+            ("300", core::ZINC_300),
+            ("400", core::ZINC_400),
+            ("500", core::ZINC_500),
+            ("600", core::ZINC_600),
+            ("700", core::ZINC_700),
+            ("800", core::ZINC_800),
+            ("900", core::ZINC_900),
+            ("950", core::ZINC_950),
+        ],
+        theme,
+    );
+    subhead(ui, "Status");
+    swatch_row(
+        ui,
+        &[
+            ("success", theme.success),
+            ("warning", theme.warning),
+            ("error", theme.error),
+            ("info", theme.info),
+            ("neutral", theme.neutral),
+        ],
+        theme,
     );
 }
 
-fn cap(text: &str, theme: &Theme) -> RichText {
-    RichText::new(text)
-        .font(typography::caption().font_id())
-        .color(theme.muted_foreground)
+fn page_typography(ui: &mut Ui, _theme: &Theme) {
+    const SAMPLE: &str = "Ouroboros — the serpent renews";
+    type_row(ui, "display", |ui| {
+        Heading::new(SAMPLE).display().show(ui);
+    });
+    type_row(ui, "h1", |ui| {
+        Heading::new(SAMPLE).h1().show(ui);
+    });
+    type_row(ui, "h2", |ui| {
+        Heading::new(SAMPLE).h2().show(ui);
+    });
+    type_row(ui, "heading", |ui| {
+        Heading::new(SAMPLE).heading().show(ui);
+    });
+    for (name, role) in [
+        ("body", TextRole::Body),
+        ("body_strong", TextRole::BodyStrong),
+        ("label", TextRole::Label),
+        ("caption", TextRole::Caption),
+        ("code", TextRole::Code),
+        ("kbd", TextRole::Kbd),
+    ] {
+        type_row(ui, name, move |ui| {
+            Text::new(SAMPLE).role(role).show(ui);
+        });
+    }
 }
 
-/// Bordered, width-bounded box wrapping an auto-layout demo so leftover-space
-/// distribution (space-between / fill / center) is visible.
+fn page_spacing(ui: &mut Ui, theme: &Theme) {
+    for (name, w) in [
+        ("SPACE_1", core::SPACE_1),
+        ("SPACE_2", core::SPACE_2),
+        ("SPACE_3", core::SPACE_3),
+        ("SPACE_4", core::SPACE_4),
+        ("SPACE_5", core::SPACE_5),
+        ("SPACE_6", core::SPACE_6),
+        ("SPACE_8", core::SPACE_8),
+        ("SPACE_10", core::SPACE_10),
+        ("SPACE_12", core::SPACE_12),
+    ] {
+        ui.horizontal(|ui| {
+            name_cell(ui, name);
+            let (rect, _) = ui.allocate_exact_size(vec2(w, core::SPACE_3), Sense::hover());
+            ui.painter()
+                .rect_filled(rect, CornerRadius::same(2), theme.primary);
+            Text::new(format!("{w}")).caption().muted().show(ui);
+        });
+    }
+}
+
+fn page_radius(ui: &mut Ui, theme: &Theme) {
+    ui.horizontal(|ui| {
+        for (name, r) in [
+            ("SM 4", core::RADIUS_SM),
+            ("MD 6", core::RADIUS_MD),
+            ("LG 8", core::RADIUS_LG),
+            ("XL 12", core::RADIUS_XL),
+        ] {
+            ui.vertical(|ui| {
+                let (rect, _) = ui.allocate_exact_size(vec2(56.0, 56.0), Sense::hover());
+                ui.painter()
+                    .rect_filled(rect, CornerRadius::same(r as u8), theme.muted);
+                ui.painter().rect_stroke(
+                    rect,
+                    CornerRadius::same(r as u8),
+                    Stroke::new(core::BORDER_THIN, theme.border_strong),
+                    StrokeKind::Inside,
+                );
+                ui.add_space(core::SPACE_1);
+                Text::new(name).caption().muted().show(ui);
+            });
+            ui.add_space(core::SPACE_4);
+        }
+    });
+}
+
+fn page_shadows(ui: &mut Ui, _theme: &Theme) {
+    caption(
+        ui,
+        "shown on a light panel — dark-theme shadows are subtle by design",
+    );
+    ui.add_space(core::SPACE_2);
+    egui::Frame::default()
+        .fill(core::ZINC_200)
+        .corner_radius(CornerRadius::same(core::RADIUS_LG as u8))
+        .inner_margin(core::SPACE_6)
+        .show(ui, |ui| {
+            ui.horizontal(|ui| {
+                for (name, shadow) in [
+                    ("sm", core::SHADOW_SM),
+                    ("md", core::SHADOW_MD),
+                    ("lg", core::SHADOW_LG),
+                ] {
+                    egui::Frame::default()
+                        .fill(core::ZINC_50)
+                        .corner_radius(CornerRadius::same(core::RADIUS_LG as u8))
+                        .shadow(shadow)
+                        .inner_margin(core::SPACE_4)
+                        .show(ui, |ui| {
+                            Text::new(format!("shadow {name}"))
+                                .label()
+                                .color(core::ZINC_900)
+                                .show(ui);
+                        });
+                    ui.add_space(core::SPACE_8);
+                }
+            });
+        });
+}
+
+fn page_sizing(ui: &mut Ui, theme: &Theme) {
+    caption(ui, "Control heights");
+    ui.horizontal(|ui| {
+        for (name, h) in [
+            ("SM 26", core::CONTROL_SM),
+            ("MD 32", core::CONTROL_MD),
+            ("LG 38", core::CONTROL_LG),
+        ] {
+            let (rect, _) = ui.allocate_exact_size(vec2(96.0, h), Sense::hover());
+            ui.painter()
+                .rect_filled(rect, CornerRadius::same(core::RADIUS_MD as u8), theme.muted);
+            ui.painter().rect_stroke(
+                rect,
+                CornerRadius::same(core::RADIUS_MD as u8),
+                Stroke::new(core::BORDER_THIN, theme.border_strong),
+                StrokeKind::Inside,
+            );
+            ui.painter().text(
+                rect.center(),
+                egui::Align2::CENTER_CENTER,
+                name,
+                typography::caption().font_id(),
+                theme.muted_foreground,
+            );
+            ui.add_space(core::SPACE_3);
+        }
+    });
+    subhead(ui, "Icon sizes");
+    ui.horizontal(|ui| {
+        for (sz, lbl) in [
+            (core::ICON_SM, "14"),
+            (core::ICON_MD, "16"),
+            (core::ICON_LG, "20"),
+            (core::ICON_XL, "24"),
+        ] {
+            ui.vertical(|ui| {
+                Icon::new(light::CUBE).size(sz).show(ui);
+                Text::new(lbl).caption().muted().show(ui);
+            });
+            ui.add_space(core::SPACE_4);
+        }
+    });
+}
+
+fn page_opacity(ui: &mut Ui, theme: &Theme) {
+    ui.horizontal(|ui| {
+        Text::new("enabled").show(ui);
+        ui.add_space(core::SPACE_4);
+        Text::new("disabled 0.5")
+            .color(theme.foreground.gamma_multiply(core::OPACITY_DISABLED))
+            .show(ui);
+    });
+    ui.add_space(core::SPACE_3);
+    ui.horizontal(|ui| {
+        overlay_tile(ui, "scrim 0.6", core::ZINC_200, core::SCRIM);
+        ui.add_space(core::SPACE_4);
+        overlay_tile(ui, "hover", theme.muted, theme.hover_overlay);
+        ui.add_space(core::SPACE_4);
+        overlay_tile(ui, "press", theme.muted, theme.press_overlay);
+    });
+}
+
+fn page_motion(ui: &mut Ui, theme: &Theme) {
+    let t = ui.input(|i| i.time) as f32;
+    for (name, dur, easing) in [
+        (
+            "fast 0.10  EaseOut",
+            core::DURATION_FAST,
+            core::Easing::EaseOut,
+        ),
+        (
+            "normal 0.18  EaseOut",
+            core::DURATION_NORMAL,
+            core::Easing::EaseOut,
+        ),
+        (
+            "slow 0.30  EaseInOut",
+            core::DURATION_SLOW,
+            core::Easing::EaseInOut,
+        ),
+    ] {
+        let period = dur * 2.0 + 0.6;
+        let phase = (t % period) / period;
+        let leg = if phase < 0.5 {
+            phase * 2.0
+        } else {
+            1.0 - (phase - 0.5) * 2.0
+        };
+        let e = easing.apply(leg.clamp(0.0, 1.0));
+        ui.horizontal(|ui| {
+            ui.allocate_ui(vec2(180.0, 16.0), |ui| {
+                Text::new(name).code().muted().show(ui);
+            });
+            let (track, _) = ui.allocate_exact_size(vec2(240.0, 16.0), Sense::hover());
+            ui.painter()
+                .rect_filled(track, CornerRadius::same(8), theme.muted);
+            let r = 6.0;
+            let x = track.left() + r + e * (track.width() - 2.0 * r);
+            ui.painter()
+                .circle_filled(egui::pos2(x, track.center().y), r, theme.primary);
+        });
+    }
+    ui.ctx().request_repaint();
+}
+
+fn page_layout_tokens(ui: &mut Ui, theme: &Theme) {
+    caption(ui, "Panel widths");
+    for (name, w) in [
+        ("SIDEBAR 240", layout::SIDEBAR_WIDTH),
+        ("INSPECTOR 300", layout::INSPECTOR_WIDTH),
+        ("PANEL_MIN 180", layout::PANEL_MIN),
+        ("PANEL_MAX 480", layout::PANEL_MAX),
+    ] {
+        ui.horizontal(|ui| {
+            let (rect, _) = ui.allocate_exact_size(vec2(w, core::SPACE_3), Sense::hover());
+            ui.painter()
+                .rect_filled(rect, CornerRadius::same(2), theme.border_strong);
+            Text::new(name).code().muted().show(ui);
+        });
+    }
+    subhead(ui, "Breakpoints");
+    Text::new("compact <720  ·  normal <1024  ·  wide ≥1440")
+        .code()
+        .muted()
+        .show(ui);
+}
+
+fn page_auto_layout(ui: &mut Ui, theme: &Theme) {
+    let (p, pf) = (theme.primary, theme.primary_foreground);
+    let (mu, fg) = (theme.muted, theme.foreground);
+
+    caption(ui, "gap Auto — space-between");
+    al_box(ui, theme, |ui| {
+        AutoLayout::horizontal()
+            .gap_auto()
+            .pad(core::SPACE_2)
+            .cross_align(CrossAlign::Center)
+            .hug(|ui| chip(ui, "A", p, pf))
+            .hug(|ui| chip(ui, "B", mu, fg))
+            .hug(|ui| chip(ui, "C", mu, fg))
+            .show(ui);
+    });
+    caption(ui, "Fill spacer — left group · spacer · right action");
+    al_box(ui, theme, |ui| {
+        AutoLayout::horizontal()
+            .gap(core::SPACE_2)
+            .pad(core::SPACE_2)
+            .cross_align(CrossAlign::Center)
+            .hug(|ui| chip(ui, "File", mu, fg))
+            .hug(|ui| chip(ui, "Edit", mu, fg))
+            .fill(|_ui| {})
+            .hug(|ui| chip(ui, "Run", p, pf))
+            .show(ui);
+    });
+    caption(ui, "main_align Center");
+    al_box(ui, theme, |ui| {
+        AutoLayout::horizontal()
+            .gap(core::SPACE_2)
+            .pad(core::SPACE_2)
+            .main_align(MainAlign::Center)
+            .cross_align(CrossAlign::Center)
+            .hug(|ui| chip(ui, "ok", p, pf))
+            .hug(|ui| chip(ui, "cancel", mu, fg))
+            .show(ui);
+    });
+    caption(ui, "vertical stack — gap + padding");
+    al_box(ui, theme, |ui| {
+        AutoLayout::vertical()
+            .gap(core::SPACE_2)
+            .pad(core::SPACE_3)
+            .cross_align(CrossAlign::Start)
+            .hug(|ui| chip(ui, "row one", mu, fg))
+            .hug(|ui| chip(ui, "row two", mu, fg))
+            .hug(|ui| chip(ui, "row three", p, pf))
+            .show(ui);
+    });
+}
+
+fn page_text(ui: &mut Ui, theme: &Theme) {
+    for (name, role) in [
+        ("body", TextRole::Body),
+        ("body_strong", TextRole::BodyStrong),
+        ("label", TextRole::Label),
+        ("caption", TextRole::Caption),
+        ("code", TextRole::Code),
+        ("kbd", TextRole::Kbd),
+    ] {
+        ui.horizontal(|ui| {
+            name_cell(ui, name);
+            Text::new("Ouroboros — the serpent renews")
+                .role(role)
+                .show(ui);
+        });
+    }
+    subhead(ui, "Color & decoration");
+    ui.horizontal(|ui| {
+        Text::new("muted").muted().show(ui);
+        ui.add_space(core::SPACE_4);
+        Text::new("success token").color(theme.success).show(ui);
+        ui.add_space(core::SPACE_4);
+        Text::new("underlined").underline().show(ui);
+    });
+}
+
+fn page_heading(ui: &mut Ui, _theme: &Theme) {
+    Heading::new("Display").display().show(ui);
+    ui.add_space(core::SPACE_2);
+    Heading::new("Heading 1").h1().show(ui);
+    ui.add_space(core::SPACE_2);
+    Heading::new("Heading 2").h2().show(ui);
+    ui.add_space(core::SPACE_2);
+    Heading::new("Heading").heading().show(ui);
+}
+
+fn page_icon(ui: &mut Ui, theme: &Theme) {
+    caption(ui, "Sizes (sm/md/lg/xl) + color");
+    ui.horizontal(|ui| {
+        Icon::new(light::CUBE).sm().show(ui);
+        ui.add_space(core::SPACE_3);
+        Icon::new(light::CUBE).md().show(ui);
+        ui.add_space(core::SPACE_3);
+        Icon::new(light::CUBE).lg().show(ui);
+        ui.add_space(core::SPACE_3);
+        Icon::new(light::CUBE).xl().show(ui);
+        ui.add_space(core::SPACE_5);
+        Icon::new(light::CHECK).lg().color(theme.success).show(ui);
+        ui.add_space(core::SPACE_3);
+        Icon::new(light::WARNING).lg().color(theme.warning).show(ui);
+        ui.add_space(core::SPACE_3);
+        Icon::new(light::HEART).lg().color(theme.error).show(ui);
+    });
+    subhead(ui, "Phosphor Light set (sample)");
+    ui.horizontal_wrapped(|ui| {
+        for g in [
+            light::GRID_FOUR,
+            light::SQUARES_FOUR,
+            light::CUBE,
+            light::TERMINAL,
+            light::GEAR,
+            light::PALETTE,
+            light::MAGNIFYING_GLASS,
+            light::STAR,
+            light::CHECK,
+            light::WARNING,
+            light::INFO,
+            light::LIGHTBULB,
+        ] {
+            Icon::new(g).lg().show(ui);
+            ui.add_space(core::SPACE_3);
+        }
+    });
+}
+
+fn page_divider(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Horizontal");
+    Divider::horizontal().show(ui);
+    ui.add_space(core::SPACE_3);
+    caption(ui, "Destructive (red rule)");
+    Divider::horizontal().destructive().show(ui);
+    ui.add_space(core::SPACE_3);
+    caption(ui, "Vertical (between content)");
+    ui.allocate_ui(vec2(ui.available_width(), 22.0), |ui| {
+        ui.horizontal(|ui| {
+            Text::new("File").show(ui);
+            ui.add_space(core::SPACE_3);
+            Divider::vertical().show(ui);
+            ui.add_space(core::SPACE_3);
+            Text::new("Edit").show(ui);
+        });
+    });
+}
+
+fn page_button(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Variants × sizes (Sm/Md/Lg)");
+    for (name, variant) in [
+        ("Default", ButtonVariant::Default),
+        ("Secondary", ButtonVariant::Secondary),
+        ("Destructive", ButtonVariant::Destructive),
+        ("Outline", ButtonVariant::Outline),
+        ("Ghost", ButtonVariant::Ghost),
+        ("Link", ButtonVariant::Link),
+    ] {
+        ui.horizontal(|ui| {
+            name_cell(ui, name);
+            Button::new("Button")
+                .variant(variant)
+                .sm()
+                .id_source((name, "sm"))
+                .show(ui);
+            ui.add_space(core::SPACE_2);
+            Button::new("Button")
+                .variant(variant)
+                .id_source((name, "md"))
+                .show(ui);
+            ui.add_space(core::SPACE_2);
+            Button::new("Button")
+                .variant(variant)
+                .lg()
+                .id_source((name, "lg"))
+                .show(ui);
+        });
+        ui.add_space(core::SPACE_1);
+    }
+    subhead(ui, "Icons · icon-only · disabled");
+    ui.horizontal(|ui| {
+        Button::new("New")
+            .icon_left(light::CUBE)
+            .id_source("b_new")
+            .show(ui);
+        ui.add_space(core::SPACE_2);
+        Button::new("Next")
+            .icon_right(light::CHECK)
+            .secondary()
+            .id_source("b_next")
+            .show(ui);
+        ui.add_space(core::SPACE_2);
+        Button::new("")
+            .icon_only()
+            .icon_left(light::GEAR)
+            .outline()
+            .id_source("b_gear")
+            .show(ui);
+        ui.add_space(core::SPACE_2);
+        Button::new("Delete")
+            .destructive()
+            .icon_left(light::WARNING)
+            .id_source("b_del")
+            .show(ui);
+        ui.add_space(core::SPACE_2);
+        Button::new("Disabled")
+            .disabled()
+            .id_source("b_dis")
+            .show(ui);
+    });
+}
+
+// ── Helpers (text via atoms) ──────────────────────────────────────────────────
+
+/// A muted caption line.
+fn caption(ui: &mut Ui, text: &str) {
+    Text::new(text).caption().muted().show(ui);
+}
+
+/// A subsection label with space above.
+fn subhead(ui: &mut Ui, text: &str) {
+    ui.add_space(core::SPACE_5);
+    Text::new(text).label().show(ui);
+    ui.add_space(core::SPACE_2);
+}
+
+/// A fixed-width mono name column (for `name | demo` rows).
+fn name_cell(ui: &mut Ui, name: &str) {
+    ui.allocate_ui(vec2(112.0, core::TEXT_LG), |ui| {
+        Text::new(name).code().muted().show(ui);
+    });
+}
+
+/// A `name | rendered` typography row.
+fn type_row(ui: &mut Ui, name: &str, render: impl FnOnce(&mut Ui)) {
+    ui.horizontal(|ui| {
+        ui.allocate_ui(vec2(120.0, core::TEXT_3XL), |ui| {
+            Text::new(name).code().muted().show(ui);
+        });
+        render(ui);
+    });
+    ui.add_space(core::SPACE_1);
+}
+
 fn al_box(ui: &mut Ui, theme: &Theme, add: impl FnOnce(&mut Ui)) {
     egui::Frame::default()
-        .stroke(Stroke::new(1.0, theme.border))
+        .stroke(Stroke::new(core::BORDER_THIN, theme.border))
         .corner_radius(CornerRadius::same(core::RADIUS_MD as u8))
+        .inner_margin(core::SPACE_1)
         .show(ui, |ui| {
             ui.set_width(ui.available_width().min(420.0));
             add(ui);
         });
-    ui.add_space(core::SPACE_4);
+    ui.add_space(core::SPACE_3);
 }
 
-/// A content-sized (Hug) pill with a centered label — a stand-in child for layout demos.
+/// A content-sized pill — a stand-in child for the auto-layout demos.
 fn chip(ui: &mut Ui, label: &str, fill: Color32, fg: Color32) {
-    let pad = vec2(10.0, 6.0);
+    let pad = vec2(core::SPACE_3, core::SPACE_2);
     let galley = ui
         .painter()
         .layout_no_wrap(label.to_owned(), typography::label().font_id(), fg);
@@ -503,25 +795,10 @@ fn chip(ui: &mut Ui, label: &str, fill: Color32, fg: Color32) {
     ui.painter().galley(rect.min + pad, galley, fg);
 }
 
-fn section(ui: &mut Ui, text: &str, theme: &Theme) {
-    ui.add_space(core::SPACE_6);
-    ui.label(
-        RichText::new(text)
-            .font(typography::heading().font_id())
-            .color(theme.foreground),
-    );
-    let (rect, _) =
-        ui.allocate_exact_size(vec2(ui.available_width().min(880.0), 1.0), Sense::hover());
-    ui.painter()
-        .rect_filled(rect, CornerRadius::ZERO, theme.border);
-    ui.add_space(core::SPACE_3);
-}
-
 fn hex(c: Color32) -> String {
     format!("#{:02x}{:02x}{:02x}", c.r(), c.g(), c.b())
 }
 
-/// A tile of `base` with `overlay` veiled on top, captioned — for opacity/scrim demos.
 fn overlay_tile(ui: &mut Ui, label: &str, base: Color32, overlay: Color32) {
     ui.vertical(|ui| {
         let (rect, _) = ui.allocate_exact_size(vec2(104.0, 44.0), Sense::hover());
@@ -529,11 +806,7 @@ fn overlay_tile(ui: &mut Ui, label: &str, base: Color32, overlay: Color32) {
         ui.painter().rect_filled(rect, cr, base);
         ui.painter().rect_filled(rect, cr, overlay);
         ui.add_space(core::SPACE_1);
-        ui.label(
-            RichText::new(label)
-                .font(typography::caption().font_id())
-                .color(core::ZINC_400),
-        );
+        Text::new(label).caption().color(core::ZINC_400).show(ui);
     });
 }
 
@@ -547,20 +820,12 @@ fn swatch_row(ui: &mut Ui, items: &[(&str, Color32)], theme: &Theme) {
                 ui.painter().rect_stroke(
                     rect,
                     CornerRadius::same(core::RADIUS_MD as u8),
-                    Stroke::new(1.0, Color32::from_white_alpha(18)),
+                    Stroke::new(core::BORDER_THIN, theme.border),
                     StrokeKind::Inside,
                 );
                 ui.add_space(core::SPACE_1);
-                ui.label(
-                    RichText::new(*name)
-                        .font(typography::caption().font_id())
-                        .color(theme.foreground),
-                );
-                ui.label(
-                    RichText::new(hex(*color))
-                        .font(typography::code().font_id())
-                        .color(theme.muted_foreground),
-                );
+                Text::new(*name).caption().show(ui);
+                Text::new(hex(*color)).code().muted().show(ui);
             });
             ui.add_space(core::SPACE_3);
         }
