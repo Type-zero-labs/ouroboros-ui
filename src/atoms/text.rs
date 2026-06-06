@@ -105,6 +105,7 @@ impl Text {
         let style = self.role.style();
         let mut rich = RichText::new(self.content)
             .font(style.font_id())
+            .extra_letter_spacing(style.tracking)
             .color(color);
         // Leading only matters for multi-line text; applying it to a single line inflates
         // the row and pushes the glyph off-center inside parents (e.g. a button).

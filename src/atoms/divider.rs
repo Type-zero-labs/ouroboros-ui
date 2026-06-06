@@ -20,6 +20,7 @@ pub struct Divider {
     axis: Axis,
     color: Option<Color32>,
     destructive: bool,
+    weight: f32,
 }
 
 impl Divider {
@@ -28,6 +29,7 @@ impl Divider {
             axis: Axis::Horizontal,
             color: None,
             destructive: false,
+            weight: core::BORDER_THIN,
         }
     }
     pub fn vertical() -> Self {
@@ -35,6 +37,7 @@ impl Divider {
             axis: Axis::Vertical,
             color: None,
             destructive: false,
+            weight: core::BORDER_THIN,
         }
     }
 
@@ -47,6 +50,11 @@ impl Divider {
         self.destructive = true;
         self
     }
+    /// Thicker rule (`BORDER_FOCUS`) — e.g. a tab underline indicator.
+    pub fn thick(mut self) -> Self {
+        self.weight = core::BORDER_FOCUS;
+        self
+    }
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let theme = Theme::get(ui);
@@ -55,19 +63,18 @@ impl Divider {
         } else {
             theme.border
         });
-        let stroke = Stroke::new(core::BORDER_THIN, color);
+        let stroke = Stroke::new(self.weight, color);
         match self.axis {
             Axis::Horizontal => {
                 let width = ui.available_width();
-                let (rect, resp) =
-                    ui.allocate_exact_size(vec2(width, core::BORDER_THIN), Sense::hover());
+                let (rect, resp) = ui.allocate_exact_size(vec2(width, self.weight), Sense::hover());
                 ui.painter().hline(rect.x_range(), rect.center().y, stroke);
                 resp
             }
             Axis::Vertical => {
                 let height = ui.available_height();
                 let (rect, resp) =
-                    ui.allocate_exact_size(vec2(core::BORDER_THIN, height), Sense::hover());
+                    ui.allocate_exact_size(vec2(self.weight, height), Sense::hover());
                 ui.painter().vline(rect.center().x, rect.y_range(), stroke);
                 resp
             }
