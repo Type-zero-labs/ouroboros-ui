@@ -12,6 +12,7 @@ use ouroboros_ui::atoms::{
     Icon, Input, Kbd, NumericField, Progress, Radio, Skeleton, Slider, Spinner, Surface, Switch,
     Text, TextRole, Textarea, Toggle, Tooltip,
 };
+use ouroboros_ui::cells::{ListItem, MenuItem, PropertyRow, TableRow, ToolbarButton, TreeNode};
 use ouroboros_ui::egui_phosphor::light;
 use ouroboros_ui::molecules::{
     Alert, Breadcrumb, Card, CheckboxCard, Collapsible, ColorField, Field, FieldSeparator,
@@ -340,6 +341,54 @@ fn tabs_selects() {
         .click_accesskit();
     harness.run();
     assert_eq!(selected.get(), 1, "clicking the Game tab should select it");
+}
+
+#[test]
+fn cells_render() {
+    rendered(|ui| {
+        let mut m = 1.0_f32;
+        PropertyRow::new("Mass").show(ui, |ui| NumericField::new(&mut m).show(ui));
+        ListItem::new("Cube")
+            .icon(light::CUBE)
+            .subtitle("Mesh")
+            .show(ui);
+        MenuItem::new("Copy")
+            .icon(light::COPY)
+            .shortcut("Ctrl C")
+            .show(ui);
+        TreeNode::new("Player")
+            .depth(1)
+            .icon(light::CUBE)
+            .expandable(true)
+            .show(ui);
+        let mut active = true;
+        ToolbarButton::new(&mut active, light::CURSOR)
+            .tooltip("Select")
+            .show(ui);
+        TableRow::new(["A", "B"]).header().show(ui, &[80.0, 80.0]);
+    });
+}
+
+#[test]
+fn list_item_selects() {
+    let clicked = Rc::new(Cell::new(false));
+    let sink = clicked.clone();
+    let mut installed = false;
+    let mut harness = Harness::new_ui(move |ui| {
+        if !installed {
+            Theme::install(ui.ctx(), Mode::Dark);
+            installed = true;
+            return;
+        }
+        if ListItem::new("Cube").show(ui).clicked() {
+            sink.set(true);
+        }
+    });
+    harness.run();
+    harness.run();
+    harness.get_by_label("Cube").click();
+    harness.run();
+    assert!(clicked.get(), "clicking the list row should select it");
 }
 
 #[test]

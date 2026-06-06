@@ -25,6 +25,7 @@ const FORBIDDEN: &[&str] = &[
 fn molecules_compose_never_paint() {
     let mut violations = Vec::new();
     scan_dir(Path::new("src/molecules"), &mut violations);
+    scan_dir(Path::new("src/cells"), &mut violations);
     assert!(
         violations.is_empty(),
         "\nMolecules must compose atoms, not paint primitives:\n  {}\n",

@@ -15,6 +15,7 @@ use ouroboros_ui::atoms::{
     SurfaceFill, Switch, Text, TextRole, Textarea, Toggle, Tooltip,
 };
 use ouroboros_ui::auto_layout::{AutoLayout, CrossAlign, MainAlign};
+use ouroboros_ui::cells::{ListItem, MenuItem, PropertyRow, TableRow, ToolbarButton, TreeNode};
 use ouroboros_ui::molecules::{
     Alert, AlertVariant, Breadcrumb, Card, CheckboxCard, Collapsible, ColorField, Field,
     FieldSeparator, FieldSet, InputGroup, RadioCard, RadioGroup, SearchField, Slot, Tabs,
@@ -72,6 +73,12 @@ enum Page {
     VectorField,
     ColorField,
     SearchField,
+    PropertyRow,
+    ListItem,
+    MenuItem,
+    TreeNode,
+    ToolbarButton,
+    TableRow,
 }
 
 impl Page {
@@ -123,6 +130,12 @@ impl Page {
             Page::VectorField => "Vector field",
             Page::ColorField => "Color field",
             Page::SearchField => "Search field",
+            Page::PropertyRow => "Property row",
+            Page::ListItem => "List item",
+            Page::MenuItem => "Menu item",
+            Page::TreeNode => "Tree node",
+            Page::ToolbarButton => "Toolbar button",
+            Page::TableRow => "Table row",
         }
     }
 }
@@ -186,6 +199,17 @@ const NAV: &[(&str, &[Page])] = &[
             Page::VectorField,
             Page::ColorField,
             Page::SearchField,
+        ],
+    ),
+    (
+        "CELLS",
+        &[
+            Page::PropertyRow,
+            Page::ListItem,
+            Page::MenuItem,
+            Page::TreeNode,
+            Page::ToolbarButton,
+            Page::TableRow,
         ],
     ),
 ];
@@ -370,7 +394,148 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::VectorField => page_vector_field(ui, theme),
         Page::ColorField => page_color_field(ui, theme),
         Page::SearchField => page_search_field(ui, theme),
+        Page::PropertyRow => page_property_row(ui, theme),
+        Page::ListItem => page_list_item(ui, theme),
+        Page::MenuItem => page_menu_item(ui, theme),
+        Page::TreeNode => page_tree_node(ui, theme),
+        Page::ToolbarButton => page_toolbar_button(ui, theme),
+        Page::TableRow => page_table_row(ui, theme),
     }
+}
+
+fn page_property_row(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Inspector rows (aligned label column)");
+    let id = egui::Id::new("prop_demo");
+    let mut vals = ui.data(|d| d.get_temp::<[f32; 3]>(id).unwrap_or([1.0, 0.05, 0.6]));
+    ui.allocate_ui(vec2(360.0, 140.0), |ui| {
+        for (i, name) in ["Mass", "Drag", "Bounce"].iter().enumerate() {
+            PropertyRow::new(*name).show(ui, |ui| {
+                NumericField::new(&mut vals[i]).speed(0.05).show(ui)
+            });
+        }
+    });
+    ui.data_mut(|d| d.insert_temp(id, vals));
+}
+
+fn page_list_item(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Selectable list rows");
+    let id = egui::Id::new("li_demo");
+    let mut sel = ui.data(|d| d.get_temp::<usize>(id).unwrap_or(0));
+    ui.allocate_ui(vec2(280.0, 160.0), |ui| {
+        for (i, (icon, title, sub)) in [
+            (light::CUBE, "Cube", "Mesh"),
+            (light::STAR, "Light", "Point"),
+            (light::GEAR, "Settings", "Project"),
+        ]
+        .iter()
+        .enumerate()
+        {
+            if ListItem::new(*title)
+                .icon(icon)
+                .subtitle(*sub)
+                .selected(sel == i)
+                .id_source(("li", i))
+                .show(ui)
+                .clicked()
+            {
+                sel = i;
+            }
+        }
+    });
+    ui.data_mut(|d| d.insert_temp(id, sel));
+}
+
+fn page_menu_item(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Menu rows (icon + label + shortcut)");
+    ui.allocate_ui(vec2(240.0, 140.0), |ui| {
+        MenuItem::new("Copy")
+            .icon(light::COPY)
+            .shortcut("Ctrl C")
+            .id_source("mi_c")
+            .show(ui);
+        MenuItem::new("Paste")
+            .icon(light::CLIPBOARD)
+            .shortcut("Ctrl V")
+            .id_source("mi_v")
+            .show(ui);
+        MenuItem::new("Delete")
+            .icon(light::TRASH)
+            .id_source("mi_d")
+            .show(ui);
+        MenuItem::new("Disabled")
+            .enabled(false)
+            .id_source("mi_x")
+            .show(ui);
+    });
+}
+
+fn page_tree_node(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Hierarchy rows (indent + caret)");
+    ui.allocate_ui(vec2(280.0, 180.0), |ui| {
+        TreeNode::new("Scene")
+            .icon(light::FOLDER)
+            .expandable(true)
+            .id_source("tn0")
+            .show(ui);
+        TreeNode::new("Player")
+            .depth(1)
+            .icon(light::CUBE)
+            .expandable(false)
+            .selected(true)
+            .id_source("tn1")
+            .show(ui);
+        TreeNode::new("Camera")
+            .depth(1)
+            .icon(light::CUBE)
+            .id_source("tn2")
+            .show(ui);
+        TreeNode::new("Mesh")
+            .depth(2)
+            .icon(light::CUBE)
+            .id_source("tn3")
+            .show(ui);
+    });
+}
+
+fn page_toolbar_button(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Toolbar icon toggles (hover for tooltip)");
+    let id = egui::Id::new("tb_demo");
+    let mut state = ui.data(|d| d.get_temp::<[bool; 3]>(id).unwrap_or([true, false, false]));
+    ui.horizontal(|ui| {
+        ToolbarButton::new(&mut state[0], light::CURSOR)
+            .tooltip("Select")
+            .id_source("tb0")
+            .show(ui);
+        ToolbarButton::new(&mut state[1], light::ARROWS_OUT)
+            .tooltip("Move")
+            .id_source("tb1")
+            .show(ui);
+        ToolbarButton::new(&mut state[2], light::ARROWS_CLOCKWISE)
+            .tooltip("Rotate")
+            .id_source("tb2")
+            .show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id, state));
+}
+
+fn page_table_row(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Table rows (fixed columns)");
+    let widths = [120.0_f32, 80.0, 80.0];
+    ui.allocate_ui(vec2(300.0, 140.0), |ui| {
+        TableRow::new(["Name", "Type", "Size"])
+            .header()
+            .show(ui, &widths);
+        ui.add_space(core::SPACE_1);
+        Divider::horizontal().show(ui);
+        ui.add_space(core::SPACE_1);
+        for row in [
+            ["hero.fbx", "Mesh", "2.1 MB"],
+            ["grass.png", "Texture", "512 KB"],
+            ["main.rs", "Script", "8 KB"],
+        ] {
+            TableRow::new(row).show(ui, &widths);
+        }
+    });
 }
 
 fn page_tabs(ui: &mut Ui, _theme: &Theme) {
