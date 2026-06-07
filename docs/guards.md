@@ -6,11 +6,16 @@ page documents exactly what they catch and how to add a component without trippi
 
 ---
 
-## Guard 1 — atoms paint only with tokens
+## Guard 1 — atoms (and graph) paint only with tokens
 
 `tests/no_raw_values.rs` → test `atoms_use_only_tokens`. Recursively scans
-`src/atoms/**/*.rs` and fails on any hardcoded design value. Comments are stripped first,
-so prose mentioning a pattern is fine.
+`src/atoms/**/*.rs` **and `src/graph/**/*.rs`** and fails on any hardcoded design value.
+Comments are stripped first, so prose mentioning a pattern is fine.
+
+> The [graph layer](./components/graph/README.md) is allowed to paint (a node editor needs
+> grid dots, wires, handles), but it is held to the **same purity contract** as atoms — its
+> colors resolve from `Theme` (via `GraphTokens`) and geometry from `core`. That is why this
+> guard scans it too.
 
 | Pattern flagged | Why | Use instead |
 |-----------------|-----|-------------|
@@ -46,6 +51,10 @@ hline(   vline(
 The rule: if a cell/molecule/organism needs to paint something, **the missing piece
 becomes an atom** (atoms are the only layer allowed to paint — see `src/atoms/surface.rs`,
 the painting primitive everything composes for fills/borders).
+
+> **`src/graph` is deliberately not scanned by this guard.** The node-editor layer is the
+> sanctioned exception that paints directly (grid/wires/handles/marquee) — painting there is
+> by design. It is still held to token purity by Guard 1, which *does* scan it.
 
 ---
 

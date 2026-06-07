@@ -20,6 +20,9 @@ layer may reference the layer below it, and **nothing below knows the layer abov
 │      ↓ read                                                   │
 │  core        ZINC_950, SPACE_4, RADIUS_MD, TEXT_BASE…        │  raw primitives (const)
 └─────────────────────────────────────────────────────────────┘
+
+  ┌── graph ──┐  peer layer (node editor on egui::Scene) — reads the same tokens,
+  └───────────┘  but is the one place outside atoms allowed to paint. See below.
 ```
 
 The crate root re-exports the four most-used names so consumers don't reach deep:
@@ -92,6 +95,25 @@ Popover/DropdownMenu/Select/Menubar → `Popup::menu`. The *casing* is either a 
 `Surface` atom (Toast, Toolbar, bordered Table) or themed egui visuals driven by `Theme`
 tokens (the Modal/Popup-based ones) — placement is egui's job, the look is always tokens.
 
+### graph — the node-editor peer layer
+
+`src/graph/`. A peer layer beside the four above — a reactflow-style node editor
+(`GraphView`) built on `egui::Scene`. It is the **one place outside `atoms` that paints**: a
+node graph needs grid dots, bezier wires, handle circles and a marquee, none of which the
+atom vocabulary covers. The atomic-design rules don't fit it, so it has its **own invariant**
+instead — *paint, but only through tokens*:
+
+- It **may call the painter**, but every value still flows through a token (colors from
+  `Theme` resolved into `GraphTokens`, geometry from `core`). The `no_raw_values` guard is
+  **extended to scan `src/graph`**, so it has the same purity contract as atoms.
+- The `no_painter_in_molecules` guard **deliberately skips it** — painting here is allowed.
+
+Internally it splits into a **paint tier** (`viewport`/`grid`/`edge`/`handle`/`resizer`) and
+a **compose tier** (`node`/`controls`/`minimap`/`toolbar`/`search`, which reuse `Surface` +
+atoms). And it follows a **data-model-agnostic contract**: the caller owns the node/edge
+data, the library owns only view-state and reports back *intents*. Full docs:
+[components/graph](./components/graph/README.md).
+
 ---
 
 ## The primordial law
@@ -103,12 +125,14 @@ tokens (the Modal/Popup-based ones) — placement is egui's job, the look is alw
 This is not a style preference; it is **mechanically enforced** by two test guards that
 run with `cargo test`:
 
-- `tests/no_raw_values.rs` — scans `src/atoms/**`, fails on hardcoded `Color32::from_rgb`,
-  named `Color32` constants, or raw `FontId::new`. Atoms must source colors from `Theme`/`core`
-  and fonts from `theme::typography`.
+- `tests/no_raw_values.rs` — scans `src/atoms/**` **and `src/graph/**`**, fails on hardcoded
+  `Color32::from_rgb`, named `Color32` constants, or raw `FontId::new`. Atoms (and the graph
+  layer) must source colors from `Theme`/`core` and fonts from `theme::typography`.
 - `tests/no_painter_in_molecules.rs` — scans `src/cells/**`, `src/molecules/**`,
   `src/organisms/**`, fails on any painting call (`ui.painter()`, `.rect_filled()`,
-  `.circle_stroke()`, `Shape::*`, …). Above atoms you compose; you never paint.
+  `.circle_stroke()`, `Shape::*`, …). Above atoms you compose; you never paint. **`src/graph`
+  is deliberately not scanned** — it is the sanctioned exception that paints (still via
+  tokens, enforced by `no_raw_values`).
 
 The consequence: the missing-piece-becomes-an-atom discipline keeps the atom set complete
 and every higher layer pure composition. See [guards.md](./guards.md).
