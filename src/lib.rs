@@ -22,6 +22,7 @@
 pub mod atoms;
 pub mod auto_layout;
 pub mod cells;
+pub mod graph;
 pub mod molecules;
 pub mod organisms;
 pub mod theme;

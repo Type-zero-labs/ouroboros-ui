@@ -315,3 +315,32 @@ pub fn hover_t(ctx: &egui::Context, id: egui::Id, hovered: bool) -> f32 {
     let raw = ctx.animate_bool_with_time(id.with("hover"), hovered, DURATION_FAST);
     Easing::EaseOut.apply(raw)
 }
+
+/// Re-tint a color to a given alpha (`0..=255`), preserving its RGB. The single source for
+/// translucent fills (selection marquee, soft overlays) built from a token color, so the
+/// `graph` layer never reaches for a raw `Color32::from_rgba_*`. Lives here (a non-scanned
+/// leaf) by design; callers pass a `Theme`/`core` color and an alpha.
+pub fn tint(color: Color32, alpha: u8) -> Color32 {
+    let [r, g, b, _] = color.to_array();
+    Color32::from_rgba_unmultiplied(r, g, b, alpha)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Graph geometry — neutral primitives for the `graph` node-editor layer (dot grid,
+// edges, handles). Sizes only; every color comes from `Theme` via `graph::GraphTokens`.
+// Screen-space px unless a scale is applied; hit radii stay screen-constant on purpose
+// (a thin edge/handle must remain grabbable when zoomed out).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Radius (px) of a single background grid dot.
+pub const GRID_DOT_RADIUS: f32 = 1.0;
+/// Base spacing (px) between grid dots at zoom = 1 (scaled by zoom at paint time).
+pub const GRID_SPACING: f32 = 28.0;
+/// Default edge (wire) stroke width.
+pub const EDGE_WIDTH: f32 = 2.0;
+/// Pointer-to-edge distance (screen px) that still counts as a hover/click hit.
+pub const EDGE_HIT_RADIUS: f32 = 6.0;
+/// Radius (world px, pre-zoom) of a connection handle.
+pub const HANDLE_RADIUS: f32 = 5.0;
+/// Translucent fill alpha for the box-select marquee.
+pub const MARQUEE_ALPHA: u8 = 38;

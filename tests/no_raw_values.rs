@@ -4,6 +4,9 @@
 //! built from literals or a named color constant, or a directly-constructed `FontId`.
 //! Atoms must source every color from `Theme`/`core` and every font from
 //! `theme::typography`. Sizes/radii/spacing come from `core::*` and are checked by review.
+//!
+//! The same contract extends to `src/graph` — the node-editor layer paints (it is exempt from
+//! `no_painter_in_molecules`) but must still source every color/font from tokens.
 
 use std::fs;
 use std::path::Path;
@@ -15,6 +18,17 @@ fn atoms_use_only_tokens() {
     assert!(
         violations.is_empty(),
         "\nHardcoded design values found in atoms (use foundation tokens instead):\n  {}\n",
+        violations.join("\n  ")
+    );
+}
+
+#[test]
+fn graph_uses_only_tokens() {
+    let mut violations = Vec::new();
+    scan_dir(Path::new("src/graph"), &mut violations);
+    assert!(
+        violations.is_empty(),
+        "\nHardcoded design values found in graph (use foundation tokens instead):\n  {}\n",
         violations.join("\n  ")
     );
 }
