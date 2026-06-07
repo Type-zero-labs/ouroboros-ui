@@ -1,8 +1,9 @@
 # Component catalog
 
-58 components across four atomic-design layers. Each has its own page with design intent,
-anatomy, variants/states, API, and usage examples. Layer rules: atoms paint, everything
-above composes (see [guards](../guards.md)).
+58 components across four atomic-design layers, plus the **[graph](#graph)** peer layer
+(node editor). Each has its own page with design intent, anatomy, variants/states, API, and
+usage examples. Layer rules: atoms paint, everything above composes; the graph layer is the
+sanctioned exception that paints (still via tokens). See [guards](../guards.md).
 
 ---
 
@@ -106,6 +107,26 @@ above composes (see [guards](../guards.md)).
 - [TreeView](./organisms/tree_view.md) — hierarchical tree (`TreeItem`)
 - [TabView](./organisms/tab_view.md) — tabbed content view
 - [Accordion](./organisms/accordion.md) — stacked collapsible sections (`AccordionCtx`)
+
+---
+
+## Graph
+
+The **[graph](./graph/README.md)** peer layer — a reactflow-style node editor on
+`egui::Scene`. The one place outside `atoms` that paints (still via tokens). Caller owns the
+data; the library owns view-state and reports intents.
+
+- [Graph layer overview](./graph/README.md) — invariant, two tiers, data-model contract, lifecycle
+- [identity](./graph/identity.md) — `NodeId`/`PortId`/`NodeKindId`/`PortSide`/`Port`/`Connection`
+- [canvas](./graph/canvas.md) — `GraphView`, `GraphCtx`, `GraphResponse`
+- [state](./graph/state.md) — `GraphViewState` + drag structs
+- [tokens](./graph/tokens.md) — `GraphTokens`
+- [node](./graph/node.md) — `NodeFrame`/`NodeResult`/`NodeStatus` + `ctx.node`
+- [edge](./graph/edge.md) — `EdgeStyle`/`EdgeResult` + `ctx.edge`
+- [handle](./graph/handle.md) — `HandleSpec`/`HandleVariant` (ports)
+- [search](./graph/search.md) — `NodeSearch` palette
+- [viewport](./graph/viewport.md) — standalone world↔screen transform helper
+- [extras](./graph/extras.md) — `grid`, `resizer`, `minimap`, `toolbar`, `controls`
 
 ---
 

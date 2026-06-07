@@ -33,6 +33,7 @@ Every component has its own page under [`components/`](./components/), grouped b
 - **[Cells](./components/README.md#cells)** — 7 row/item building blocks.
 - **[Molecules](./components/README.md#molecules)** — 14 compositions of atoms.
 - **[Organisms](./components/README.md#organisms)** — 14 full UI sections.
+- **[Graph](./components/graph/README.md)** — the node-editor peer layer (reactflow-style on `egui::Scene`).
 
 See the [component catalog](./components/README.md) for the complete index.
 
