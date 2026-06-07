@@ -202,7 +202,15 @@ impl<'a> Splitter<'a> {
         let main = |v: Vec2| if horizontal { v.x } else { v.y };
         let div = core::SPACE_2;
         let main_len = main(rect.size());
-        let content_main = (main_len - div * (n as f32 - 1.0)).max(1.0);
+
+        // A boundary is draggable only when both neighbours are resizable. Fixed/locked
+        // boundaries (e.g. next to a `PanelSpec::fixed` chrome band) get no handle and no gap, so
+        // the chrome reads as seamless bands rather than draggable splits.
+        let draggable: Vec<bool> = (0..n.saturating_sub(1))
+            .map(|i| self.panels[i].cfg.resizable && self.panels[i + 1].cfg.resizable)
+            .collect();
+        let div_total = div * draggable.iter().filter(|d| **d).count() as f32;
+        let content_main = (main_len - div_total).max(1.0);
 
         // ── Fixed bands reserve px up front; flex panels share what's left ──
         let fixed_px: Vec<Option<f32>> = self.panels.iter().map(|p| p.cfg.fixed).collect();
@@ -280,20 +288,18 @@ impl<'a> Splitter<'a> {
             }
             cursor += pixels[i];
 
-            // Divider after every panel except the last.
-            if i + 1 < n {
+            // Draggable boundaries get a handle + a gap; fixed/locked boundaries are seamless.
+            if i + 1 < n && draggable[i] {
                 let d_rect = cell(cursor, div, &rect);
                 let line = if horizontal {
                     Axis::Vertical
                 } else {
                     Axis::Horizontal
                 };
-                let pair_resizable =
-                    self.panels[i].cfg.resizable && self.panels[i + 1].cfg.resizable;
                 let active = state.collapsed[i] || state.collapsed[i + 1];
                 let mut hui = ui.new_child(UiBuilder::new().max_rect(d_rect));
                 let h = SplitterHandle::new(line).active(active).show(&mut hui);
-                if pair_resizable && h.dragged() {
+                if h.dragged() {
                     drag_for = Some((i, main(h.drag_delta())));
                 }
                 if h.double_clicked() {
