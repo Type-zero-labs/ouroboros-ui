@@ -27,11 +27,14 @@ use egui::{pos2, vec2, Id, Rect, Response, Sense, Ui, UiBuilder, Vec2};
 pub struct PanelSpec {
     /// Initial size as a fraction of the splitter's main axis (0..1). `None` = equal share.
     size: Option<f32>,
-    /// Minimum / maximum size in px.
+    /// Minimum / maximum size in px. `max` defaults to unbounded (`f32::INFINITY`) so a wide
+    /// flex panel never blocks an adjacent divider's drag.
     min: f32,
     max: f32,
     resizable: bool,
     collapsible: bool,
+    /// Inner padding (px) applied to the panel's content rect. `0` = flush (the default).
+    pad: f32,
 }
 
 impl PanelSpec {
@@ -39,14 +42,25 @@ impl PanelSpec {
         Self {
             size: None,
             min: layout::PANEL_MIN,
-            max: layout::PANEL_MAX,
+            max: f32::INFINITY,
             resizable: true,
             collapsible: false,
+            pad: 0.0,
         }
+    }
+    /// A flex panel: no explicit size (takes the remainder) and unbounded `max`. Same as
+    /// [`PanelSpec::new`] — a readable alias for the wide center pane (viewport/canvas).
+    pub fn flex() -> Self {
+        Self::new()
     }
     /// Initial size as a fraction of the main axis (0..1).
     pub fn size(mut self, fraction: f32) -> Self {
         self.size = Some(fraction.clamp(0.0, 1.0));
+        self
+    }
+    /// Inner padding (px) for the panel's content. Default `0` (flush).
+    pub fn pad(mut self, px: f32) -> Self {
+        self.pad = px;
         self
     }
     pub fn min(mut self, px: f32) -> Self {
@@ -189,8 +203,14 @@ impl<'a> Splitter<'a> {
         for i in 0..n {
             let p_rect = cell(cursor, pixels[i], &rect);
             if !state.collapsed[i] {
-                let mut cui = ui.new_child(UiBuilder::new().max_rect(p_rect));
-                cui.set_clip_rect(p_rect);
+                let pad = self.panels[i].cfg.pad;
+                let content_rect = if pad > 0.0 {
+                    p_rect.shrink(pad)
+                } else {
+                    p_rect
+                };
+                let mut cui = ui.new_child(UiBuilder::new().max_rect(content_rect));
+                cui.set_clip_rect(content_rect);
                 (self.panels[i].add)(&mut cui);
             }
             cursor += pixels[i];

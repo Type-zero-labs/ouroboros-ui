@@ -105,7 +105,7 @@ impl Badge {
 
         // Padding + text style scale with Size; Md preserves the original look.
         let (pad, text_style) = match self.size {
-            Size::Sm => (vec2(core::SPACE_1, core::SPACE_1), typography::caption()),
+            Size::Sm => (vec2(core::SPACE_2, core::SPACE_1), typography::caption()),
             Size::Md => (vec2(core::SPACE_2, core::SPACE_1), typography::caption()),
             Size::Lg => (vec2(core::SPACE_3, core::SPACE_1), typography::label()),
         };

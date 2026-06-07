@@ -35,6 +35,7 @@ pub struct AppShell<'a> {
     footer_height: f32,
     aside_left_width: f32,
     aside_right_width: f32,
+    pad: f32,
     id_source: Option<Id>,
 }
 
@@ -50,6 +51,7 @@ impl<'a> AppShell<'a> {
             footer_height: layout::STATUSBAR_HEIGHT,
             aside_left_width: layout::SIDEBAR_WIDTH,
             aside_right_width: layout::INSPECTOR_WIDTH,
+            pad: 0.0,
             id_source: None,
         }
     }
@@ -91,6 +93,12 @@ impl<'a> AppShell<'a> {
         self.aside_right_width = px;
         self
     }
+    /// Inner padding (px) applied to every slot's content (header/footer bands + asides + main).
+    /// Default `0` (flush).
+    pub fn pad(mut self, px: f32) -> Self {
+        self.pad = px;
+        self
+    }
     pub fn id_source(mut self, id: impl std::hash::Hash) -> Self {
         self.id_source = Some(Id::new(id));
         self
@@ -100,6 +108,7 @@ impl<'a> AppShell<'a> {
         let outer = ui.available_size();
         let (rect, response) = ui.allocate_exact_size(outer, Sense::hover());
         let id = self.id_source.unwrap_or(response.id);
+        let pad = self.pad;
 
         let header_h = if self.header.is_some() {
             self.header_height
@@ -122,6 +131,7 @@ impl<'a> AppShell<'a> {
                 return;
             }
             if let Some(add) = slot.as_mut() {
+                let cell = if pad > 0.0 { cell.shrink(pad) } else { cell };
                 let mut cui = ui.new_child(UiBuilder::new().max_rect(cell));
                 cui.set_clip_rect(cell);
                 add(&mut cui);
@@ -153,19 +163,21 @@ impl<'a> AppShell<'a> {
                     PanelSpec::new()
                         .size(frac(self.aside_left_width))
                         .min(layout::PANEL_MIN)
-                        .max(layout::PANEL_MAX),
+                        .max(layout::PANEL_MAX)
+                        .pad(pad),
                     add,
                 );
             }
             if let Some(add) = self.main.take() {
-                splitter = splitter.panel(PanelSpec::new(), add);
+                splitter = splitter.panel(PanelSpec::new().pad(pad), add);
             }
             if let Some(add) = self.aside_right.take() {
                 splitter = splitter.panel(
                     PanelSpec::new()
                         .size(frac(self.aside_right_width))
                         .min(layout::PANEL_MIN)
-                        .max(layout::PANEL_MAX),
+                        .max(layout::PANEL_MAX)
+                        .pad(pad),
                     add,
                 );
             }

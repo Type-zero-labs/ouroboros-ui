@@ -1077,6 +1077,17 @@ fn page_sidebar(ui: &mut Ui, _theme: &Theme) {
                 .icons_only()
                 .show(ui);
         });
+        ui.add_space(core::SPACE_4);
+        // Icon rail with 24px glyphs (ICON_XL) — a denser editor-style rail.
+        ui.allocate_ui(vec2(56.0, 180.0), |ui| {
+            Sidebar::new(&mut sel)
+                .item(light::HOUSE, "Home")
+                .item(light::CUBE, "Assets")
+                .item(light::GEAR, "Settings")
+                .icons_only()
+                .icon_size(core::ICON_XL)
+                .show(ui);
+        });
     });
     ui.data_mut(|d| d.insert_temp(id, sel));
 }
