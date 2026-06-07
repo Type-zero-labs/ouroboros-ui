@@ -697,3 +697,45 @@ fn splitter_fixed_bands_hold_px() {
         body_h.get()
     );
 }
+
+#[test]
+fn splitter_layout_returns_fixed_rects() {
+    // The rect-returning `layout()` path (for `&mut self` panel bodies) must size fixed bands the
+    // same as `show()`.
+    let header_h = Rc::new(Cell::new(0.0f32));
+    let body_h = Rc::new(Cell::new(0.0f32));
+    let footer_h = Rc::new(Cell::new(0.0f32));
+    let (h, b, f) = (header_h.clone(), body_h.clone(), footer_h.clone());
+    rendered(move |ui| {
+        let layout = Splitter::vertical()
+            .id_source("test_layout_fixed")
+            .region(PanelSpec::fixed(40.0))
+            .region(PanelSpec::flex())
+            .region(PanelSpec::fixed(24.0))
+            .layout(ui);
+        if let Some(r) = layout.rects[0] {
+            h.set(r.height());
+        }
+        if let Some(r) = layout.rects[1] {
+            b.set(r.height());
+        }
+        if let Some(r) = layout.rects[2] {
+            f.set(r.height());
+        }
+    });
+    assert!(
+        (header_h.get() - 40.0).abs() < 0.5,
+        "layout fixed header should be 40px, got {}",
+        header_h.get()
+    );
+    assert!(
+        (footer_h.get() - 24.0).abs() < 0.5,
+        "layout fixed footer should be 24px, got {}",
+        footer_h.get()
+    );
+    assert!(
+        body_h.get() > 40.0,
+        "layout flex body should take the remainder, got {}",
+        body_h.get()
+    );
+}

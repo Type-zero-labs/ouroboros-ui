@@ -25,7 +25,7 @@ pub use menubar::Menubar;
 pub use popover::Popover;
 pub use select::Select;
 pub use sidebar::Sidebar;
-pub use splitter::{PanelSpec, Splitter};
+pub use splitter::{PanelSpec, Splitter, SplitterLayout};
 pub use tab_view::TabView;
 pub use table::{ColWidth, Column, Table};
 pub use toast::Toast;

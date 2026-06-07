@@ -154,12 +154,48 @@ impl<'a> Splitter<'a> {
         self
     }
 
+    /// Add a panel without a content closure, for use with [`Splitter::layout`]. Use this when
+    /// each panel's body needs `&mut self` of the caller — three `FnMut(&mut Ui)` closures can't
+    /// each borrow the same state, so instead lay the splitter out, get the rects back, and draw
+    /// into them sequentially via `ui.new_child`.
+    pub fn region(self, cfg: PanelSpec) -> Self {
+        self.panel(cfg, |_| {})
+    }
+
+    /// Render panels by invoking their content closures.
     pub fn show(mut self, ui: &mut Ui) -> Response {
+        let SplitterLayout { rects, response } = self.layout_rects(ui);
+        for (i, slot) in rects.iter().enumerate() {
+            if let Some(content_rect) = slot {
+                let mut cui = ui.new_child(UiBuilder::new().max_rect(*content_rect));
+                cui.set_clip_rect(*content_rect);
+                (self.panels[i].add)(&mut cui);
+            }
+        }
+        response
+    }
+
+    /// Lay the splitter out — draw the dividers, handle resize/collapse, persist state — and
+    /// return one content rect per panel (`None` when collapsed) **instead of** invoking content
+    /// closures. Use with [`Splitter::region`] when each panel body needs `&mut self`; draw into
+    /// the returned rects sequentially via `ui.new_child`.
+    pub fn layout(mut self, ui: &mut Ui) -> SplitterLayout {
+        self.layout_rects(ui)
+    }
+
+    /// Shared layout core for [`Splitter::show`] and [`Splitter::layout`]: allocate, size panels
+    /// (fixed-px bands + flex split), draw dividers, apply drag/collapse, persist state. Returns
+    /// the per-panel content rects; the caller decides whether to render closures or hand the
+    /// rects back.
+    fn layout_rects(&mut self, ui: &mut Ui) -> SplitterLayout {
         let n = self.panels.len();
         let outer = ui.available_size();
         let (rect, response) = ui.allocate_exact_size(outer, Sense::hover());
         if n == 0 {
-            return response;
+            return SplitterLayout {
+                rects: Vec::new(),
+                response,
+            };
         }
 
         let horizontal = self.horizontal;
@@ -226,6 +262,7 @@ impl<'a> Splitter<'a> {
         let mut cursor = main_start;
         let mut drag_for: Option<(usize, f32)> = None;
         let mut toggle: Option<usize> = None;
+        let mut rects: Vec<Option<Rect>> = vec![None; n];
 
         // Indexed loop: each iteration touches several parallel arrays plus the `i + 1`
         // neighbor for the divider, so a single enumerate() doesn't fit cleanly.
@@ -239,9 +276,7 @@ impl<'a> Splitter<'a> {
                 } else {
                     p_rect
                 };
-                let mut cui = ui.new_child(UiBuilder::new().max_rect(content_rect));
-                cui.set_clip_rect(content_rect);
-                (self.panels[i].add)(&mut cui);
+                rects[i] = Some(content_rect);
             }
             cursor += pixels[i];
 
@@ -298,8 +333,15 @@ impl<'a> Splitter<'a> {
         }
 
         ui.data_mut(|d| d.insert_temp(id, state));
-        response
+        SplitterLayout { rects, response }
     }
+}
+
+/// Output of [`Splitter::layout`] — one content rect per panel (`None` if collapsed), plus the
+/// splitter's own [`Response`].
+pub struct SplitterLayout {
+    pub rects: Vec<Option<Rect>>,
+    pub response: Response,
 }
 
 /// Initial fractions over the **flex** panels: honour explicit `size`, split the remainder
