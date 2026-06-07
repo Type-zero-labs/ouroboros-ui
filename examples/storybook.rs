@@ -970,6 +970,31 @@ fn page_table(ui: &mut Ui, theme: &Theme) {
                 .show(ui);
         });
     });
+
+    subhead(ui, "Editable cells (Table::layout + NumericField)");
+    let id = egui::Id::new("tbl_edit_vals");
+    let mut vals = ui
+        .data(|d| d.get_temp::<[f32; 3]>(id))
+        .unwrap_or([10.0, 20.0, 30.0]);
+    let labels = ["STR", "AGI", "VIT"];
+    ui.allocate_ui(vec2(300.0, 150.0), |ui| {
+        let layout = Table::new()
+            .id_source("tbl_edit")
+            .border(true)
+            .columns([Column::new("Stat"), Column::new("Value").exact(120.0)])
+            .layout(ui, 3);
+        for (i, row) in layout.rects.iter().enumerate() {
+            if row.len() == 2 {
+                let mut lui = ui.new_child(egui::UiBuilder::new().max_rect(row[0]));
+                lui.set_clip_rect(row[0]);
+                Text::new(labels[i]).show(&mut lui);
+                let mut vui = ui.new_child(egui::UiBuilder::new().max_rect(row[1]));
+                vui.set_clip_rect(row[1]);
+                NumericField::new(&mut vals[i]).decimals(0).show(&mut vui);
+            }
+        }
+    });
+    ui.data_mut(|d| d.insert_temp(id, vals));
 }
 
 fn page_tree_view(ui: &mut Ui, _theme: &Theme) {

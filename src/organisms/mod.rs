@@ -27,7 +27,7 @@ pub use select::Select;
 pub use sidebar::Sidebar;
 pub use splitter::{PanelSpec, Splitter, SplitterLayout};
 pub use tab_view::TabView;
-pub use table::{ColWidth, Column, Table};
+pub use table::{ColWidth, Column, Table, TableLayout};
 pub use toast::Toast;
 pub use toolbar::Toolbar;
 pub use tree_view::{TreeItem, TreeView};

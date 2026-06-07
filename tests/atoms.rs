@@ -770,3 +770,30 @@ fn auto_layout_layout_sizes_fixed_and_fill() {
         rest.get()
     );
 }
+
+#[test]
+fn table_layout_returns_cell_rects() {
+    // The rect-returning Table path (for inline-editable data grids): one rect per body cell.
+    use ouroboros_ui::organisms::{Column, Table};
+    let dims = Rc::new(Cell::new((0usize, 0usize)));
+    let nonempty = Rc::new(Cell::new(false));
+    let (d, ne) = (dims.clone(), nonempty.clone());
+    rendered(move |ui| {
+        let layout = Table::new()
+            .columns([Column::new("Element"), Column::new("Resist")])
+            .id_source("test_table_layout")
+            .layout(ui, 3);
+        let rows = layout.rects.len();
+        let cols = layout.rects.first().map(|r| r.len()).unwrap_or(0);
+        d.set((rows, cols));
+        ne.set(
+            layout
+                .rects
+                .iter()
+                .flatten()
+                .all(|r| r.width() > 0.0 && r.height() > 0.0),
+        );
+    });
+    assert_eq!(dims.get(), (3, 2), "3 body rows × 2 columns of cell rects");
+    assert!(nonempty.get(), "every cell rect should be non-empty");
+}
