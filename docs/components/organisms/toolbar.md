@@ -6,7 +6,7 @@ A horizontal action bar (Unity / O3DE Toolbar). `show` lays your `content` closu
 
 ## Design
 
-- **Purpose / when to use** — the action strip of a view (tool toggles, play/pause, separators), typically the `header` slot of an [`AppShell`](app_shell.md).
+- **Purpose / when to use** — the action strip of a view (tool toggles, play/pause, separators), typically the fixed header band (`PanelSpec::fixed`) of a screen's root [`Splitter`](splitter.md).
 - **Anatomy** — a `Surface` (`muted`, `border_none`, `pad SPACE_1`, `RADIUS_MD`) → `ui.horizontal(content)`.
 - **Variants / states** — none of its own; appearance comes from the muted surface and the widgets you place inside.
 - **Tokens / layout consumed** — `core::SPACE_1` (surface padding), `core::RADIUS_MD` (corner radius); muted fill from the theme. See [tokens](../../tokens.md) / [theming](../../theming.md).

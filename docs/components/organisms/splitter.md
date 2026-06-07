@@ -6,7 +6,7 @@ Resizable panes split by draggable dividers (Element Plus Splitter). Horizontal 
 
 ## Design
 
-- **Purpose / when to use** — split a region into adjustable panes (hierarchy | viewport | inspector). The middle band of [`AppShell`](app_shell.md) is built on this.
+- **Purpose / when to use** — the single layout primitive: it is the root scaffold of every screen. Fixed chrome bands (header/footer/toolbar/rail) use `PanelSpec::fixed(px)` (non-resizable); the body is a flex panel; resizable regions nest another `Splitter`. Content inside each leaf panel is arranged with `AutoLayout`.
 - **Anatomy** — `ui.allocate_exact_size(available)` → along the main axis, alternating panel cells (each a clipped child `Ui`) and a `SplitterHandle` divider of width `core::SPACE_2` after every panel but the last. Cross-axis fills the rect.
 - **Variants / states**
 

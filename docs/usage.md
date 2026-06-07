@@ -94,7 +94,7 @@ Components are grouped by layer; pull from the layer module:
 use ouroboros_ui::atoms::{Button, Input, Text, Icon, Badge, Switch};
 use ouroboros_ui::cells::{ListItem, PropertyRow, MenuItem};
 use ouroboros_ui::molecules::{Field, Card, Alert, Tabs, RadioGroup};
-use ouroboros_ui::organisms::{AppShell, Dialog, Table, TreeView, Toast};
+use ouroboros_ui::organisms::{Splitter, PanelSpec, Dialog, Table, TreeView, Toast};
 ```
 
 Foundation re-exports live at the crate root:

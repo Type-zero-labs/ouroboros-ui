@@ -28,8 +28,8 @@ use ouroboros_ui::molecules::{
     ToggleGroup, VectorField,
 };
 use ouroboros_ui::organisms::{
-    Accordion, AppShell, Column, Dialog, DialogChoice, DropdownMenu, Menubar, PanelSpec, Popover,
-    Select, Sidebar, Splitter, TabView, Table, Toast, Toolbar, TreeItem, TreeView,
+    Accordion, Column, Dialog, DialogChoice, DropdownMenu, Menubar, PanelSpec, Popover, Select,
+    Sidebar, Splitter, TabView, Table, Toast, Toolbar, TreeItem, TreeView,
 };
 use ouroboros_ui::theme::typography;
 use ouroboros_ui::tokens::{core, layout};
@@ -102,7 +102,6 @@ enum Page {
     Accordion,
     Menubar,
     Splitter,
-    AppShell,
     GraphLive,
     GraphNode,
     GraphEdge,
@@ -177,7 +176,6 @@ impl Page {
             Page::Accordion => "Accordion",
             Page::Menubar => "Menubar",
             Page::Splitter => "Splitter",
-            Page::AppShell => "App shell",
             Page::GraphLive => "Live graph",
             Page::GraphNode => "Node variants",
             Page::GraphEdge => "Edge variants",
@@ -274,7 +272,6 @@ const NAV: &[(&str, &[Page])] = &[
             Page::Accordion,
             Page::Menubar,
             Page::Splitter,
-            Page::AppShell,
         ],
     ),
     (
@@ -487,7 +484,6 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::Accordion => page_accordion(ui, theme),
         Page::Menubar => page_menubar(ui, theme),
         Page::Splitter => page_splitter(ui, theme),
-        Page::AppShell => page_app_shell(ui, theme),
         Page::GraphLive => page_graph_live(ui, theme),
         Page::GraphNode => page_graph_node(ui, theme),
         Page::GraphEdge => page_graph_edge(ui, theme),
@@ -756,88 +752,28 @@ fn page_splitter(ui: &mut Ui, _theme: &Theme) {
             })
             .show(ui);
     });
-}
 
-/// One labeled box filling its cell — used as a slot's content in the AppShell demos.
-fn shell_slot(ui: &mut Ui, label: &str, muted: bool) {
-    let s = if muted {
-        Surface::new().muted()
-    } else {
-        Surface::new()
-    };
-    s.show(ui, |ui| {
-        ui.set_min_size(ui.available_size());
-        Text::new(label).muted().caption().show(ui);
-    });
-}
-
-fn page_app_shell(ui: &mut Ui, _theme: &Theme) {
+    ui.add_space(core::SPACE_4);
     caption(
         ui,
-        "Slots: header · aside-left · main · aside-right · footer — asides are Splitter-resizable; shells nest",
+        "Fixed bands (PanelSpec::fixed) — header/footer keep their px; the flex body takes the rest",
     );
-    // A small AppShell demo for each common layout. Each gets a stable id so its splitter
-    // state persists independently.
-    let demo = |ui: &mut Ui, title: &str, build: &dyn Fn(&mut Ui)| {
-        subhead(ui, title);
-        ui.allocate_ui(vec2(420.0, 150.0), |ui| build(ui));
-    };
-
-    demo(ui, "Header + Main", &|ui| {
-        AppShell::new()
-            .id_source("shell_hm")
-            .header(|ui| shell_slot(ui, "Header", false))
-            .main(|ui| shell_slot(ui, "Main", true))
-            .show(ui);
-    });
-
-    demo(ui, "Header + Main + Footer", &|ui| {
-        AppShell::new()
-            .id_source("shell_hmf")
-            .header(|ui| shell_slot(ui, "Header", false))
-            .main(|ui| shell_slot(ui, "Main", true))
-            .footer(|ui| shell_slot(ui, "Footer", false))
-            .show(ui);
-    });
-
-    demo(
-        ui,
-        "Aside-left + Main + Aside-right (drag the dividers)",
-        &|ui| {
-            AppShell::new()
-                .id_source("shell_ama")
-                .aside_left(|ui| shell_slot(ui, "Aside L", true))
-                .main(|ui| shell_slot(ui, "Main", true))
-                .aside_right(|ui| shell_slot(ui, "Aside R", true))
-                .show(ui);
-        },
-    );
-
-    demo(
-        ui,
-        "Full: Header + Aside-L + Main + Aside-R + Footer",
-        &|ui| {
-            AppShell::new()
-                .id_source("shell_full")
-                .header(|ui| shell_slot(ui, "Header", false))
-                .aside_left(|ui| shell_slot(ui, "Nav", true))
-                .main(|ui| shell_slot(ui, "Scene", true))
-                .aside_right(|ui| shell_slot(ui, "Inspector", true))
-                .footer(|ui| shell_slot(ui, "Status", false))
-                .show(ui);
-        },
-    );
-
-    demo(ui, "Nested: an AppShell inside the main slot", &|ui| {
-        AppShell::new()
-            .id_source("shell_outer")
-            .header(|ui| shell_slot(ui, "Outer header", false))
-            .main(|ui| {
-                AppShell::new()
-                    .id_source("shell_inner")
-                    .aside_left(|ui| shell_slot(ui, "Inner aside", true))
-                    .main(|ui| shell_slot(ui, "Inner main", true))
+    ui.allocate_ui(vec2(560.0, 240.0), |ui| {
+        Splitter::vertical()
+            .id_source("sp_demo_fixed")
+            .panel(PanelSpec::fixed(layout::TOOLBAR_HEIGHT), |ui| {
+                panel(ui, "Header — fixed 40px")
+            })
+            .panel(PanelSpec::flex(), |ui| {
+                // The body itself can still host a resizable horizontal split.
+                Splitter::horizontal()
+                    .id_source("sp_demo_fixed_body")
+                    .panel(PanelSpec::new().size(0.25), |ui| panel(ui, "Aside"))
+                    .panel(PanelSpec::flex(), |ui| panel(ui, "Body — flex"))
                     .show(ui);
+            })
+            .panel(PanelSpec::fixed(layout::STATUSBAR_HEIGHT), |ui| {
+                panel(ui, "Footer — fixed 24px")
             })
             .show(ui);
     });

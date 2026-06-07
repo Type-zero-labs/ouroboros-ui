@@ -21,8 +21,8 @@ use ouroboros_ui::molecules::{
     FieldSet, InputGroup, RadioGroup, SearchField, Slot, Tabs, ToggleGroup, VectorField,
 };
 use ouroboros_ui::organisms::{
-    Accordion, AppShell, Column, Menubar, PanelSpec, Select, Sidebar, Splitter, TabView, Table,
-    Toolbar, TreeItem, TreeView,
+    Accordion, Column, Menubar, PanelSpec, Select, Sidebar, Splitter, TabView, Table, Toolbar,
+    TreeItem, TreeView,
 };
 use ouroboros_ui::tokens::core;
 use ouroboros_ui::{Mode, Size, Theme};
@@ -512,32 +512,6 @@ fn splitter_renders() {
 }
 
 #[test]
-fn app_shell_renders() {
-    rendered(|ui| {
-        ui.allocate_ui(egui::vec2(480.0, 320.0), |ui| {
-            AppShell::new()
-                .id_source("test_shell")
-                .header(|ui| {
-                    Text::new("header").show(ui);
-                })
-                .aside_left(|ui| {
-                    Text::new("nav").show(ui);
-                })
-                .main(|ui| {
-                    Text::new("scene").show(ui);
-                })
-                .aside_right(|ui| {
-                    Text::new("inspector").show(ui);
-                })
-                .footer(|ui| {
-                    Text::new("footer").show(ui);
-                })
-                .show(ui);
-        });
-    });
-}
-
-#[test]
 fn organisms_forms_render() {
     rendered(|ui| {
         let mut s = 0;
@@ -689,4 +663,37 @@ fn disabled_button_does_not_click() {
         .click_accesskit();
     harness.run();
     assert!(!clicked.get(), "disabled button must not fire a click");
+}
+
+#[test]
+fn splitter_fixed_bands_hold_px() {
+    // A `[fixed · flex · fixed]` vertical splitter must give the fixed bands their exact px and
+    // hand the remainder to the flex panel — the header/footer chrome pattern.
+    let header_h = Rc::new(Cell::new(0.0f32));
+    let body_h = Rc::new(Cell::new(0.0f32));
+    let footer_h = Rc::new(Cell::new(0.0f32));
+    let (h, b, f) = (header_h.clone(), body_h.clone(), footer_h.clone());
+    rendered(move |ui| {
+        Splitter::vertical()
+            .id_source("test_fixed_bands")
+            .panel(PanelSpec::fixed(40.0), |ui| h.set(ui.max_rect().height()))
+            .panel(PanelSpec::flex(), |ui| b.set(ui.max_rect().height()))
+            .panel(PanelSpec::fixed(24.0), |ui| f.set(ui.max_rect().height()))
+            .show(ui);
+    });
+    assert!(
+        (header_h.get() - 40.0).abs() < 0.5,
+        "fixed header should be 40px, got {}",
+        header_h.get()
+    );
+    assert!(
+        (footer_h.get() - 24.0).abs() < 0.5,
+        "fixed footer should be 24px, got {}",
+        footer_h.get()
+    );
+    assert!(
+        body_h.get() > 40.0,
+        "flex body should take the remainder, got {}",
+        body_h.get()
+    );
 }

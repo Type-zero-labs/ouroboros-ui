@@ -6,7 +6,7 @@ layer may reference the layer below it, and **nothing below knows the layer abov
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  organisms   app_shell, dialog, table, tree_view, toast…     │  full UI sections
+│  organisms   splitter, dialog, table, tree_view, toast…      │  full UI sections
 │      ↓ compose                                                │
 │  molecules   field, card, alert, tabs, radio_group…          │  compositions of atoms
 │      ↓ compose                                                │
