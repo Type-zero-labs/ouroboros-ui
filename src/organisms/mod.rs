@@ -21,7 +21,7 @@ pub mod tree_view;
 
 pub use accordion::{Accordion, AccordionCtx};
 pub use app_shell::AppShell;
-pub use dialog::Dialog;
+pub use dialog::{Dialog, DialogChoice};
 pub use dropdown_menu::DropdownMenu;
 pub use menubar::Menubar;
 pub use popover::Popover;

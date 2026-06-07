@@ -28,8 +28,8 @@ use ouroboros_ui::molecules::{
     ToggleGroup, VectorField,
 };
 use ouroboros_ui::organisms::{
-    Accordion, AppShell, Column, Dialog, DropdownMenu, Menubar, PanelSpec, Popover, Select,
-    Sidebar, Splitter, TabView, Table, Toast, Toolbar, TreeItem, TreeView,
+    Accordion, AppShell, Column, Dialog, DialogChoice, DropdownMenu, Menubar, PanelSpec, Popover,
+    Select, Sidebar, Splitter, TabView, Table, Toast, Toolbar, TreeItem, TreeView,
 };
 use ouroboros_ui::theme::typography;
 use ouroboros_ui::tokens::{core, layout};
@@ -1134,6 +1134,33 @@ fn page_dialog(ui: &mut Ui, _theme: &Theme) {
         }
     }
     ui.data_mut(|d| d.insert_temp(id, open));
+
+    ui.add_space(core::SPACE_4);
+    caption(
+        ui,
+        "Confirm variant (.confirm — replaces the legacy prompt)",
+    );
+    let cid = egui::Id::new("dlg_confirm_open");
+    let mut copen = ui.data(|d| d.get_temp::<bool>(cid).unwrap_or(false));
+    if Button::new("Discard changes…")
+        .secondary()
+        .id_source("dlg_c_trigger")
+        .show(ui)
+        .clicked()
+    {
+        copen = true;
+    }
+    if copen {
+        let choice = Dialog::new("Discard changes?")
+            .description("Your edits will be lost. This cannot be undone.")
+            .destructive()
+            .id_source("dlg_confirm")
+            .confirm(ui.ctx(), "Discard", "Keep editing");
+        if choice != DialogChoice::None {
+            copen = false;
+        }
+    }
+    ui.data_mut(|d| d.insert_temp(cid, copen));
 }
 
 fn page_toast(ui: &mut Ui, _theme: &Theme) {
@@ -1147,10 +1174,13 @@ fn page_toast(ui: &mut Ui, _theme: &Theme) {
     {
         show = !show;
     }
-    if show {
-        Toast::new("Build finished in 2.3s")
+    if show
+        && Toast::new("Build finished in 2.3s")
             .success()
-            .show(ui.ctx());
+            .dismissible()
+            .show(ui.ctx())
+    {
+        show = false;
     }
     ui.data_mut(|d| d.insert_temp(id, show));
 }
@@ -1522,6 +1552,13 @@ fn page_numeric_field(ui: &mut Ui, _theme: &Theme) {
         NumericField::new(&mut p).show(ui);
     });
     ui.data_mut(|d| d.insert_temp(id0, p));
+    subhead(ui, "Fixed decimals (.decimals(2))");
+    let idd = egui::Id::new("num_dec");
+    let mut d2 = ui.data(|d| d.get_temp::<f32>(idd).unwrap_or(1.5));
+    ui.allocate_ui(vec2(160.0, core::CONTROL_MD), |ui| {
+        NumericField::new(&mut d2).speed(0.01).decimals(2).show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(idd, d2));
     subhead(ui, "Stepper (−/+)");
     let id2 = egui::Id::new("num_step");
     let mut s = ui.data(|d| d.get_temp::<f32>(id2).unwrap_or(3.0));
@@ -2485,6 +2522,9 @@ fn page_divider(ui: &mut Ui, _theme: &Theme) {
     ui.add_space(core::SPACE_3);
     caption(ui, "Destructive (red rule)");
     Divider::horizontal().destructive().show(ui);
+    ui.add_space(core::SPACE_3);
+    caption(ui, "Dotted");
+    Divider::horizontal().dotted().show(ui);
     ui.add_space(core::SPACE_3);
     caption(ui, "Vertical (between content)");
     ui.allocate_ui(vec2(ui.available_width(), 22.0), |ui| {

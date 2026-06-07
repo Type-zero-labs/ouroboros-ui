@@ -25,6 +25,7 @@ pub struct NumericField<'a> {
     enabled: bool,
     error: bool,
     size: Size,
+    decimals: Option<usize>,
 }
 
 impl<'a> NumericField<'a> {
@@ -40,6 +41,7 @@ impl<'a> NumericField<'a> {
             enabled: true,
             error: false,
             size: Size::default(),
+            decimals: None,
         }
     }
 
@@ -64,6 +66,12 @@ impl<'a> NumericField<'a> {
     }
     pub fn suffix(mut self, suffix: impl Into<String>) -> Self {
         self.suffix = Some(suffix.into());
+        self
+    }
+    /// Show and edit with a fixed number of decimal places. Default (`None`) keeps egui's
+    /// adaptive formatting (integers stay integers) — the original behavior.
+    pub fn decimals(mut self, decimals: usize) -> Self {
+        self.decimals = Some(decimals);
         self
     }
     pub fn enabled(mut self, enabled: bool) -> Self {
@@ -116,6 +124,7 @@ impl<'a> NumericField<'a> {
         let inner = rect.shrink2(vec2(core::SPACE_2, 0.0));
         let step = self.step.unwrap_or(1.0);
         let suffix = self.suffix;
+        let decimals = self.decimals;
         let (min, max, speed) = (self.min, self.max, self.speed);
         let value = self.value;
         macro_rules! drag {
@@ -123,6 +132,9 @@ impl<'a> NumericField<'a> {
                 let mut dv = DragValue::new($v).speed(speed).range(min..=max);
                 if let Some(suffix) = &suffix {
                     dv = dv.suffix(suffix.clone());
+                }
+                if let Some(d) = decimals {
+                    dv = dv.fixed_decimals(d);
                 }
                 dv
             }};
