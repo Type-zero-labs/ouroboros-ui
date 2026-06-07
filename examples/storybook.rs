@@ -18,6 +18,10 @@ use ouroboros_ui::auto_layout::{AutoLayout, CrossAlign, MainAlign};
 use ouroboros_ui::cells::{
     ListItem, MenuItem, PropertyRow, TableCell, TableRow, ToolbarButton, TreeNode,
 };
+use ouroboros_ui::graph::{
+    EdgeStyle, GraphView, HandleSpec, NodeFrame, NodeId, NodeKindId, NodeSearch, NodeStatus, Port,
+    PortId, PortSide,
+};
 use ouroboros_ui::molecules::{
     Alert, AlertVariant, Breadcrumb, Card, CheckboxCard, Collapsible, ColorField, Field,
     FieldSeparator, FieldSet, InputGroup, RadioCard, RadioGroup, SearchField, Slot, Tabs,
@@ -99,6 +103,10 @@ enum Page {
     Menubar,
     Splitter,
     AppShell,
+    GraphLive,
+    GraphNode,
+    GraphEdge,
+    GraphSearch,
 }
 
 impl Page {
@@ -170,6 +178,10 @@ impl Page {
             Page::Menubar => "Menubar",
             Page::Splitter => "Splitter",
             Page::AppShell => "App shell",
+            Page::GraphLive => "Live graph",
+            Page::GraphNode => "Node variants",
+            Page::GraphEdge => "Edge variants",
+            Page::GraphSearch => "Node search",
         }
     }
 }
@@ -263,6 +275,15 @@ const NAV: &[(&str, &[Page])] = &[
             Page::Menubar,
             Page::Splitter,
             Page::AppShell,
+        ],
+    ),
+    (
+        "GRAPH",
+        &[
+            Page::GraphLive,
+            Page::GraphNode,
+            Page::GraphEdge,
+            Page::GraphSearch,
         ],
     ),
 ];
@@ -467,7 +488,240 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::Menubar => page_menubar(ui, theme),
         Page::Splitter => page_splitter(ui, theme),
         Page::AppShell => page_app_shell(ui, theme),
+        Page::GraphLive => page_graph_live(ui, theme),
+        Page::GraphNode => page_graph_node(ui, theme),
+        Page::GraphEdge => page_graph_edge(ui, theme),
+        Page::GraphSearch => page_graph_search(ui, theme),
     }
+}
+
+fn page_graph_node(ui: &mut Ui, _theme: &Theme) {
+    caption(
+        ui,
+        "Node variants: base · status · placeholder · sized · labeled handles",
+    );
+    ui.add_space(core::SPACE_3);
+    GraphView::new("sb_graph_node")
+        .size(vec2(680.0, 360.0))
+        .show(ui, |g| {
+            g.node(
+                NodeId(1),
+                egui::pos2(20.0, 20.0),
+                NodeFrame::base()
+                    .title("Status")
+                    .status(NodeStatus::Running)
+                    .appendix("last run 2s ago")
+                    .tooltip("a node with a status badge")
+                    .handle(HandleSpec::input(0).label("in"))
+                    .handle(HandleSpec::output(1).label("out")),
+                |ui| {
+                    Text::new("body content").muted().show(ui);
+                },
+            );
+            g.node(
+                NodeId(2),
+                egui::pos2(300.0, 20.0),
+                NodeFrame::placeholder().title("Placeholder"),
+                |ui| {
+                    Text::new("drop a node here").muted().show(ui);
+                },
+            );
+            g.node(
+                NodeId(3),
+                egui::pos2(20.0, 200.0),
+                NodeFrame::base()
+                    .title("Sized")
+                    .size(vec2(180.0, 96.0))
+                    .input(0),
+                |ui| {
+                    Text::new("fixed size (select to resize)").muted().show(ui);
+                },
+            );
+        });
+}
+
+fn page_graph_edge(ui: &mut Ui, _theme: &Theme) {
+    caption(
+        ui,
+        "Edge variants: default · animated · with-button · with-label",
+    );
+    ui.add_space(core::SPACE_3);
+    let styles = [
+        ("Default", EdgeStyle::Default),
+        ("Animated", EdgeStyle::Animated),
+        ("Button", EdgeStyle::WithButton),
+        ("Label", EdgeStyle::WithLabel),
+    ];
+    GraphView::new("sb_graph_edge")
+        .size(vec2(680.0, 380.0))
+        .show(ui, |g| {
+            for (i, (label, style)) in styles.iter().enumerate() {
+                let y = 20.0 + i as f32 * 88.0;
+                let a = 100 + i as u64 * 2;
+                let b = a + 1;
+                g.node(
+                    NodeId(a),
+                    egui::pos2(20.0, y),
+                    NodeFrame::base().title(*label).output(1),
+                    |_ui| {},
+                );
+                g.node(
+                    NodeId(b),
+                    egui::pos2(360.0, y),
+                    NodeFrame::base().input(0),
+                    |_ui| {},
+                );
+                g.edge(
+                    Port {
+                        node: NodeId(a),
+                        port: PortId(1),
+                        side: PortSide::Out,
+                    },
+                    Port {
+                        node: NodeId(b),
+                        port: PortId(0),
+                        side: PortSide::In,
+                    },
+                    *style,
+                );
+            }
+        });
+}
+
+fn page_graph_search(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Node search — a command palette of node kinds");
+    ui.add_space(core::SPACE_3);
+    let trigger = Button::new("Add node")
+        .icon_left(light::PLUS)
+        .id_source("sb_search_trigger")
+        .show(ui);
+    let chosen = NodeSearch::new()
+        .kind(NodeKindId(1), "Trigger")
+        .kind(NodeKindId(2), "Condition")
+        .kind(NodeKindId(3), "Action")
+        .kind(NodeKindId(4), "Delay")
+        .show(ui, &trigger);
+    if let Some(k) = chosen {
+        ui.data_mut(|d| d.insert_temp(egui::Id::new("sb_search_last"), k.0));
+    }
+    let last: Option<u64> = ui.data(|d| d.get_temp(egui::Id::new("sb_search_last")));
+    ui.add_space(core::SPACE_2);
+    if let Some(k) = last {
+        Text::new(format!("last picked kind id: {k}"))
+            .muted()
+            .show(ui);
+    } else {
+        Text::new("click \"Add node\" and pick a kind")
+            .muted()
+            .show(ui);
+    }
+}
+
+fn page_graph_live(ui: &mut Ui, _theme: &Theme) {
+    caption(
+        ui,
+        "Drag nodes to move · click to select · middle-drag to pan · scroll to zoom",
+    );
+    ui.add_space(core::SPACE_3);
+
+    // Demo graph data lives in egui memory (the caller owns it; the lib owns only view state).
+    let data_id = egui::Id::new("storybook_graph_data");
+    let mut nodes: Vec<(u64, egui::Pos2, String)> = ui.data_mut(|d| {
+        d.get_temp(data_id).unwrap_or_else(|| {
+            vec![
+                (1, egui::pos2(40.0, 60.0), "Trigger".to_owned()),
+                (2, egui::pos2(340.0, 60.0), "Condition".to_owned()),
+                (3, egui::pos2(340.0, 240.0), "Action".to_owned()),
+            ]
+        })
+    });
+    let edges_id = egui::Id::new("storybook_graph_edges");
+    let mut edges: Vec<(u64, u64)> = ui.data_mut(|d| d.get_temp(edges_id).unwrap_or_default());
+    // Last frame's selection (the lib owns it; mirrored here to drive the per-node toolbar).
+    let sel_id = egui::Id::new("storybook_graph_sel");
+    let prev_sel: Vec<u64> = ui.data_mut(|d| d.get_temp(sel_id).unwrap_or_default());
+    let mut tb_delete: Vec<u64> = Vec::new();
+
+    let resp = GraphView::new("storybook_graph_live")
+        .size(vec2(720.0, 420.0))
+        .grid(true)
+        .controls(true)
+        .minimap(true)
+        .show(ui, |g| {
+            // Nodes first (so their handle positions are known), each input 0 / output 1.
+            for (id, pos, label) in &nodes {
+                let frame = NodeFrame::base().title(label.clone()).input(0).output(1);
+                g.node(NodeId(*id), *pos, frame, |ui| {
+                    Text::new("body content").muted().show(ui);
+                });
+            }
+            // A toolbar above each selected node (delete action).
+            for &sid in &prev_sel {
+                g.node_toolbar(NodeId(sid), |ui| {
+                    if Button::new("")
+                        .ghost()
+                        .sm()
+                        .icon_only()
+                        .icon_left(light::TRASH)
+                        .id_source(("tb_del", sid))
+                        .show(ui)
+                        .clicked()
+                    {
+                        tb_delete.push(sid);
+                    }
+                });
+            }
+            // Then edges (bezier; drawn under the nodes via the reserved slot).
+            for (from, to) in &edges {
+                g.edge(
+                    Port {
+                        node: NodeId(*from),
+                        port: PortId(1),
+                        side: PortSide::Out,
+                    },
+                    Port {
+                        node: NodeId(*to),
+                        port: PortId(0),
+                        side: PortSide::In,
+                    },
+                    EdgeStyle::Default,
+                );
+            }
+        });
+
+    // Commit the library's intents back into the caller-owned data.
+    for (moved_id, delta) in &resp.node_moved {
+        if let Some((_, pos, _)) = nodes.iter_mut().find(|(id, _, _)| NodeId(*id) == *moved_id) {
+            *pos += *delta;
+        }
+    }
+    if let Some(c) = resp.connection {
+        let pair = (c.from.node.0, c.to.node.0);
+        if c.from.node != c.to.node && !edges.contains(&pair) {
+            edges.push(pair);
+        }
+    }
+    // Commit deletes (Delete/Backspace): drop the edge, or the selected nodes + their edges.
+    if let Some((from, to)) = resp.delete_edge {
+        edges.retain(|(f, t)| !(*f == from.node.0 && *t == to.node.0));
+    }
+    if !resp.delete_nodes.is_empty() {
+        let gone: Vec<u64> = resp.delete_nodes.iter().map(|n| n.0).collect();
+        nodes.retain(|(id, _, _)| !gone.contains(id));
+        edges.retain(|(f, t)| !gone.contains(f) && !gone.contains(t));
+    }
+    // Toolbar delete buttons.
+    if !tb_delete.is_empty() {
+        nodes.retain(|(id, _, _)| !tb_delete.contains(id));
+        edges.retain(|(f, t)| !tb_delete.contains(f) && !tb_delete.contains(t));
+    }
+    // Mirror current selection for next frame's toolbars.
+    let cur_sel: Vec<u64> = resp.selection.iter().map(|n| n.0).collect();
+    ui.data_mut(|d| {
+        d.insert_temp(data_id, nodes);
+        d.insert_temp(edges_id, edges);
+        d.insert_temp(sel_id, cur_sel);
+    });
 }
 
 fn page_splitter(ui: &mut Ui, _theme: &Theme) {
