@@ -194,18 +194,22 @@ impl Button {
         let galley = ui.painter().layout_job(job);
         let content_size = galley.size();
 
+        // Icon-only is a square that grows with the glyph: the icon box plus padding on
+        // every side, never smaller than the size's control height.
+        let icon_box = (icon_size + 2.0 * core::SPACE_2).max(height);
         let width = if is_icon_only {
-            height
+            icon_box
         } else {
             content_size.x + 2.0 * self.size.pad_x()
         };
+        let outer_h = if is_icon_only { icon_box } else { height };
         let interactive = self.enabled && !self.loading;
         let sense = if interactive {
             Sense::click()
         } else {
             Sense::hover()
         };
-        let (rect, response) = ui.allocate_exact_size(vec2(width, height), sense);
+        let (rect, response) = ui.allocate_exact_size(vec2(width, outer_h), sense);
         let anim_id = self.id_source.unwrap_or(response.id);
 
         // Accessibility: expose a Button node with the label.
