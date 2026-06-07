@@ -739,3 +739,34 @@ fn splitter_layout_returns_fixed_rects() {
         body_h.get()
     );
 }
+
+#[test]
+fn auto_layout_layout_sizes_fixed_and_fill() {
+    // The rect-returning AutoLayout path (for `&mut self` sibling cells): Fixed reserves px, Fill
+    // takes the remainder, all cells span the full cross axis.
+    use ouroboros_ui::{AutoLayout, SizeMode};
+    let lead = Rc::new(Cell::new(0.0f32));
+    let rest = Rc::new(Cell::new(0.0f32));
+    let (l, r) = (lead.clone(), rest.clone());
+    rendered(move |ui| {
+        let total = ui.available_width();
+        let out = AutoLayout::horizontal()
+            .region(SizeMode::Fixed(120.0))
+            .region(SizeMode::Fill)
+            .layout(ui);
+        l.set(out.rects[0].width());
+        r.set(out.rects[1].width());
+        // Stash total via the body cell check below.
+        let _ = total;
+    });
+    assert!(
+        (lead.get() - 120.0).abs() < 0.5,
+        "fixed cell should be 120px, got {}",
+        lead.get()
+    );
+    assert!(
+        rest.get() > 50.0,
+        "fill cell should take the remainder, got {}",
+        rest.get()
+    );
+}

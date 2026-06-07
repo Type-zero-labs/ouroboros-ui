@@ -238,6 +238,98 @@ impl<'a> AutoLayout<'a> {
         self.child(SizeMode::Fixed(px), add)
     }
 
+    /// Add a child with a main-axis [`SizeMode`] but **no content closure**, for use with
+    /// [`AutoLayout::layout`]. Use this when sibling cells each need `&mut self` of the caller —
+    /// `FnMut` closures can't each borrow the same state, so lay out, get the rects back, and draw
+    /// into them sequentially via `ui.new_child`.
+    pub fn region(mut self, main: SizeMode) -> Self {
+        self.children.push(Child {
+            main,
+            add: Box::new(|_| {}),
+        });
+        self
+    }
+
+    /// Lay out and return one rect per child **instead of** rendering content closures. Each cell
+    /// spans the full cross axis; on the main axis `Fixed(px)` reserves its px, `Fill` shares the
+    /// remainder, and `Hug` is treated as `Fill` (content size can't be measured without a closure
+    /// — use [`AutoLayout::show`] when you need `Hug`). Pair with [`AutoLayout::region`].
+    pub fn layout(self, ui: &mut Ui) -> AutoLayoutLayout {
+        let dir = self.direction;
+        let n = self.children.len();
+        let pad_x = self.padding.left + self.padding.right;
+        let pad_y = self.padding.top + self.padding.bottom;
+
+        let avail = ui.available_size();
+        let inner = vec2((avail.x - pad_x).max(0.0), (avail.y - pad_y).max(0.0));
+        let inner_main = dir.main(inner);
+        let inner_cross = dir.cross(inner);
+
+        let fixed_gap = match self.gap {
+            Gap::Fixed(g) => g,
+            Gap::Auto => 0.0,
+        };
+        let gap_total = if n > 1 {
+            fixed_gap * (n as f32 - 1.0)
+        } else {
+            0.0
+        };
+        let fixed_total: f32 = self
+            .children
+            .iter()
+            .filter_map(|c| match c.main {
+                SizeMode::Fixed(v) => Some(v),
+                _ => None,
+            })
+            .sum();
+        let flexible = self
+            .children
+            .iter()
+            .filter(|c| !matches!(c.main, SizeMode::Fixed(_)))
+            .count();
+        let leftover = (inner_main - fixed_total - gap_total).max(0.0);
+        let fill_share = if flexible > 0 {
+            leftover / flexible as f32
+        } else {
+            0.0
+        };
+
+        let main_extent: Vec<f32> = self
+            .children
+            .iter()
+            .map(|c| match c.main {
+                SizeMode::Fixed(v) => v,
+                _ => fill_share,
+            })
+            .collect();
+        let content_main: f32 = main_extent.iter().sum::<f32>() + gap_total;
+        let free = (inner_main - content_main).max(0.0);
+
+        // Distribution: Auto = space-between; with flex children the leftover is already consumed;
+        // otherwise honour main_align over the free space.
+        let (start_offset, between_extra) = if self.gap == Gap::Auto && n > 1 {
+            (0.0, free / (n as f32 - 1.0))
+        } else if flexible > 0 {
+            (0.0, 0.0)
+        } else {
+            (free * self.main_align.factor(), 0.0)
+        };
+
+        let (rect, response) = ui.allocate_exact_size(avail, Sense::hover());
+        let inner_min = rect.min + vec2(self.padding.left, self.padding.top);
+        let inner_main_min = dir.main(inner_min.to_vec2());
+        let inner_cross_min = dir.cross(inner_min.to_vec2());
+
+        let mut cursor = start_offset;
+        let mut rects = Vec::with_capacity(n);
+        for ext in &main_extent {
+            rects.push(dir.rect(inner_main_min + cursor, inner_cross_min, *ext, inner_cross));
+            cursor += ext + fixed_gap + between_extra;
+        }
+
+        AutoLayoutLayout { rects, response }
+    }
+
     /// Lay out and render. Returns the frame's [`Response`].
     pub fn show(mut self, ui: &mut Ui) -> Response {
         let dir = self.direction;
@@ -328,6 +420,12 @@ impl<'a> AutoLayout<'a> {
 
         response
     }
+}
+
+/// Output of [`AutoLayout::layout`] — one cell rect per child, plus the frame's [`Response`].
+pub struct AutoLayoutLayout {
+    pub rects: Vec<Rect>,
+    pub response: Response,
 }
 
 /// Measure a child's natural size by rendering it once into an invisible sizing-pass ui.
