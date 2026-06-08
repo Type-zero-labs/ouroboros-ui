@@ -41,3 +41,8 @@ pub use tokens::semantic::Theme;
 // Re-export the icon font crate so consumers reach glyphs without a separate dependency
 // (e.g. `ouroboros_ui::egui_phosphor::light::GEAR`).
 pub use egui_phosphor;
+
+// Re-export the taffy layout bridge so consumers (studio) reach the constraint solver through
+// the DS — same pattern as `egui_phosphor`, keeps one egui/taffy version across the graph.
+// (e.g. `ouroboros_ui::egui_taffy::{tui, taffy, TuiBuilderLogic}`.)
+pub use egui_taffy;
