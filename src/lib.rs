@@ -28,6 +28,11 @@ pub mod organisms;
 pub mod theme;
 pub mod tokens;
 
+// Figma-style flow layout — the content primitive used inside panels. Re-exported at the crate
+// root (like the layer modules' own re-exports) so callers reach it without the module path.
+pub use auto_layout::{
+    AutoLayout, AutoLayoutLayout, CrossAlign, Gap, LayoutDirection, MainAlign, Padding, SizeMode,
+};
 pub use theme::typography::{TypeStyle, Weight};
 pub use theme::Mode;
 pub use tokens::core::Size;

@@ -36,6 +36,7 @@ pub struct Button {
     icon_right: Option<&'static str>,
     enabled: bool,
     id_source: Option<Id>,
+    icon_px: Option<f32>,
 }
 
 impl Button {
@@ -50,6 +51,7 @@ impl Button {
             icon_right: None,
             enabled: true,
             id_source: None,
+            icon_px: None,
         }
     }
 
@@ -86,6 +88,12 @@ impl Button {
     /// Render as a square, icon-only button (label dropped). Composes with [`Self::size`].
     pub fn icon_only(mut self) -> Self {
         self.icon_only = true;
+        self
+    }
+    /// Override the glyph box size (px), independent of [`Self::size`]. Defaults to the
+    /// size's icon box (`Size::icon_size`). Use e.g. `core::ICON_XL` for a 24px rail icon.
+    pub fn icon_px(mut self, px: f32) -> Self {
+        self.icon_px = Some(px);
         self
     }
 
@@ -130,7 +138,7 @@ impl Button {
         };
 
         let height = self.size.height();
-        let icon_size = self.size.icon_size();
+        let icon_size = self.icon_px.unwrap_or(self.size.icon_size());
         let gap = core::SPACE_2;
         let is_icon_only = self.icon_only;
         let has_text = !is_icon_only && !self.label.is_empty();
@@ -186,18 +194,22 @@ impl Button {
         let galley = ui.painter().layout_job(job);
         let content_size = galley.size();
 
+        // Icon-only is a square that grows with the glyph: the icon box plus padding on
+        // every side, never smaller than the size's control height.
+        let icon_box = (icon_size + 2.0 * core::SPACE_2).max(height);
         let width = if is_icon_only {
-            height
+            icon_box
         } else {
             content_size.x + 2.0 * self.size.pad_x()
         };
+        let outer_h = if is_icon_only { icon_box } else { height };
         let interactive = self.enabled && !self.loading;
         let sense = if interactive {
             Sense::click()
         } else {
             Sense::hover()
         };
-        let (rect, response) = ui.allocate_exact_size(vec2(width, height), sense);
+        let (rect, response) = ui.allocate_exact_size(vec2(width, outer_h), sense);
         let anim_id = self.id_source.unwrap_or(response.id);
 
         // Accessibility: expose a Button node with the label.

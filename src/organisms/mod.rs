@@ -5,7 +5,6 @@
 //! for placement + a token [`Surface`](crate::atoms::Surface)/themed visuals for the casing.
 
 pub mod accordion;
-pub mod app_shell;
 pub mod dialog;
 pub mod dropdown_menu;
 pub mod menubar;
@@ -20,16 +19,15 @@ pub mod toolbar;
 pub mod tree_view;
 
 pub use accordion::{Accordion, AccordionCtx};
-pub use app_shell::AppShell;
-pub use dialog::Dialog;
+pub use dialog::{Dialog, DialogChoice};
 pub use dropdown_menu::DropdownMenu;
 pub use menubar::Menubar;
 pub use popover::Popover;
 pub use select::Select;
 pub use sidebar::Sidebar;
-pub use splitter::{PanelSpec, Splitter};
+pub use splitter::{PanelSpec, Splitter, SplitterLayout};
 pub use tab_view::TabView;
-pub use table::{ColWidth, Column, Table};
+pub use table::{ColWidth, Column, Table, TableLayout};
 pub use toast::Toast;
 pub use toolbar::Toolbar;
 pub use tree_view::{TreeItem, TreeView};

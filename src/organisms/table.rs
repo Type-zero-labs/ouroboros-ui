@@ -21,7 +21,7 @@ use crate::atoms::{Spinner, Surface, Text};
 use crate::cells::{CellAlign, TableCell, TableRow};
 use crate::tokens::core;
 use crate::{Size, Theme};
-use egui::{Align, Id, Layout, Response, Sense, Ui};
+use egui::{Align, Id, Layout, Rect, Response, Sense, Ui};
 use egui_extras::{Column as ExtraColumn, TableBuilder};
 
 /// How a column is sized.
@@ -213,6 +213,68 @@ impl<'a> Table<'a> {
         }
     }
 
+    /// Lay the table out (header + striped/sized columns) but **return one content rect per body
+    /// cell** instead of rendering cell data — `rects[row][col]`. Use this for inline-editable data
+    /// grids: draw a `NumericField`/`Input` atom into each cell rect sequentially (which sidesteps
+    /// the borrow conflict of building many `&mut`-capturing cell closures upfront). `n_rows` body
+    /// rows are laid out; columns come from [`Table::columns`]. Mirrors `Splitter::layout`.
+    pub fn layout(self, ui: &mut Ui, n_rows: usize) -> TableLayout {
+        let theme = Theme::get(ui);
+        let id = self.id_salt.unwrap_or_else(|| ui.id().with("table_layout"));
+        let row_h = self.size.height();
+        let mut rects: Vec<Vec<Rect>> = Vec::new();
+
+        let response = ui
+            .scope(|ui| {
+                table_visuals(ui, &theme);
+                let mut tb = TableBuilder::new(ui)
+                    .id_salt(id)
+                    .striped(self.striped)
+                    .cell_layout(Layout::left_to_right(Align::Center));
+                for col in &self.columns {
+                    let mut c = match col.width {
+                        ColWidth::Auto => ExtraColumn::auto(),
+                        ColWidth::Exact(w) => ExtraColumn::exact(w),
+                        ColWidth::Initial(w) => ExtraColumn::initial(w),
+                        ColWidth::Remainder => ExtraColumn::remainder(),
+                    };
+                    if let Some(m) = col.min_width {
+                        c = c.at_least(m);
+                    }
+                    tb = tb.column(c.clip(true));
+                }
+
+                let columns = &self.columns;
+                let ncols = columns.len();
+                tb.header(row_h, |mut header| {
+                    for col in columns {
+                        header.col(|ui| {
+                            TableCell::text(col.label.clone())
+                                .header()
+                                .align(col.align)
+                                .show(ui);
+                        });
+                    }
+                })
+                .body(|mut body| {
+                    for _ in 0..n_rows {
+                        let mut row_rects: Vec<Rect> = Vec::with_capacity(ncols);
+                        body.row(row_h, |mut row| {
+                            for _ in 0..ncols {
+                                row.col(|ui| {
+                                    row_rects.push(ui.max_rect());
+                                });
+                            }
+                        });
+                        rects.push(row_rects);
+                    }
+                });
+            })
+            .response;
+
+        TableLayout { rects, response }
+    }
+
     fn build(self, ui: &mut Ui) -> Response {
         let theme = Theme::get(ui);
         let id = self.id_salt.unwrap_or_else(|| ui.id().with("table"));
@@ -293,6 +355,13 @@ impl Default for Table<'_> {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Output of [`Table::layout`] — one content rect per body cell (`rects[row][col]`), plus the
+/// table area [`Response`]. Draw editable atoms into the rects.
+pub struct TableLayout {
+    pub rects: Vec<Vec<Rect>>,
+    pub response: Response,
 }
 
 /// Derive table zebra/selection/hover colors from the theme onto `ui` (no painting) so

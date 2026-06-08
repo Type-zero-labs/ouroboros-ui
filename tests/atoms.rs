@@ -21,8 +21,8 @@ use ouroboros_ui::molecules::{
     FieldSet, InputGroup, RadioGroup, SearchField, Slot, Tabs, ToggleGroup, VectorField,
 };
 use ouroboros_ui::organisms::{
-    Accordion, AppShell, Column, Menubar, PanelSpec, Select, Sidebar, Splitter, TabView, Table,
-    Toolbar, TreeItem, TreeView,
+    Accordion, Column, Menubar, PanelSpec, Select, Sidebar, Splitter, TabView, Table, Toolbar,
+    TreeItem, TreeView,
 };
 use ouroboros_ui::tokens::core;
 use ouroboros_ui::{Mode, Size, Theme};
@@ -512,32 +512,6 @@ fn splitter_renders() {
 }
 
 #[test]
-fn app_shell_renders() {
-    rendered(|ui| {
-        ui.allocate_ui(egui::vec2(480.0, 320.0), |ui| {
-            AppShell::new()
-                .id_source("test_shell")
-                .header(|ui| {
-                    Text::new("header").show(ui);
-                })
-                .aside_left(|ui| {
-                    Text::new("nav").show(ui);
-                })
-                .main(|ui| {
-                    Text::new("scene").show(ui);
-                })
-                .aside_right(|ui| {
-                    Text::new("inspector").show(ui);
-                })
-                .footer(|ui| {
-                    Text::new("footer").show(ui);
-                })
-                .show(ui);
-        });
-    });
-}
-
-#[test]
 fn organisms_forms_render() {
     rendered(|ui| {
         let mut s = 0;
@@ -689,4 +663,137 @@ fn disabled_button_does_not_click() {
         .click_accesskit();
     harness.run();
     assert!(!clicked.get(), "disabled button must not fire a click");
+}
+
+#[test]
+fn splitter_fixed_bands_hold_px() {
+    // A `[fixed · flex · fixed]` vertical splitter must give the fixed bands their exact px and
+    // hand the remainder to the flex panel — the header/footer chrome pattern.
+    let header_h = Rc::new(Cell::new(0.0f32));
+    let body_h = Rc::new(Cell::new(0.0f32));
+    let footer_h = Rc::new(Cell::new(0.0f32));
+    let (h, b, f) = (header_h.clone(), body_h.clone(), footer_h.clone());
+    rendered(move |ui| {
+        Splitter::vertical()
+            .id_source("test_fixed_bands")
+            .panel(PanelSpec::fixed(40.0), |ui| h.set(ui.max_rect().height()))
+            .panel(PanelSpec::flex(), |ui| b.set(ui.max_rect().height()))
+            .panel(PanelSpec::fixed(24.0), |ui| f.set(ui.max_rect().height()))
+            .show(ui);
+    });
+    assert!(
+        (header_h.get() - 40.0).abs() < 0.5,
+        "fixed header should be 40px, got {}",
+        header_h.get()
+    );
+    assert!(
+        (footer_h.get() - 24.0).abs() < 0.5,
+        "fixed footer should be 24px, got {}",
+        footer_h.get()
+    );
+    assert!(
+        body_h.get() > 40.0,
+        "flex body should take the remainder, got {}",
+        body_h.get()
+    );
+}
+
+#[test]
+fn splitter_layout_returns_fixed_rects() {
+    // The rect-returning `layout()` path (for `&mut self` panel bodies) must size fixed bands the
+    // same as `show()`.
+    let header_h = Rc::new(Cell::new(0.0f32));
+    let body_h = Rc::new(Cell::new(0.0f32));
+    let footer_h = Rc::new(Cell::new(0.0f32));
+    let (h, b, f) = (header_h.clone(), body_h.clone(), footer_h.clone());
+    rendered(move |ui| {
+        let layout = Splitter::vertical()
+            .id_source("test_layout_fixed")
+            .region(PanelSpec::fixed(40.0))
+            .region(PanelSpec::flex())
+            .region(PanelSpec::fixed(24.0))
+            .layout(ui);
+        if let Some(r) = layout.rects[0] {
+            h.set(r.height());
+        }
+        if let Some(r) = layout.rects[1] {
+            b.set(r.height());
+        }
+        if let Some(r) = layout.rects[2] {
+            f.set(r.height());
+        }
+    });
+    assert!(
+        (header_h.get() - 40.0).abs() < 0.5,
+        "layout fixed header should be 40px, got {}",
+        header_h.get()
+    );
+    assert!(
+        (footer_h.get() - 24.0).abs() < 0.5,
+        "layout fixed footer should be 24px, got {}",
+        footer_h.get()
+    );
+    assert!(
+        body_h.get() > 40.0,
+        "layout flex body should take the remainder, got {}",
+        body_h.get()
+    );
+}
+
+#[test]
+fn auto_layout_layout_sizes_fixed_and_fill() {
+    // The rect-returning AutoLayout path (for `&mut self` sibling cells): Fixed reserves px, Fill
+    // takes the remainder, all cells span the full cross axis.
+    use ouroboros_ui::{AutoLayout, SizeMode};
+    let lead = Rc::new(Cell::new(0.0f32));
+    let rest = Rc::new(Cell::new(0.0f32));
+    let (l, r) = (lead.clone(), rest.clone());
+    rendered(move |ui| {
+        let total = ui.available_width();
+        let out = AutoLayout::horizontal()
+            .region(SizeMode::Fixed(120.0))
+            .region(SizeMode::Fill)
+            .layout(ui);
+        l.set(out.rects[0].width());
+        r.set(out.rects[1].width());
+        // Stash total via the body cell check below.
+        let _ = total;
+    });
+    assert!(
+        (lead.get() - 120.0).abs() < 0.5,
+        "fixed cell should be 120px, got {}",
+        lead.get()
+    );
+    assert!(
+        rest.get() > 50.0,
+        "fill cell should take the remainder, got {}",
+        rest.get()
+    );
+}
+
+#[test]
+fn table_layout_returns_cell_rects() {
+    // The rect-returning Table path (for inline-editable data grids): one rect per body cell.
+    use ouroboros_ui::organisms::{Column, Table};
+    let dims = Rc::new(Cell::new((0usize, 0usize)));
+    let nonempty = Rc::new(Cell::new(false));
+    let (d, ne) = (dims.clone(), nonempty.clone());
+    rendered(move |ui| {
+        let layout = Table::new()
+            .columns([Column::new("Element"), Column::new("Resist")])
+            .id_source("test_table_layout")
+            .layout(ui, 3);
+        let rows = layout.rects.len();
+        let cols = layout.rects.first().map(|r| r.len()).unwrap_or(0);
+        d.set((rows, cols));
+        ne.set(
+            layout
+                .rects
+                .iter()
+                .flatten()
+                .all(|r| r.width() > 0.0 && r.height() > 0.0),
+        );
+    });
+    assert_eq!(dims.get(), (3, 2), "3 body rows × 2 columns of cell rects");
+    assert!(nonempty.get(), "every cell rect should be non-empty");
 }

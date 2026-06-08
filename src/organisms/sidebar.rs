@@ -10,6 +10,7 @@ pub struct Sidebar<'a> {
     selected: &'a mut usize,
     items: Vec<(Option<&'static str>, String)>,
     icons_only: bool,
+    icon_px: Option<f32>,
 }
 
 impl<'a> Sidebar<'a> {
@@ -18,6 +19,7 @@ impl<'a> Sidebar<'a> {
             selected,
             items: Vec::new(),
             icons_only: false,
+            icon_px: None,
         }
     }
     pub fn item(mut self, icon: &'static str, label: impl Into<String>) -> Self {
@@ -33,11 +35,19 @@ impl<'a> Sidebar<'a> {
         self.icons_only = true;
         self
     }
+    /// Override the rail glyph box size (px) in [`Self::icons_only`] mode. Defaults to the
+    /// button's icon size; pass e.g. `core::ICON_XL` (24px) for a larger rail. Additive —
+    /// no effect on the default (non-icon-only) sidebar.
+    pub fn icon_size(mut self, px: f32) -> Self {
+        self.icon_px = Some(px);
+        self
+    }
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let selected = self.selected;
         let items = self.items;
         let icons_only = self.icons_only;
+        let icon_px = self.icon_px;
         ui.vertical(|ui| {
             for (i, (icon, label)) in items.into_iter().enumerate() {
                 let active = *selected == i;
@@ -51,6 +61,9 @@ impl<'a> Sidebar<'a> {
                         .icon_only()
                         .variant(variant)
                         .id_source(("sidebar_icon", i));
+                    if let Some(px) = icon_px {
+                        button = button.icon_px(px);
+                    }
                     if let Some(glyph) = icon {
                         button = button.icon_left(glyph);
                     }

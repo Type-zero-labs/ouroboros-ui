@@ -50,6 +50,8 @@ pub struct Theme {
     pub primary: Color32,
     /// Text/icon on `primary` (dark, for contrast).
     pub primary_foreground: Color32,
+    /// Hover/active fill for `primary` actions.
+    pub primary_hover: Color32,
     /// Secondary action fill.
     pub secondary: Color32,
     /// Text on `secondary`.
@@ -108,6 +110,7 @@ impl Theme {
             // Interactive — Ouroboros turquoise primary (lighter; dark text reads on it).
             primary: core::TEAL_200,
             primary_foreground: core::ZINC_950,
+            primary_hover: core::TEAL_300,
             secondary: core::ZINC_800,
             secondary_foreground: core::ZINC_50,
             accent: core::ZINC_800,
@@ -154,6 +157,7 @@ impl Theme {
             // Interactive — Ouroboros turquoise primary (lighter; dark text on teal).
             primary: core::TEAL_400,
             primary_foreground: core::ZINC_950,
+            primary_hover: core::TEAL_500,
             secondary: core::ZINC_100,
             secondary_foreground: core::ZINC_900,
             accent: core::ZINC_100,
@@ -189,6 +193,7 @@ impl Theme {
         let mut t = Self::dark();
         t.primary = core::ZINC_50;
         t.primary_foreground = core::ZINC_900;
+        t.primary_hover = core::ZINC_200;
         t.ring = core::ZINC_300;
         t
     }
@@ -197,6 +202,7 @@ impl Theme {
         let mut t = Self::light();
         t.primary = core::ZINC_900;
         t.primary_foreground = core::ZINC_50;
+        t.primary_hover = core::ZINC_700;
         t.ring = core::ZINC_400;
         t
     }

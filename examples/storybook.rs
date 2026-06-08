@@ -28,7 +28,7 @@ use ouroboros_ui::molecules::{
     ToggleGroup, VectorField,
 };
 use ouroboros_ui::organisms::{
-    Accordion, AppShell, Column, Dialog, DropdownMenu, Menubar, PanelSpec, Popover, Select,
+    Accordion, Column, Dialog, DialogChoice, DropdownMenu, Menubar, PanelSpec, Popover, Select,
     Sidebar, Splitter, TabView, Table, Toast, Toolbar, TreeItem, TreeView,
 };
 use ouroboros_ui::theme::typography;
@@ -102,7 +102,6 @@ enum Page {
     Accordion,
     Menubar,
     Splitter,
-    AppShell,
     GraphLive,
     GraphNode,
     GraphEdge,
@@ -177,7 +176,6 @@ impl Page {
             Page::Accordion => "Accordion",
             Page::Menubar => "Menubar",
             Page::Splitter => "Splitter",
-            Page::AppShell => "App shell",
             Page::GraphLive => "Live graph",
             Page::GraphNode => "Node variants",
             Page::GraphEdge => "Edge variants",
@@ -274,7 +272,6 @@ const NAV: &[(&str, &[Page])] = &[
             Page::Accordion,
             Page::Menubar,
             Page::Splitter,
-            Page::AppShell,
         ],
     ),
     (
@@ -487,7 +484,6 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::Accordion => page_accordion(ui, theme),
         Page::Menubar => page_menubar(ui, theme),
         Page::Splitter => page_splitter(ui, theme),
-        Page::AppShell => page_app_shell(ui, theme),
         Page::GraphLive => page_graph_live(ui, theme),
         Page::GraphNode => page_graph_node(ui, theme),
         Page::GraphEdge => page_graph_edge(ui, theme),
@@ -756,88 +752,28 @@ fn page_splitter(ui: &mut Ui, _theme: &Theme) {
             })
             .show(ui);
     });
-}
 
-/// One labeled box filling its cell — used as a slot's content in the AppShell demos.
-fn shell_slot(ui: &mut Ui, label: &str, muted: bool) {
-    let s = if muted {
-        Surface::new().muted()
-    } else {
-        Surface::new()
-    };
-    s.show(ui, |ui| {
-        ui.set_min_size(ui.available_size());
-        Text::new(label).muted().caption().show(ui);
-    });
-}
-
-fn page_app_shell(ui: &mut Ui, _theme: &Theme) {
+    ui.add_space(core::SPACE_4);
     caption(
         ui,
-        "Slots: header · aside-left · main · aside-right · footer — asides are Splitter-resizable; shells nest",
+        "Fixed bands (PanelSpec::fixed) — header/footer keep their px; the flex body takes the rest",
     );
-    // A small AppShell demo for each common layout. Each gets a stable id so its splitter
-    // state persists independently.
-    let demo = |ui: &mut Ui, title: &str, build: &dyn Fn(&mut Ui)| {
-        subhead(ui, title);
-        ui.allocate_ui(vec2(420.0, 150.0), |ui| build(ui));
-    };
-
-    demo(ui, "Header + Main", &|ui| {
-        AppShell::new()
-            .id_source("shell_hm")
-            .header(|ui| shell_slot(ui, "Header", false))
-            .main(|ui| shell_slot(ui, "Main", true))
-            .show(ui);
-    });
-
-    demo(ui, "Header + Main + Footer", &|ui| {
-        AppShell::new()
-            .id_source("shell_hmf")
-            .header(|ui| shell_slot(ui, "Header", false))
-            .main(|ui| shell_slot(ui, "Main", true))
-            .footer(|ui| shell_slot(ui, "Footer", false))
-            .show(ui);
-    });
-
-    demo(
-        ui,
-        "Aside-left + Main + Aside-right (drag the dividers)",
-        &|ui| {
-            AppShell::new()
-                .id_source("shell_ama")
-                .aside_left(|ui| shell_slot(ui, "Aside L", true))
-                .main(|ui| shell_slot(ui, "Main", true))
-                .aside_right(|ui| shell_slot(ui, "Aside R", true))
-                .show(ui);
-        },
-    );
-
-    demo(
-        ui,
-        "Full: Header + Aside-L + Main + Aside-R + Footer",
-        &|ui| {
-            AppShell::new()
-                .id_source("shell_full")
-                .header(|ui| shell_slot(ui, "Header", false))
-                .aside_left(|ui| shell_slot(ui, "Nav", true))
-                .main(|ui| shell_slot(ui, "Scene", true))
-                .aside_right(|ui| shell_slot(ui, "Inspector", true))
-                .footer(|ui| shell_slot(ui, "Status", false))
-                .show(ui);
-        },
-    );
-
-    demo(ui, "Nested: an AppShell inside the main slot", &|ui| {
-        AppShell::new()
-            .id_source("shell_outer")
-            .header(|ui| shell_slot(ui, "Outer header", false))
-            .main(|ui| {
-                AppShell::new()
-                    .id_source("shell_inner")
-                    .aside_left(|ui| shell_slot(ui, "Inner aside", true))
-                    .main(|ui| shell_slot(ui, "Inner main", true))
+    ui.allocate_ui(vec2(560.0, 240.0), |ui| {
+        Splitter::vertical()
+            .id_source("sp_demo_fixed")
+            .panel(PanelSpec::fixed(layout::TOOLBAR_HEIGHT), |ui| {
+                panel(ui, "Header — fixed 40px")
+            })
+            .panel(PanelSpec::flex(), |ui| {
+                // The body itself can still host a resizable horizontal split.
+                Splitter::horizontal()
+                    .id_source("sp_demo_fixed_body")
+                    .panel(PanelSpec::new().size(0.25), |ui| panel(ui, "Aside"))
+                    .panel(PanelSpec::flex(), |ui| panel(ui, "Body — flex"))
                     .show(ui);
+            })
+            .panel(PanelSpec::fixed(layout::STATUSBAR_HEIGHT), |ui| {
+                panel(ui, "Footer — fixed 24px")
             })
             .show(ui);
     });
@@ -1034,6 +970,31 @@ fn page_table(ui: &mut Ui, theme: &Theme) {
                 .show(ui);
         });
     });
+
+    subhead(ui, "Editable cells (Table::layout + NumericField)");
+    let id = egui::Id::new("tbl_edit_vals");
+    let mut vals = ui
+        .data(|d| d.get_temp::<[f32; 3]>(id))
+        .unwrap_or([10.0, 20.0, 30.0]);
+    let labels = ["STR", "AGI", "VIT"];
+    ui.allocate_ui(vec2(300.0, 150.0), |ui| {
+        let layout = Table::new()
+            .id_source("tbl_edit")
+            .border(true)
+            .columns([Column::new("Stat"), Column::new("Value").exact(120.0)])
+            .layout(ui, 3);
+        for (i, row) in layout.rects.iter().enumerate() {
+            if row.len() == 2 {
+                let mut lui = ui.new_child(egui::UiBuilder::new().max_rect(row[0]));
+                lui.set_clip_rect(row[0]);
+                Text::new(labels[i]).show(&mut lui);
+                let mut vui = ui.new_child(egui::UiBuilder::new().max_rect(row[1]));
+                vui.set_clip_rect(row[1]);
+                NumericField::new(&mut vals[i]).decimals(0).show(&mut vui);
+            }
+        }
+    });
+    ui.data_mut(|d| d.insert_temp(id, vals));
 }
 
 fn page_tree_view(ui: &mut Ui, _theme: &Theme) {
@@ -1075,6 +1036,17 @@ fn page_sidebar(ui: &mut Ui, _theme: &Theme) {
                 .item(light::CUBE, "Assets")
                 .item(light::GEAR, "Settings")
                 .icons_only()
+                .show(ui);
+        });
+        ui.add_space(core::SPACE_4);
+        // Icon rail with 24px glyphs (ICON_XL) — a denser editor-style rail.
+        ui.allocate_ui(vec2(56.0, 180.0), |ui| {
+            Sidebar::new(&mut sel)
+                .item(light::HOUSE, "Home")
+                .item(light::CUBE, "Assets")
+                .item(light::GEAR, "Settings")
+                .icons_only()
+                .icon_size(core::ICON_XL)
                 .show(ui);
         });
     });
@@ -1123,6 +1095,33 @@ fn page_dialog(ui: &mut Ui, _theme: &Theme) {
         }
     }
     ui.data_mut(|d| d.insert_temp(id, open));
+
+    ui.add_space(core::SPACE_4);
+    caption(
+        ui,
+        "Confirm variant (.confirm — replaces the legacy prompt)",
+    );
+    let cid = egui::Id::new("dlg_confirm_open");
+    let mut copen = ui.data(|d| d.get_temp::<bool>(cid).unwrap_or(false));
+    if Button::new("Discard changes…")
+        .secondary()
+        .id_source("dlg_c_trigger")
+        .show(ui)
+        .clicked()
+    {
+        copen = true;
+    }
+    if copen {
+        let choice = Dialog::new("Discard changes?")
+            .description("Your edits will be lost. This cannot be undone.")
+            .destructive()
+            .id_source("dlg_confirm")
+            .confirm(ui.ctx(), "Discard", "Keep editing");
+        if choice != DialogChoice::None {
+            copen = false;
+        }
+    }
+    ui.data_mut(|d| d.insert_temp(cid, copen));
 }
 
 fn page_toast(ui: &mut Ui, _theme: &Theme) {
@@ -1136,10 +1135,13 @@ fn page_toast(ui: &mut Ui, _theme: &Theme) {
     {
         show = !show;
     }
-    if show {
-        Toast::new("Build finished in 2.3s")
+    if show
+        && Toast::new("Build finished in 2.3s")
             .success()
-            .show(ui.ctx());
+            .dismissible()
+            .show(ui.ctx())
+    {
+        show = false;
     }
     ui.data_mut(|d| d.insert_temp(id, show));
 }
@@ -1511,6 +1513,13 @@ fn page_numeric_field(ui: &mut Ui, _theme: &Theme) {
         NumericField::new(&mut p).show(ui);
     });
     ui.data_mut(|d| d.insert_temp(id0, p));
+    subhead(ui, "Fixed decimals (.decimals(2))");
+    let idd = egui::Id::new("num_dec");
+    let mut d2 = ui.data(|d| d.get_temp::<f32>(idd).unwrap_or(1.5));
+    ui.allocate_ui(vec2(160.0, core::CONTROL_MD), |ui| {
+        NumericField::new(&mut d2).speed(0.01).decimals(2).show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(idd, d2));
     subhead(ui, "Stepper (−/+)");
     let id2 = egui::Id::new("num_step");
     let mut s = ui.data(|d| d.get_temp::<f32>(id2).unwrap_or(3.0));
@@ -2474,6 +2483,9 @@ fn page_divider(ui: &mut Ui, _theme: &Theme) {
     ui.add_space(core::SPACE_3);
     caption(ui, "Destructive (red rule)");
     Divider::horizontal().destructive().show(ui);
+    ui.add_space(core::SPACE_3);
+    caption(ui, "Dotted");
+    Divider::horizontal().dotted().show(ui);
     ui.add_space(core::SPACE_3);
     caption(ui, "Vertical (between content)");
     ui.allocate_ui(vec2(ui.available_width(), 22.0), |ui| {

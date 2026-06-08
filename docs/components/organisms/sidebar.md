@@ -6,7 +6,7 @@ A vertical navigation list (shadcn Sidebar / Navigation Menu) bound to a `&mut u
 
 ## Design
 
-- **Purpose / when to use** — primary nav for a view (Home / Assets / Settings), as the `aside_left` of an [`AppShell`](app_shell.md). Use the icon rail when horizontal space is tight.
+- **Purpose / when to use** — primary nav for a view (Home / Assets / Settings), as the left band of a screen's root [`Splitter`](splitter.md) (fixed-px rail, or a resizable panel). Use the icon rail when horizontal space is tight.
 - **Anatomy** — `ui.vertical` → per entry, either:
   - **list mode** — a `ListItem` (`.selected(active)`, keyed `("sidebar", i)`, optional leading glyph), or
   - **icons-only mode** — an icon-only `Button` (`Secondary` when active else `Ghost`, keyed `("sidebar_icon", i)`, optional `icon_left`).

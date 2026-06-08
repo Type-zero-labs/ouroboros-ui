@@ -86,13 +86,12 @@ sanctioned exception that paints (still via tokens). See [guards](../guards.md).
 
 ## Organisms
 
-14 full UI sections composed from cells, molecules, and atoms.
+13 full UI sections composed from cells, molecules, and atoms.
 
 ### Layout shells
-- [AppShell](./organisms/app_shell.md) — sidebar/toolbar/statusbar layout wrapper
+- [Splitter](./organisms/splitter.md) — the single layout primitive: screen root + resizable panes (`PanelSpec`, with `fixed(px)` non-resizable chrome bands)
 - [Sidebar](./organisms/sidebar.md) — navigation panel
 - [Toolbar](./organisms/toolbar.md) — top/bottom tool bar
-- [Splitter](./organisms/splitter.md) — resizable multi-panel layout (`PanelSpec`)
 - [Menubar](./organisms/menubar.md) — application menu bar
 
 ### Overlays

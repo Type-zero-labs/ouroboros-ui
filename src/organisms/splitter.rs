@@ -27,26 +27,56 @@ use egui::{pos2, vec2, Id, Rect, Response, Sense, Ui, UiBuilder, Vec2};
 pub struct PanelSpec {
     /// Initial size as a fraction of the splitter's main axis (0..1). `None` = equal share.
     size: Option<f32>,
-    /// Minimum / maximum size in px.
+    /// Fixed size in px on the main axis. When `Some`, the panel is excluded from flex
+    /// distribution (reserves its px before the rest is shared) and is non-resizable by default —
+    /// for fixed chrome bands like headers/footers/toolbars. `None` = a flex panel.
+    fixed: Option<f32>,
+    /// Minimum / maximum size in px. `max` defaults to unbounded (`f32::INFINITY`) so a wide
+    /// flex panel never blocks an adjacent divider's drag.
     min: f32,
     max: f32,
     resizable: bool,
     collapsible: bool,
+    /// Inner padding (px) applied to the panel's content rect. `0` = flush (the default).
+    pad: f32,
 }
 
 impl PanelSpec {
     pub fn new() -> Self {
         Self {
             size: None,
+            fixed: None,
             min: layout::PANEL_MIN,
-            max: layout::PANEL_MAX,
+            max: f32::INFINITY,
             resizable: true,
             collapsible: false,
+            pad: 0.0,
+        }
+    }
+    /// A flex panel: no explicit size (takes the remainder) and unbounded `max`. Same as
+    /// [`PanelSpec::new`] — a readable alias for the wide center pane (viewport/canvas).
+    pub fn flex() -> Self {
+        Self::new()
+    }
+    /// A fixed-size band: an absolute `px` size on the main axis, excluded from flex distribution
+    /// (reserved before the remainder is shared) and **non-resizable** by default. The canonical
+    /// header/footer/toolbar/rail band that must keep its px through window resizes. Override the
+    /// divider behaviour with [`PanelSpec::resizable`] if a fixed band should still be draggable.
+    pub fn fixed(px: f32) -> Self {
+        Self {
+            fixed: Some(px.max(0.0)),
+            resizable: false,
+            ..Self::new()
         }
     }
     /// Initial size as a fraction of the main axis (0..1).
     pub fn size(mut self, fraction: f32) -> Self {
         self.size = Some(fraction.clamp(0.0, 1.0));
+        self
+    }
+    /// Inner padding (px) for the panel's content. Default `0` (flush).
+    pub fn pad(mut self, px: f32) -> Self {
+        self.pad = px;
         self
     }
     pub fn min(mut self, px: f32) -> Self {
@@ -124,19 +154,68 @@ impl<'a> Splitter<'a> {
         self
     }
 
+    /// Add a panel without a content closure, for use with [`Splitter::layout`]. Use this when
+    /// each panel's body needs `&mut self` of the caller — three `FnMut(&mut Ui)` closures can't
+    /// each borrow the same state, so instead lay the splitter out, get the rects back, and draw
+    /// into them sequentially via `ui.new_child`.
+    pub fn region(self, cfg: PanelSpec) -> Self {
+        self.panel(cfg, |_| {})
+    }
+
+    /// Render panels by invoking their content closures.
     pub fn show(mut self, ui: &mut Ui) -> Response {
+        let SplitterLayout { rects, response } = self.layout_rects(ui);
+        for (i, slot) in rects.iter().enumerate() {
+            if let Some(content_rect) = slot {
+                let mut cui = ui.new_child(UiBuilder::new().max_rect(*content_rect));
+                cui.set_clip_rect(*content_rect);
+                (self.panels[i].add)(&mut cui);
+            }
+        }
+        response
+    }
+
+    /// Lay the splitter out — draw the dividers, handle resize/collapse, persist state — and
+    /// return one content rect per panel (`None` when collapsed) **instead of** invoking content
+    /// closures. Use with [`Splitter::region`] when each panel body needs `&mut self`; draw into
+    /// the returned rects sequentially via `ui.new_child`.
+    pub fn layout(mut self, ui: &mut Ui) -> SplitterLayout {
+        self.layout_rects(ui)
+    }
+
+    /// Shared layout core for [`Splitter::show`] and [`Splitter::layout`]: allocate, size panels
+    /// (fixed-px bands + flex split), draw dividers, apply drag/collapse, persist state. Returns
+    /// the per-panel content rects; the caller decides whether to render closures or hand the
+    /// rects back.
+    fn layout_rects(&mut self, ui: &mut Ui) -> SplitterLayout {
         let n = self.panels.len();
         let outer = ui.available_size();
         let (rect, response) = ui.allocate_exact_size(outer, Sense::hover());
         if n == 0 {
-            return response;
+            return SplitterLayout {
+                rects: Vec::new(),
+                response,
+            };
         }
 
         let horizontal = self.horizontal;
         let main = |v: Vec2| if horizontal { v.x } else { v.y };
         let div = core::SPACE_2;
         let main_len = main(rect.size());
-        let content_main = (main_len - div * (n as f32 - 1.0)).max(1.0);
+
+        // A boundary is draggable only when both neighbours are resizable. Fixed/locked
+        // boundaries (e.g. next to a `PanelSpec::fixed` chrome band) get no handle and no gap, so
+        // the chrome reads as seamless bands rather than draggable splits.
+        let draggable: Vec<bool> = (0..n.saturating_sub(1))
+            .map(|i| self.panels[i].cfg.resizable && self.panels[i + 1].cfg.resizable)
+            .collect();
+        let div_total = div * draggable.iter().filter(|d| **d).count() as f32;
+        let content_main = (main_len - div_total).max(1.0);
+
+        // ── Fixed bands reserve px up front; flex panels share what's left ──
+        let fixed_px: Vec<Option<f32>> = self.panels.iter().map(|p| p.cfg.fixed).collect();
+        let fixed_total: f32 = fixed_px.iter().flatten().copied().sum();
+        let flex_content = (content_main - fixed_total).max(0.0);
 
         // ── Load or initialise session state ──
         let id = self.id_source.unwrap_or(response.id);
@@ -148,12 +227,15 @@ impl<'a> Splitter<'a> {
                 collapsed: vec![false; n],
             });
 
-        // ── Effective fractions: collapsed panels contribute 0, redistribute the rest ──
-        let mut eff: Vec<f32> = state
-            .fracs
-            .iter()
-            .zip(&state.collapsed)
-            .map(|(f, c)| if *c { 0.0 } else { *f })
+        // ── Effective fractions: fixed and collapsed panels contribute 0 to the flex split ──
+        let mut eff: Vec<f32> = (0..n)
+            .map(|i| {
+                if fixed_px[i].is_some() || state.collapsed[i] {
+                    0.0
+                } else {
+                    state.fracs[i]
+                }
+            })
             .collect();
         let sum: f32 = eff.iter().sum();
         if sum > f32::EPSILON {
@@ -161,7 +243,13 @@ impl<'a> Splitter<'a> {
                 *f /= sum;
             }
         }
-        let pixels: Vec<f32> = eff.iter().map(|f| f * content_main).collect();
+        // Fixed panels take their px (clamped to what's available); flex panels share the rest.
+        let pixels: Vec<f32> = (0..n)
+            .map(|i| match fixed_px[i] {
+                Some(px) => px.min(content_main),
+                None => eff[i] * flex_content,
+            })
+            .collect();
 
         // ── Render panels + dividers along the main axis ──
         let cell = |start: f32, len: f32, cross_full: &Rect| -> Rect {
@@ -182,6 +270,7 @@ impl<'a> Splitter<'a> {
         let mut cursor = main_start;
         let mut drag_for: Option<(usize, f32)> = None;
         let mut toggle: Option<usize> = None;
+        let mut rects: Vec<Option<Rect>> = vec![None; n];
 
         // Indexed loop: each iteration touches several parallel arrays plus the `i + 1`
         // neighbor for the divider, so a single enumerate() doesn't fit cleanly.
@@ -189,26 +278,28 @@ impl<'a> Splitter<'a> {
         for i in 0..n {
             let p_rect = cell(cursor, pixels[i], &rect);
             if !state.collapsed[i] {
-                let mut cui = ui.new_child(UiBuilder::new().max_rect(p_rect));
-                cui.set_clip_rect(p_rect);
-                (self.panels[i].add)(&mut cui);
+                let pad = self.panels[i].cfg.pad;
+                let content_rect = if pad > 0.0 {
+                    p_rect.shrink(pad)
+                } else {
+                    p_rect
+                };
+                rects[i] = Some(content_rect);
             }
             cursor += pixels[i];
 
-            // Divider after every panel except the last.
-            if i + 1 < n {
+            // Draggable boundaries get a handle + a gap; fixed/locked boundaries are seamless.
+            if i + 1 < n && draggable[i] {
                 let d_rect = cell(cursor, div, &rect);
                 let line = if horizontal {
                     Axis::Vertical
                 } else {
                     Axis::Horizontal
                 };
-                let pair_resizable =
-                    self.panels[i].cfg.resizable && self.panels[i + 1].cfg.resizable;
                 let active = state.collapsed[i] || state.collapsed[i + 1];
                 let mut hui = ui.new_child(UiBuilder::new().max_rect(d_rect));
                 let h = SplitterHandle::new(line).active(active).show(&mut hui);
-                if pair_resizable && h.dragged() {
+                if h.dragged() {
                     drag_for = Some((i, main(h.drag_delta())));
                 }
                 if h.double_clicked() {
@@ -227,7 +318,9 @@ impl<'a> Splitter<'a> {
                     self.panels[i + 1].cfg.min,
                     self.panels[i + 1].cfg.max,
                 );
-                apply_drag(&mut state, i, delta, content_main, bounds);
+                // Drags only occur between two flex panels (fixed bands are non-resizable),
+                // so the redistribution space is the flex content, not the full main axis.
+                apply_drag(&mut state, i, delta, flex_content, bounds);
             }
         }
 
@@ -246,22 +339,47 @@ impl<'a> Splitter<'a> {
         }
 
         ui.data_mut(|d| d.insert_temp(id, state));
-        response
+        SplitterLayout { rects, response }
     }
 }
 
-/// Initial fractions: honour explicit `size`, split the remainder equally among the rest.
+/// Output of [`Splitter::layout`] — one content rect per panel (`None` if collapsed), plus the
+/// splitter's own [`Response`].
+pub struct SplitterLayout {
+    pub rects: Vec<Option<Rect>>,
+    pub response: Response,
+}
+
+/// Initial fractions over the **flex** panels: honour explicit `size`, split the remainder
+/// equally among the rest. Fixed bands get fraction `0` (they're sized in px, not by fraction).
 fn init_fracs(panels: &[Panel<'_>]) -> Vec<f32> {
     let n = panels.len();
-    let explicit: f32 = panels.iter().filter_map(|p| p.cfg.size).sum();
-    let unset = panels.iter().filter(|p| p.cfg.size.is_none()).count();
+    let is_flex = |p: &Panel<'_>| p.cfg.fixed.is_none();
+    let explicit: f32 = panels
+        .iter()
+        .filter(|p| is_flex(p))
+        .filter_map(|p| p.cfg.size)
+        .sum();
+    let unset = panels
+        .iter()
+        .filter(|p| is_flex(p) && p.cfg.size.is_none())
+        .count();
     let remainder = (1.0 - explicit).max(0.0);
     let each = if unset > 0 {
         remainder / unset as f32
     } else {
         0.0
     };
-    let raw: Vec<f32> = panels.iter().map(|p| p.cfg.size.unwrap_or(each)).collect();
+    let raw: Vec<f32> = panels
+        .iter()
+        .map(|p| {
+            if p.cfg.fixed.is_some() {
+                0.0
+            } else {
+                p.cfg.size.unwrap_or(each)
+            }
+        })
+        .collect();
     let sum: f32 = raw.iter().sum();
     if sum > f32::EPSILON {
         raw.iter().map(|f| f / sum).collect()
