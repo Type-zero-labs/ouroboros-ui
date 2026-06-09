@@ -33,7 +33,11 @@ impl PropertyRow {
                     Text::new(label).muted().show(ui);
                 },
             );
-            control(ui)
+            // Control anchored to the RIGHT (Unity-inspector style, like the data-table value
+            // column): a fixed-width control sits at the right edge and the gap between label and
+            // control flexes on resize. A filling control (text input) still fills the remainder.
+            ui.with_layout(Layout::right_to_left(Align::Center), control)
+                .inner
         })
         .inner
     }
