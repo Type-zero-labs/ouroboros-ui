@@ -58,7 +58,7 @@ impl Dialog {
         Heading::new(title).h2().show(ui);
         if let Some(description) = description {
             ui.add_space(core::SPACE_1);
-            Text::new(description).muted().show(ui);
+            Text::new(description).muted().wrap().show(ui);
         }
     }
 

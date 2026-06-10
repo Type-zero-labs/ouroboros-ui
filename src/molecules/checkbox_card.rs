@@ -54,7 +54,7 @@ impl<'a> CheckboxCard<'a> {
                     ui.vertical(|ui| {
                         Text::new(label).body_strong().show(ui);
                         if let Some(description) = description {
-                            Text::new(description).caption().muted().show(ui);
+                            Text::new(description).caption().muted().wrap().show(ui);
                         }
                     });
                 });

@@ -32,6 +32,7 @@ pub mod tokens;
 // root (like the layer modules' own re-exports) so callers reach it without the module path.
 pub use auto_layout::{
     AutoLayout, AutoLayoutLayout, CrossAlign, Gap, LayoutDirection, MainAlign, Padding, SizeMode,
+    Sizing,
 };
 pub use theme::typography::{TypeStyle, Weight};
 pub use theme::Mode;

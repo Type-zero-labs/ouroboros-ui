@@ -114,12 +114,18 @@ fn label_row(ui: &mut Ui, theme: &Theme, label: &str, required: bool) -> bool {
 }
 
 fn below(ui: &mut Ui, theme: &Theme, hint: &Option<String>, error: &Option<String>) {
+    // Free-form prose: wrap on the available width so a long error/hint grows the
+    // field downward instead of running past a narrow panel.
     if let Some(error) = error {
         ui.add_space(core::SPACE_1);
-        Text::new(error).caption().color(theme.error).show(ui);
+        Text::new(error)
+            .caption()
+            .color(theme.error)
+            .wrap()
+            .show(ui);
     } else if let Some(hint) = hint {
         ui.add_space(core::SPACE_1);
-        Text::new(hint).caption().muted().show(ui);
+        Text::new(hint).caption().muted().wrap().show(ui);
     }
 }
 

@@ -3,9 +3,14 @@
 //! Token box wrapping an egui [`DragValue`](egui::DragValue): drag to scrub, click to type.
 //! The value is right-aligned. `.stepper()` flanks it with `−`/`+` icon buttons; `.suffix()`
 //! appends a unit. The editing substrate is egui's; the casing is token.
+//!
+//! Width is intrinsically constrained: the field fills the available width clamped to
+//! [`layout::NUMERIC_MIN_W`]`..=`[`layout::FIELD_NUM_W`], so numbers stay moderate and
+//! column-aligned instead of ballooning to the panel. `.full_width()` drops the cap.
 
 use crate::atoms::Button;
 use crate::tokens::core::{self, Size};
+use crate::tokens::layout;
 use crate::Theme;
 use egui::{
     vec2, Align, Color32, CornerRadius, DragValue, Layout, Response, Sense, Stroke, StrokeKind, Ui,
@@ -22,6 +27,7 @@ pub struct NumericField<'a> {
     step: Option<f32>,
     suffix: Option<String>,
     stepper: bool,
+    full_width: bool,
     enabled: bool,
     error: bool,
     size: Size,
@@ -38,6 +44,7 @@ impl<'a> NumericField<'a> {
             step: None,
             suffix: None,
             stepper: false,
+            full_width: false,
             enabled: true,
             error: false,
             size: Size::default(),
@@ -62,6 +69,12 @@ impl<'a> NumericField<'a> {
     /// Flank the value with `−`/`+` buttons.
     pub fn stepper(mut self) -> Self {
         self.stepper = true;
+        self
+    }
+    /// Fill the available width — drops the [`layout::FIELD_NUM_W`] cap (the
+    /// [`layout::NUMERIC_MIN_W`] floor still applies).
+    pub fn full_width(mut self) -> Self {
+        self.full_width = true;
         self
     }
     pub fn suffix(mut self, suffix: impl Into<String>) -> Self {
@@ -99,7 +112,20 @@ impl<'a> NumericField<'a> {
     pub fn show(self, ui: &mut Ui) -> Response {
         let theme = Theme::get(ui);
         let height = self.size.height();
-        let width = ui.available_width();
+        // Intrinsic constraints: floor so the field never collapses; cap so a numeric
+        // value stays moderate in wide panels (`.full_width()` keeps only the floor).
+        // A stepper needs room for both flanking buttons besides the value.
+        let floor = if self.stepper {
+            layout::NUMERIC_STEPPER_MIN_W
+        } else {
+            layout::NUMERIC_MIN_W
+        };
+        let width = if self.full_width {
+            ui.available_width().max(floor)
+        } else {
+            ui.available_width()
+                .clamp(floor, layout::FIELD_NUM_W.max(floor))
+        };
         let (rect, box_resp) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
         let enabled = self.enabled;
         let error = self.error;

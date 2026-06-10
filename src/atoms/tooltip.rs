@@ -19,7 +19,8 @@ impl Tooltip {
     pub fn show(self, response: Response) -> Response {
         let text = self.text;
         response.on_hover_ui(move |ui| {
-            Text::new(text).show(ui);
+            // Wrap at the tooltip's max width — long help text grows down, not sideways.
+            Text::new(text).wrap().show(ui);
         })
     }
 }
