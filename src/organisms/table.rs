@@ -196,7 +196,7 @@ impl<'a> Table<'a> {
             return ui
                 .vertical_centered(|ui| {
                     ui.add_space(core::SPACE_6);
-                    Text::new(self.empty_text).muted().show(ui);
+                    Text::new(self.empty_text).muted().wrap().show(ui);
                     ui.add_space(core::SPACE_6);
                 })
                 .response;

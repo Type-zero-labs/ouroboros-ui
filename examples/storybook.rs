@@ -47,6 +47,7 @@ enum Page {
     Motion,
     LayoutTokens,
     AutoLayoutDemo,
+    ResizeLab,
     Text,
     Heading,
     Icon,
@@ -121,6 +122,7 @@ impl Page {
             Page::Motion => "Motion",
             Page::LayoutTokens => "Layout & panels",
             Page::AutoLayoutDemo => "Auto-layout (Figma)",
+            Page::ResizeLab => "Resize Lab",
             Page::Text => "Text",
             Page::Heading => "Heading",
             Page::Icon => "Icon",
@@ -198,7 +200,10 @@ const NAV: &[(&str, &[Page])] = &[
             Page::Motion,
         ],
     ),
-    ("LAYOUT", &[Page::LayoutTokens, Page::AutoLayoutDemo]),
+    (
+        "LAYOUT",
+        &[Page::LayoutTokens, Page::AutoLayoutDemo, Page::ResizeLab],
+    ),
     (
         "ATOMS",
         &[
@@ -429,6 +434,7 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::Motion => page_motion(ui, theme),
         Page::LayoutTokens => page_layout_tokens(ui, theme),
         Page::AutoLayoutDemo => page_auto_layout(ui, theme),
+        Page::ResizeLab => page_resize_lab(ui, theme),
         Page::Text => page_text(ui, theme),
         Page::Heading => page_heading(ui, theme),
         Page::Icon => page_icon(ui, theme),
@@ -2400,6 +2406,215 @@ fn page_auto_layout(ui: &mut Ui, theme: &Theme) {
             .hug(|ui| chip(ui, "row three", p, pf))
             .show(ui);
     });
+    caption(
+        ui,
+        "Fill with min/max — fill_clamped(80, 160) · fill_min(120)",
+    );
+    al_box(ui, theme, |ui| {
+        AutoLayout::horizontal()
+            .gap(core::SPACE_2)
+            .pad(core::SPACE_2)
+            .cross_align(CrossAlign::Center)
+            .fill_clamped(80.0, 160.0, |ui| fill_chip(ui, "80–160", mu, fg))
+            .fill_min(120.0, |ui| fill_chip(ui, "min 120", p, pf))
+            .show(ui);
+    });
+    caption(
+        ui,
+        "wrap — 6 × fill_min(72) reflow: one row when wide, 2–3 when narrow",
+    );
+    al_box(ui, theme, |ui| {
+        let mut grid = AutoLayout::horizontal()
+            .wrap()
+            .gap(core::SPACE_2)
+            .pad(core::SPACE_2);
+        for label in ["STR", "AGI", "VIT", "INT", "DEX", "LUK"] {
+            grid = grid.fill_min(72.0, move |ui| fill_chip(ui, label, mu, fg));
+        }
+        grid.show(ui);
+    });
+}
+
+fn page_resize_lab(ui: &mut Ui, _theme: &Theme) {
+    Text::new(
+        "Responsive layout stress area — drag the divider and watch the left panel reflow \
+         without overlap, clipping ratchets, or collapsed columns.",
+    )
+    .muted()
+    .wrap()
+    .show(ui);
+    // Live width readouts so failure ranges can be reported precisely ("breaks below N px").
+    Text::new(format!("window: {:.0} px", ui.ctx().content_rect().width()))
+        .muted()
+        .show(ui);
+    ui.add_space(core::SPACE_3);
+
+    // Interactive state lives in egui temp memory (same pattern as the other pages).
+    let id_name = egui::Id::new("rlab_name");
+    let id_mass = egui::Id::new("rlab_mass");
+    let id_blend = egui::Id::new("rlab_blend");
+    let id_drag = egui::Id::new("rlab_drag");
+    let id_stats = egui::Id::new("rlab_stats");
+    let id_cols = egui::Id::new("rlab_cols");
+    let mut name = ui.data(|d| d.get_temp::<String>(id_name).unwrap_or_default());
+    let mut mass = ui.data(|d| d.get_temp::<f32>(id_mass).unwrap_or(72.5));
+    let mut blend = ui.data(|d| d.get_temp::<usize>(id_blend).unwrap_or(0));
+    let mut drag = ui.data(|d| d.get_temp::<f32>(id_drag).unwrap_or(0.05));
+    let mut stats = ui.data(|d| {
+        d.get_temp::<[f32; 6]>(id_stats)
+            .unwrap_or([12.0, 9.0, 14.0, 7.0, 11.0, 5.0])
+    });
+    let mut cols = ui.data(|d| {
+        d.get_temp::<[f32; 4]>(id_cols)
+            .unwrap_or([0.6, 0.25, 0.4, 0.8])
+    });
+
+    ui.allocate_ui(vec2(ui.available_width(), 460.0), |ui| {
+        Splitter::horizontal()
+            .id_source("rlab_split")
+            .panel(PanelSpec::new().size(0.35).min(180.0).max(520.0), |ui| {
+                let panel_w = ui.available_width();
+                Text::new(format!("◂ panel: {panel_w:.0} px ▸")).show(ui);
+                ui.add_space(core::SPACE_1);
+                egui::ScrollArea::vertical()
+                    .id_salt("rlab_scroll")
+                    .auto_shrink([true, false])
+                    .show(ui, |ui| {
+                        resize_lab_panel(
+                            ui, &mut name, &mut mass, &mut blend, &mut drag, &mut stats, &mut cols,
+                        );
+                    });
+            })
+            .panel(PanelSpec::flex(), |ui| {
+                let flex_w = ui.available_width();
+                Surface::new().muted().show(ui, |ui| {
+                    ui.set_min_size(ui.available_size());
+                    Text::new(format!("flex area: {flex_w:.0} px")).show(ui);
+                    Text::new("shrink the window to stress the left panel")
+                        .muted()
+                        .wrap()
+                        .show(ui);
+                });
+            })
+            .show(ui);
+    });
+
+    ui.data_mut(|d| {
+        d.insert_temp(id_name, name);
+        d.insert_temp(id_mass, mass);
+        d.insert_temp(id_blend, blend);
+        d.insert_temp(id_drag, drag);
+        d.insert_temp(id_stats, stats);
+        d.insert_temp(id_cols, cols);
+    });
+}
+
+/// The torture stack inside the Resize Lab's left panel — every responsive failure mode
+/// in one column: stretching controls, a wrapping status band, a reflowing stat grid,
+/// wrapping prose, and two side-by-side columns that must not collapse.
+fn resize_lab_panel(
+    ui: &mut Ui,
+    name: &mut String,
+    mass: &mut f32,
+    blend: &mut usize,
+    drag: &mut f32,
+    stats: &mut [f32; 6],
+    cols: &mut [f32; 4],
+) {
+    ui.add_space(core::SPACE_2);
+
+    // a) Inspector rows — fixed label column, controls absorb the remaining width.
+    Text::new("PROPERTIES").caption().muted().show(ui);
+    ui.add_space(core::SPACE_1);
+    PropertyRow::new("Name").show(ui, |ui| {
+        Input::new(name).placeholder("Entity name…").show(ui)
+    });
+    PropertyRow::new("Mass").show(ui, |ui| {
+        NumericField::new(mass).speed(0.05).suffix(" kg").show(ui)
+    });
+    PropertyRow::new("Blend").show(ui, |ui| {
+        Select::new(blend)
+            .options(["Opaque", "Cutout", "Transparent", "Additive"])
+            .show(ui)
+    });
+    PropertyRow::new("Drag").show(ui, |ui| {
+        NumericField::new(drag).speed(0.01).decimals(2).show(ui)
+    });
+
+    // b) Status band — the alert fills (and wraps its long message), the action hugs.
+    subhead(ui, "Status band — Fill alert · Hug action");
+    AutoLayout::horizontal()
+        .gap(core::SPACE_2)
+        .cross_align(CrossAlign::Center)
+        .fill(|ui| {
+            Alert::new(
+                "Autosave recovered three unsaved changes from the previous session — \
+                 review them before publishing; a narrow panel must wrap this message \
+                 instead of pushing the action button out of view.",
+            )
+            .variant(AlertVariant::Warning)
+            .show(ui);
+        })
+        .hug(|ui| {
+            Button::new("Action")
+                .sm()
+                .id_source("rlab_band_btn")
+                .show(ui);
+        })
+        .show(ui);
+
+    // c) Stat grid — wrap + fill_min: one row when wide, reflows to 2–3 lines when narrow.
+    subhead(ui, "Stat grid — wrap + fill_min(72)");
+    let mut grid = AutoLayout::horizontal()
+        .wrap()
+        .gap(core::SPACE_2)
+        .gap_cross(core::SPACE_2);
+    for (label, value) in ["STR", "AGI", "VIT", "INT", "DEX", "LUK"]
+        .into_iter()
+        .zip(stats.iter_mut())
+    {
+        grid = grid.fill_min(72.0, move |ui| {
+            Surface::new().muted().show(ui, |ui| {
+                ui.set_min_width(ui.available_width());
+                Text::new(label).caption().muted().show(ui);
+                NumericField::new(&mut *value).speed(0.1).show(ui);
+            });
+        });
+    }
+    grid.show(ui);
+
+    // d) Long prose — text wrap under a shrinking budget.
+    subhead(ui, "Long text");
+    Text::new(
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor \
+         incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis \
+         nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \
+         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu \
+         fugiat nulla pariatur.",
+    )
+    .muted()
+    .wrap()
+    .show(ui);
+
+    // e) Two responsive columns — each floors at 140px instead of collapsing.
+    subhead(ui, "Two columns — fill_min(140) each");
+    let (ca, cb) = cols.split_at_mut(2);
+    AutoLayout::horizontal()
+        .gap(core::SPACE_4)
+        .fill_min(140.0, move |ui| {
+            PropertyRow::new("Bounce")
+                .show(ui, |ui| NumericField::new(&mut ca[0]).speed(0.01).show(ui));
+            PropertyRow::new("Friction")
+                .show(ui, |ui| NumericField::new(&mut ca[1]).speed(0.01).show(ui));
+        })
+        .fill_min(140.0, move |ui| {
+            PropertyRow::new("Damping")
+                .show(ui, |ui| NumericField::new(&mut cb[0]).speed(0.01).show(ui));
+            PropertyRow::new("Restitution")
+                .show(ui, |ui| NumericField::new(&mut cb[1]).speed(0.01).show(ui));
+        })
+        .show(ui);
+    ui.add_space(core::SPACE_4);
 }
 
 fn page_text(ui: &mut Ui, theme: &Theme) {
@@ -2626,6 +2841,21 @@ fn al_box(ui: &mut Ui, theme: &Theme, add: impl FnOnce(&mut Ui)) {
             add(ui);
         });
     ui.add_space(core::SPACE_3);
+}
+
+/// A pill that spans the cell's width — visualizes the *resolved* size of `Fill` cells
+/// in the auto-layout demos (a hugging [`chip`] would hide the distribution).
+fn fill_chip(ui: &mut Ui, label: &str, fill: Color32, fg: Color32) {
+    let pad = vec2(core::SPACE_3, core::SPACE_2);
+    let galley = ui
+        .painter()
+        .layout_no_wrap(label.to_owned(), typography::label().font_id(), fg);
+    let size = vec2(ui.available_width(), galley.size().y + pad.y * 2.0);
+    let (rect, _) = ui.allocate_exact_size(size, Sense::hover());
+    ui.painter()
+        .rect_filled(rect, CornerRadius::same(core::RADIUS_MD as u8), fill);
+    let text_pos = egui::pos2(rect.center().x - galley.size().x * 0.5, rect.min.y + pad.y);
+    ui.painter().galley(text_pos, galley, fg);
 }
 
 /// A content-sized pill — a stand-in child for the auto-layout demos.

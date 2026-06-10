@@ -82,7 +82,7 @@ impl<'a> Card<'a> {
                                 }
                                 if let Some(description) = self.description {
                                     ui.add_space(core::SPACE_1);
-                                    Text::new(description).caption().muted().show(ui);
+                                    Text::new(description).caption().muted().wrap().show(ui);
                                 }
                             });
                             if let Some(action) = self.action {

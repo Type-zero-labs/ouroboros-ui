@@ -3,6 +3,7 @@
 //! Track (`muted`) + filled portion (`primary`) + a `primary` thumb. Drag or click to set.
 
 use crate::tokens::core::{self, Size};
+use crate::tokens::layout;
 use crate::Theme;
 use egui::{pos2, vec2, Color32, CornerRadius, Rect, Response, Sense, Stroke, Ui};
 
@@ -58,7 +59,8 @@ impl<'a> Slider<'a> {
     pub fn show(self, ui: &mut Ui) -> Response {
         let theme = Theme::get(ui);
         let height = self.size.icon_size();
-        let width = ui.available_width();
+        // Fill the panel, but keep the track usable in narrow panels (intrinsic floor).
+        let width = ui.available_width().max(layout::SLIDER_MIN_W);
         let sense = if self.enabled {
             Sense::click_and_drag()
         } else {

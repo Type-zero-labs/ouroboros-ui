@@ -24,7 +24,7 @@ use ouroboros_ui::organisms::{
     Accordion, Column, Menubar, PanelSpec, Select, Sidebar, Splitter, TabView, Table, Toolbar,
     TreeItem, TreeView,
 };
-use ouroboros_ui::tokens::core;
+use ouroboros_ui::tokens::{core, layout};
 use ouroboros_ui::{Mode, Size, Theme};
 use std::cell::Cell;
 use std::rc::Rc;
@@ -741,33 +741,107 @@ fn splitter_layout_returns_fixed_rects() {
 }
 
 #[test]
-fn auto_layout_layout_sizes_fixed_and_fill() {
-    // The rect-returning AutoLayout path (for `&mut self` sibling cells): Fixed reserves px, Fill
-    // takes the remainder, all cells span the full cross axis.
-    use ouroboros_ui::{AutoLayout, SizeMode};
-    let lead = Rc::new(Cell::new(0.0f32));
-    let rest = Rc::new(Cell::new(0.0f32));
-    let (l, r) = (lead.clone(), rest.clone());
+fn input_floors_at_min_width() {
+    // In a panel narrower than the floor, the input holds its intrinsic minimum instead
+    // of collapsing. (`show` returns the inner TextEdit response, so measure the box via
+    // the child ui's min_rect.)
+    let width = Rc::new(Cell::new(0.0f32));
+    let sink = width.clone();
     rendered(move |ui| {
-        let total = ui.available_width();
-        let out = AutoLayout::horizontal()
-            .region(SizeMode::Fixed(120.0))
-            .region(SizeMode::Fill)
-            .layout(ui);
-        l.set(out.rects[0].width());
-        r.set(out.rects[1].width());
-        // Stash total via the body cell check below.
-        let _ = total;
+        ui.allocate_ui(egui::vec2(40.0, core::CONTROL_MD), |ui| {
+            let mut s = String::new();
+            Input::new(&mut s).show(ui);
+            sink.set(ui.min_rect().width());
+        });
     });
     assert!(
-        (lead.get() - 120.0).abs() < 0.5,
-        "fixed cell should be 120px, got {}",
-        lead.get()
+        width.get() >= layout::INPUT_MIN_W - 0.5,
+        "input in a 40px ui should floor at INPUT_MIN_W ({}), got {}",
+        layout::INPUT_MIN_W,
+        width.get()
+    );
+}
+
+#[test]
+fn numeric_field_caps_at_field_width() {
+    // In a wide panel the numeric field caps at the canonical field width instead of
+    // ballooning; `.full_width()` opts back into filling.
+    let capped = Rc::new(Cell::new(0.0f32));
+    let full = Rc::new(Cell::new(0.0f32));
+    let (c, f) = (capped.clone(), full.clone());
+    rendered(move |ui| {
+        ui.allocate_ui(egui::vec2(600.0, core::CONTROL_MD), |ui| {
+            let mut n = 1.0f32;
+            NumericField::new(&mut n).show(ui);
+            c.set(ui.min_rect().width());
+        });
+        ui.allocate_ui(egui::vec2(600.0, core::CONTROL_MD), |ui| {
+            let mut n = 1.0f32;
+            NumericField::new(&mut n).full_width().show(ui);
+            f.set(ui.min_rect().width());
+        });
+    });
+    assert!(
+        (capped.get() - layout::FIELD_NUM_W).abs() <= 0.5,
+        "numeric field in a 600px ui should cap at FIELD_NUM_W ({}), got {}",
+        layout::FIELD_NUM_W,
+        capped.get()
     );
     assert!(
-        rest.get() > 50.0,
-        "fill cell should take the remainder, got {}",
-        rest.get()
+        (full.get() - 600.0).abs() <= 1.0,
+        "full_width numeric field should fill the 600px ui, got {}",
+        full.get()
+    );
+}
+
+#[test]
+fn numeric_field_floors_at_min() {
+    let width = Rc::new(Cell::new(0.0f32));
+    let sink = width.clone();
+    rendered(move |ui| {
+        ui.allocate_ui(egui::vec2(30.0, core::CONTROL_MD), |ui| {
+            let mut n = 1.0f32;
+            NumericField::new(&mut n).show(ui);
+            sink.set(ui.min_rect().width());
+        });
+    });
+    assert!(
+        width.get() >= layout::NUMERIC_MIN_W - 0.5,
+        "numeric field in a 30px ui should floor at NUMERIC_MIN_W ({}), got {}",
+        layout::NUMERIC_MIN_W,
+        width.get()
+    );
+}
+
+#[test]
+fn slider_and_progress_floor_at_min() {
+    // These atoms return the allocated-box response directly, so rect.width() is the
+    // control width.
+    let slider_w = Rc::new(Cell::new(0.0f32));
+    let progress_w = Rc::new(Cell::new(0.0f32));
+    let (s, p) = (slider_w.clone(), progress_w.clone());
+    rendered(move |ui| {
+        ui.allocate_ui(egui::vec2(40.0, core::CONTROL_MD), |ui| {
+            let mut v = 0.5f32;
+            let resp = Slider::new(&mut v).show(ui);
+            s.set(resp.rect.width());
+        });
+        ui.allocate_ui(egui::vec2(40.0, core::CONTROL_MD), |ui| {
+            let resp = Progress::new(0.5).show(ui);
+            p.set(resp.rect.width());
+        });
+    });
+    assert!(
+        slider_w.get() >= layout::SLIDER_MIN_W - 0.5,
+        "slider in a 40px ui should floor at SLIDER_MIN_W ({}), got {}",
+        layout::SLIDER_MIN_W,
+        slider_w.get()
+    );
+    assert!(
+        progress_w.get() >= layout::PROGRESS_MIN_W - 0.5,
+        "progress in a 40px ui should floor at PROGRESS_MIN_W ({}), got {}",
+        layout::PROGRESS_MIN_W,
+        progress_w.get()
     );
 }
 
@@ -796,4 +870,25 @@ fn table_layout_returns_cell_rects() {
     });
     assert_eq!(dims.get(), (3, 2), "3 body rows × 2 columns of cell rects");
     assert!(nonempty.get(), "every cell rect should be non-empty");
+}
+
+#[test]
+fn numeric_field_stepper_floors_higher() {
+    // A stepper needs room for both -/+ buttons besides the value: its floor is
+    // NUMERIC_STEPPER_MIN_W, not the bare NUMERIC_MIN_W (studio stats-bar regression:
+    // the value painted over the minus button in narrow wrap cells).
+    let w = Rc::new(Cell::new(0.0f32));
+    let sink = w.clone();
+    rendered(move |ui| {
+        ui.allocate_ui(egui::vec2(40.0, 40.0), |ui| {
+            let mut v = 5.0f32;
+            NumericField::new(&mut v).stepper().show(ui);
+            sink.set(ui.min_rect().width());
+        });
+    });
+    assert!(
+        w.get() >= layout::NUMERIC_STEPPER_MIN_W - 0.5,
+        "stepper floors at NUMERIC_STEPPER_MIN_W, got {}",
+        w.get()
+    );
 }

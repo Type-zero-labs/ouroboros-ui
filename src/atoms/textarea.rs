@@ -6,6 +6,7 @@
 
 use crate::theme::typography;
 use crate::tokens::core;
+use crate::tokens::layout;
 use crate::Theme;
 use egui::{
     vec2, Color32, CornerRadius, Id, Response, RichText, Sense, Stroke, StrokeKind, TextEdit, Ui,
@@ -64,7 +65,9 @@ impl<'a> Textarea<'a> {
         let body = typography::body();
         let pad = core::SPACE_2;
         let height = self.rows as f32 * body.line_height + 2.0 * pad;
-        let width = ui.available_width();
+        // Fill the panel, but never shrink below the intrinsic floor (no cap — prose
+        // wants the room).
+        let width = ui.available_width().max(layout::INPUT_MIN_W);
 
         let (rect, box_resp) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
         let dim = |c: Color32| {

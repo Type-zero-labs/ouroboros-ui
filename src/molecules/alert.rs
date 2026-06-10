@@ -70,10 +70,12 @@ impl Alert {
                     ui.add_space(core::SPACE_2);
                     ui.vertical(|ui| {
                         if let Some(title) = title {
-                            Text::new(title).body_strong().color(color).show(ui);
+                            Text::new(title).body_strong().color(color).wrap().show(ui);
                             ui.add_space(core::SPACE_1);
                         }
-                        Text::new(message).muted().show(ui);
+                        // Wrap on the available width: in a narrow panel the callout grows
+                        // taller instead of running past its cell (and getting clipped).
+                        Text::new(message).muted().wrap().show(ui);
                     });
                 });
             })

@@ -6,6 +6,7 @@
 
 use crate::theme::typography;
 use crate::tokens::core::{self, Size};
+use crate::tokens::layout;
 use crate::Theme;
 use egui::{
     vec2, Align, Color32, CornerRadius, Id, Layout, Response, RichText, Sense, Stroke, StrokeKind,
@@ -69,7 +70,9 @@ impl<'a> Input<'a> {
         let theme = Theme::get(ui);
         let height = self.size.height();
         let pad_x = self.size.pad_x();
-        let width = ui.available_width();
+        // Fill the panel, but never shrink below the intrinsic floor (text needs room,
+        // so there is deliberately no cap).
+        let width = ui.available_width().max(layout::INPUT_MIN_W);
 
         let (rect, box_resp) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
         let dim = |c: Color32| {

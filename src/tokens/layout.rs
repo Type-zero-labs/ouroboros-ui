@@ -55,6 +55,29 @@ pub const PROPERTY_LABEL_WIDTH: f32 = 120.0;
 /// Row height for table cells/headers ([`TableCell`](crate::cells::TableCell)).
 pub const TABLE_ROW_HEIGHT: f32 = 28.0;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Control width constraints — intrinsic floors/ceilings for fill-width atoms.
+// Declared once on the component (like a Figma component's constraints) so any
+// panel inherits sane shrink/grow behavior without local annotation.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Generic floor for a fill-width control — below this a control stops being usable.
+pub const CONTROL_MIN_W: f32 = 72.0;
+/// Floor for text inputs/textareas (cursor + a few chars).
+pub const INPUT_MIN_W: f32 = 96.0;
+/// Floor for a numeric field — matches the per-component floor VectorField already uses.
+pub const NUMERIC_MIN_W: f32 = 48.0;
+/// Floor for a numeric field **with stepper buttons** (`−`/`+` flank the value): two
+/// sm icon buttons + a readable number. Below this the value paints over the buttons.
+pub const NUMERIC_STEPPER_MIN_W: f32 = 88.0;
+/// Canonical width cap of a numeric/value field (= the studio's FIELD_NUM_W): numbers
+/// stay moderate and column-aligned instead of ballooning to the panel width.
+pub const FIELD_NUM_W: f32 = 120.0;
+/// Floor for a slider track.
+pub const SLIDER_MIN_W: f32 = 120.0;
+/// Floor for a progress track.
+pub const PROGRESS_MIN_W: f32 = 64.0;
+
 /// Responsive size class derived from the available width.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SizeClass {

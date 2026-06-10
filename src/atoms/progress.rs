@@ -2,6 +2,7 @@
 //! [shadcn Progress / Unity Progress Bar]
 
 use crate::tokens::core;
+use crate::tokens::layout;
 use crate::Theme;
 use egui::{vec2, CornerRadius, Rect, Response, Sense, Shape, Stroke, Ui, Vec2};
 
@@ -61,7 +62,8 @@ impl Progress {
         }
 
         let height = core::SPACE_2;
-        let width = ui.available_width();
+        // Fill the panel, but keep the track legible in narrow panels (intrinsic floor).
+        let width = ui.available_width().max(layout::PROGRESS_MIN_W);
         let (rect, response) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
         let pill = CornerRadius::same((height / 2.0) as u8);
         let painter = ui.painter();
