@@ -1,9 +1,9 @@
 //! AutoLayout layout-contract tests (egui_kittest).
 //!
-//! Mirrors the pure-solver suite of `ouroboros-hud/src/layout.rs` (same scenarios,
-//! same expected rects) plus the responsive contract introduced by
-//! `ds-responsive-autolayout`: bounded measurement, container clamping, min/max
-//! distribution, wrap, and resize idempotence (the anti-ratchet test).
+//! Ports the core scenarios of the pure-solver suite of `ouroboros-hud/src/layout.rs`
+//! (stacking, gaps, fill distribution, min/max clamps, space-between, cross-align,
+//! padding) plus the responsive contract introduced by `ds-responsive-autolayout`:
+//! bounded measurement, container clamping, wrap, and resize idempotence (anti-ratchet).
 //!
 //! Cells are captured from inside child closures via `ui.max_rect()` — inside a cell
 //! closure that *is* the cell rect.
@@ -809,5 +809,154 @@ fn vertical_flow_below_scroll_fold_keeps_height() {
         (a.get().height() - 40.0).abs() < 0.5,
         "below-the-fold vertical child keeps its height, got {}",
         a.get().height()
+    );
+}
+
+// ── Review fixes (2026-06-09): regressões dos findings do code review ───────
+
+#[test]
+fn padding_offsets_content() {
+    // Ported from the HUD suite: padding insets the first child on both axes.
+    let (a, a2) = cell_rect();
+    let frame = Rc::new(Cell::new(Rect::NOTHING));
+    let fr = frame.clone();
+    rendered_sized(vec2(200.0, 200.0), move |ui| {
+        let a2 = a2.clone();
+        let resp = AutoLayout::vertical()
+            .pad(20.0)
+            .fixed(40.0, move |ui| {
+                a2.set(ui.max_rect());
+                ui.allocate_space(vec2(100.0, 40.0));
+            })
+            .show(ui);
+        fr.set(resp.rect);
+    });
+    assert!(
+        (a.get().top() - frame.get().top() - 20.0).abs() < 0.5,
+        "child y inset by padding, got {}",
+        a.get().top() - frame.get().top()
+    );
+    assert!(
+        (a.get().left() - frame.get().left() - 20.0).abs() < 0.5,
+        "child x inset by padding, got {}",
+        a.get().left() - frame.get().left()
+    );
+}
+
+#[test]
+fn layout_regions_never_negative() {
+    // distribute_fill can hand a sibling a NEGATIVE share when another region's min
+    // pins above the leftover - the rect API must clamp to zero, not invert rects.
+    let w = Rc::new(Cell::new(-1.0f32));
+    let sink = w.clone();
+    rendered_sized(vec2(120.0, 100.0), move |ui| {
+        let out = AutoLayout::horizontal()
+            .region(Sizing::fill().min(140.0))
+            .region(Sizing::fill())
+            .layout(ui);
+        sink.set(out.rects[1].width());
+    });
+    assert!(
+        w.get() >= -0.01,
+        "region width must never be negative, got {}",
+        w.get()
+    );
+}
+
+#[test]
+fn columns_stack_when_narrow() {
+    // The studio pilot scenario: two fill_min(220) columns with wrap() sit side by
+    // side when wide and stack full-width when the panel cannot fit both.
+    for (size, stacked) in [(600.0f32, false), (300.0f32, true)] {
+        let (a, a2) = cell_rect();
+        let (b, b2) = cell_rect();
+        rendered_sized(vec2(size, 400.0), move |ui| {
+            AutoLayout::horizontal()
+                .wrap()
+                .gap(24.0)
+                .gap_cross(24.0)
+                .fill_min(220.0, {
+                    let a2 = a2.clone();
+                    move |ui| {
+                        a2.set(ui.max_rect());
+                        ui.allocate_space(vec2(50.0, 60.0));
+                    }
+                })
+                .fill_min(220.0, {
+                    let b2 = b2.clone();
+                    move |ui| {
+                        b2.set(ui.max_rect());
+                        ui.allocate_space(vec2(50.0, 60.0));
+                    }
+                })
+                .show(ui);
+        });
+        let (ra, rb) = (a.get(), b.get());
+        if stacked {
+            assert!(
+                rb.top() >= ra.bottom() - 0.5,
+                "at {size}px the right column stacks below, got a={ra:?} b={rb:?}"
+            );
+            assert!(
+                ra.width() > 250.0,
+                "stacked columns take the full width, got {}",
+                ra.width()
+            );
+        } else {
+            assert!(
+                (rb.top() - ra.top()).abs() < 0.5 && rb.left() > ra.right(),
+                "at {size}px the columns sit side by side, got a={ra:?} b={rb:?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn wrap_resize_idempotent() {
+    // Anti-ratchet for the WRAP path: shrink (reflow to more lines) and grow back -
+    // the first cell must return to its exact original rect.
+    let a = Rc::new(Cell::new(Rect::NOTHING));
+    let a2 = a.clone();
+    let mut installed = false;
+    let mut harness = Harness::builder()
+        .with_size(vec2(560.0, 300.0))
+        .build_ui(move |ui| {
+            if !installed {
+                Theme::install(ui.ctx(), Mode::Dark);
+                installed = true;
+                return;
+            }
+            let mut grid = AutoLayout::horizontal().wrap().gap(8.0).gap_cross(8.0);
+            for i in 0..6 {
+                let probe = (i == 0).then(|| a2.clone());
+                grid = grid.fill_min(72.0, move |ui| {
+                    if let Some(p) = &probe {
+                        p.set(ui.max_rect());
+                    }
+                    ui.allocate_space(vec2(40.0, 24.0));
+                });
+            }
+            grid.show(ui);
+        });
+    harness.run();
+    harness.run();
+    let wide = a.get();
+    harness.set_size(vec2(250.0, 300.0));
+    harness.run();
+    let narrow = a.get();
+    assert!(
+        narrow.width() < wide.width(),
+        "narrow window reflows the grid ({} -> {})",
+        wide.width(),
+        narrow.width()
+    );
+    harness.set_size(vec2(560.0, 300.0));
+    harness.run();
+    let back = a.get();
+    assert!(
+        (back.width() - wide.width()).abs() < 0.5 && (back.top() - wide.top()).abs() < 0.5,
+        "wrap grid returns exactly after resize out-and-back: {} vs {}",
+        wide.width(),
+        back.width()
     );
 }

@@ -252,14 +252,15 @@ impl From<SizeMode> for Sizing {
     }
 }
 
-/// Clamp `v` by optional bounds (min wins over max, like the HUD solver).
+/// Clamp `v` by optional bounds — min applied first, max last (max wins when
+/// min > max), the exact order of the HUD solver's `clamp_opt`.
 fn clamp_opt(v: f32, min: Option<f32>, max: Option<f32>) -> f32 {
     let mut v = v;
-    if let Some(mx) = max {
-        v = v.min(mx);
-    }
     if let Some(mn) = min {
         v = v.max(mn);
+    }
+    if let Some(mx) = max {
+        v = v.min(mx);
     }
     v
 }
@@ -459,23 +460,27 @@ impl<'a> AutoLayout<'a> {
         let flex_resolved = distribute_fill(&flex_sizings, leftover);
 
         let mut flex_iter = flex_resolved.iter();
+        // `.max(0.0)`: when one flex region's `min` pins above the leftover, the
+        // redistribution hands the others a NEGATIVE share — never emit inverted rects.
         let main_extent: Vec<f32> = self
             .children
             .iter()
             .map(|c| match c.sizing.mode {
                 SizeMode::Fixed(v) => clamp_opt(v, c.sizing.min, c.sizing.max),
-                _ => *flex_iter.next().expect("one resolved size per flex child"),
+                _ => flex_iter
+                    .next()
+                    .expect("one resolved size per flex child")
+                    .max(0.0),
             })
             .collect();
         let content_main: f32 = main_extent.iter().sum::<f32>() + gap_total;
         let free = (inner_main - content_main).max(0.0);
 
-        // Distribution: Auto = space-between; with flex children the leftover is already consumed;
-        // otherwise honour main_align over the free space.
+        // Distribution: Auto = space-between; otherwise honour main_align over the free
+        // space (uncapped flex children consume it all, leaving free ≈ 0 — but flex
+        // capped by `max` leaves a real leftover that must still align, like the HUD).
         let (start_offset, between_extra) = if self.gap == Gap::Auto && n > 1 {
             (0.0, free / (n as f32 - 1.0))
-        } else if !flex_sizings.is_empty() {
-            (0.0, 0.0)
         } else {
             (free * self.main_align.factor(), 0.0)
         };
@@ -577,8 +582,14 @@ impl<'a> AutoLayout<'a> {
                 if matches!(child.sizing.mode, SizeMode::Fill) {
                     let main = fill_resolved[k].max(0.0);
                     main_nat[i] = main;
-                    let measured = measure(ui, dir, main.max(1.0), cross_bound, &mut child.add);
-                    cross_nat[i] = dir.cross(measured).min(cross_bound);
+                    if main >= 1.0 {
+                        let measured = measure(ui, dir, main, cross_bound, &mut child.add);
+                        cross_nat[i] = dir.cross(measured).min(cross_bound);
+                    } else {
+                        // Collapsed to zero width: don't measure at 1px (wrapping text
+                        // would report an absurd height) — the cell is invisible anyway.
+                        cross_nat[i] = 0.0;
+                    }
                     k += 1;
                 }
             }
@@ -609,11 +620,11 @@ impl<'a> AutoLayout<'a> {
         let cross_size = content_cross;
         let leftover = (main_size - content_main).max(0.0);
 
-        // ── Distribution ──
+        // ── Distribution: gap_auto = space-between; otherwise main_align over the real
+        // leftover (uncapped fills consume it; fills capped by `max` leave a leftover
+        // that must still align, like the HUD solver) ──
         let (start_offset, between_extra) = if self.gap == Gap::Auto && n > 1 {
             (0.0, leftover / (n as f32 - 1.0))
-        } else if !fill_sizings.is_empty() {
-            (0.0, 0.0)
         } else {
             (leftover * self.main_align.factor(), 0.0)
         };
@@ -747,8 +758,12 @@ impl<'a> AutoLayout<'a> {
             for (k, &i) in fills.iter().enumerate() {
                 main_nat[i] = resolved[k].max(0.0);
                 let child = &mut self.children[i];
-                let measured = measure(ui, dir, main_nat[i].max(1.0), cross_bound, &mut child.add);
-                cross_nat[i] = dir.cross(measured).min(cross_bound);
+                if main_nat[i] >= 1.0 {
+                    let measured = measure(ui, dir, main_nat[i], cross_bound, &mut child.add);
+                    cross_nat[i] = dir.cross(measured).min(cross_bound);
+                } else {
+                    cross_nat[i] = 0.0;
+                }
             }
         }
 
@@ -785,14 +800,11 @@ impl<'a> AutoLayout<'a> {
         for line in &lines {
             let this_main = line_main(line);
             let this_cross = line_cross(line);
-            let has_fill = line
-                .clone()
-                .any(|i| matches!(self.children[i].sizing.mode, SizeMode::Fill));
             let leftover = (main_size - this_main).max(0.0);
+            // gap_auto = space-between per line; otherwise main_align over the line's
+            // real leftover (uncapped fills consume it; capped fills leave one).
             let (start_offset, between_extra) = if self.gap == Gap::Auto && line.len() > 1 {
                 (0.0, leftover / (line.len() as f32 - 1.0))
-            } else if has_fill {
-                (0.0, 0.0)
             } else {
                 (leftover * self.main_align.factor(), 0.0)
             };
