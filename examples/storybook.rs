@@ -1253,6 +1253,25 @@ fn page_menu_item(ui: &mut Ui, _theme: &Theme) {
             .id_source("mi_x")
             .show(ui);
     });
+    subhead(
+        ui,
+        "Checkable (View-menu toggles — unchecked reserves the mark slot)",
+    );
+    ui.allocate_ui(vec2(240.0, 110.0), |ui| {
+        MenuItem::new("Show Grid")
+            .checked(true)
+            .id_source("mi_chk_on")
+            .show(ui);
+        MenuItem::new("Show Gizmos")
+            .checked(false)
+            .id_source("mi_chk_off")
+            .show(ui);
+        MenuItem::new("Snap to Grid")
+            .checked(true)
+            .shortcut("Ctrl G")
+            .id_source("mi_chk_sc")
+            .show(ui);
+    });
 }
 
 fn page_tree_node(ui: &mut Ui, _theme: &Theme) {
@@ -2640,6 +2659,10 @@ fn page_text(ui: &mut Ui, theme: &Theme) {
         Text::new("success token").color(theme.success).show(ui);
         ui.add_space(core::SPACE_4);
         Text::new("underlined").underline().show(ui);
+        ui.add_space(core::SPACE_4);
+        Text::new("italic").italic().show(ui);
+        ui.add_space(core::SPACE_4);
+        Text::new("muted italic aside").muted().italic().show(ui);
     });
 }
 

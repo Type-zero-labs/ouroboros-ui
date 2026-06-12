@@ -42,6 +42,7 @@ pub struct Text {
     muted: bool,
     wrap: bool,
     underline: bool,
+    italic: bool,
 }
 
 impl Text {
@@ -53,6 +54,7 @@ impl Text {
             muted: false,
             wrap: false,
             underline: false,
+            italic: false,
         }
     }
 
@@ -99,6 +101,11 @@ impl Text {
         self.underline = true;
         self
     }
+    /// Italicize the text (e.g. an aside/hint nuance).
+    pub fn italic(mut self) -> Self {
+        self.italic = true;
+        self
+    }
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let theme = Theme::get(ui);
@@ -119,6 +126,9 @@ impl Text {
         }
         if self.underline {
             rich = rich.underline();
+        }
+        if self.italic {
+            rich = rich.italics();
         }
         let wrap_mode = if self.wrap {
             TextWrapMode::Wrap
