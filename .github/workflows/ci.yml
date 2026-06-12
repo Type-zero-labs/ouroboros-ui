@@ -34,5 +34,8 @@ jobs:
       - name: Clippy
         run: cargo clippy --all-targets -- -D warnings
 
+      # Full test suite — the integration tests in tests/ include the governance
+      # guards (no_raw_values, no_painter_in_molecules, auto_layout contracts);
+      # `--lib` alone would skip them and the DS's own enforcement would be theater.
       - name: Test
-        run: cargo test --lib
+        run: cargo test

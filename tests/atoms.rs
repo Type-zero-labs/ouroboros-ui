@@ -395,6 +395,59 @@ fn cells_render() {
 }
 
 #[test]
+fn text_italic_renders() {
+    rendered(|ui| {
+        Text::new("aside").italic().show(ui);
+        Text::new("muted aside").muted().italic().show(ui);
+    });
+}
+
+#[test]
+fn menu_item_checked_renders() {
+    // `checked(true)` paints the mark; `checked(false)` reserves the mark's slot so the
+    // labels of checkable siblings stay (near-)aligned; an unset item keeps no slot.
+    let mut installed = false;
+    let mut harness = Harness::new_ui(move |ui| {
+        if !installed {
+            Theme::install(ui.ctx(), Mode::Dark);
+            installed = true;
+            return;
+        }
+        MenuItem::new("Plain Action").id_source("mi_plain").show(ui);
+        MenuItem::new("Show Grid")
+            .checked(true)
+            .id_source("mi_chk_on")
+            .show(ui);
+        MenuItem::new("Show Gizmos")
+            .checked(false)
+            .id_source("mi_chk_off")
+            .show(ui);
+        MenuItem::new("Snap to Grid")
+            .checked(true)
+            .shortcut("Ctrl G")
+            .id_source("mi_chk_sc")
+            .show(ui);
+    });
+    harness.run();
+    harness.run();
+    let plain_x = harness.get_by_label("Plain Action").rect().min.x;
+    let checked_x = harness.get_by_label("Show Grid").rect().min.x;
+    let unchecked_x = harness.get_by_label("Show Gizmos").rect().min.x;
+    // checked(false) must actually reserve the mark's slot (vs. a plain row).
+    assert!(
+        unchecked_x - plain_x >= core::ICON_MD,
+        "unchecked item should reserve the mark slot (plain x {plain_x}, unchecked x {unchecked_x})"
+    );
+    // checked/unchecked labels agree within one item-spacing: the reserved slot mirrors
+    // icon + gap, but the live mark (a widget) also gets egui's item_spacing.x after it,
+    // which the bare add_space path does not — currently an 8px residual, not pixel-equal.
+    assert!(
+        (checked_x - unchecked_x).abs() <= core::SPACE_2,
+        "checked/unchecked labels should align (checked x {checked_x}, unchecked x {unchecked_x})"
+    );
+}
+
+#[test]
 fn list_item_selects() {
     let clicked = Rc::new(Cell::new(false));
     let sink = clicked.clone();

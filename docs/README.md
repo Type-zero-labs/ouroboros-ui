@@ -13,6 +13,7 @@ reference page for every component.
 | Doc | What it covers |
 |-----|----------------|
 | [Architecture](./architecture.md) | The layered model (core → semantic → component → atoms → cells → molecules → organisms), dependency direction, the primordial atomic-design law. |
+| [Governance](./governance.md) | **The law** — use first, extend second, create last: the decision ladder, what is forbidden in studio chrome, the escapes, the component contribution pipeline, enforcement. |
 | [Usage](./usage.md) | Install, bootstrap the theme, the builder pattern, common recipes, how to consume the crate. |
 | [Guards & conventions](./guards.md) | The two enforcement tests (`no_raw_values`, `no_painter_in_molecules`), what they forbid, how to add a component without tripping them. |
 

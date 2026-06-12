@@ -22,7 +22,7 @@ A run of text at a typography role, in a theme color. Every visual comes from a 
   | `Code` | `code()` |
   | `Kbd` | `kbd()` |
 
-  Color: `theme.foreground` (default), `.muted()` → `muted_foreground`, `.color(c)` → explicit. `.wrap()` enables wrapping (and line-height); `.underline()` for links. No interactive states.
+  Color: `theme.foreground` (default), `.muted()` → `muted_foreground`, `.color(c)` → explicit. `.wrap()` enables wrapping (and line-height); `.underline()` for links; `.italic()` for asides/hints (combines freely, e.g. `.muted().italic()`). No interactive states.
 
 - **Tokens consumed** — `theme.foreground` / `theme.muted_foreground` (color), the per-role `typography` style.
 - **Accessibility** — rendered **non-selectable** so UI text never captures the pointer (it would steal clicks from interactive parents and show a text cursor).
@@ -38,6 +38,7 @@ A run of text at a typography role, in a theme color. Every visual comes from a 
 | `.color(color: Color32) -> Self` | Explicit color (e.g. `theme.success`). |
 | `.wrap(self) -> Self` | Wrap on available width (default: extend/no wrap). |
 | `.underline(self) -> Self` | Underline (e.g. a link). |
+| `.italic(self) -> Self` | Italicize (e.g. an aside/hint nuance). |
 | `.show(self, ui: &mut Ui) -> Response` | Render and return the `Response`. |
 
 **`TextRole`** (enum): `Body` (default), `BodyStrong`, `Label`, `LabelStrong`, `Caption`, `Code`, `Kbd`.
@@ -55,6 +56,7 @@ use ouroboros_ui::atoms::Text;
 
 Text::new("Saved").caption().color(theme.success).show(ui);
 Text::new("A long paragraph that should wrap…").wrap().show(ui);
+Text::new("No layers selected").muted().italic().show(ui);
 ```
 
 ## Composition

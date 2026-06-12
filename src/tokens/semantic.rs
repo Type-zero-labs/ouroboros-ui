@@ -78,6 +78,8 @@ pub struct Theme {
     pub hover_overlay: Color32,
     /// Stronger contrast veil for the pressed state.
     pub press_overlay: Color32,
+    /// Backdrop veil behind modals and loading overlays (black in both modes).
+    pub scrim: Color32,
 
     // ── Status (solid + soft bg) ─────────────────────────────
     pub success: Color32,
@@ -125,6 +127,7 @@ impl Theme {
             ring: core::TEAL_300,
             hover_overlay: Color32::from_white_alpha((core::HOVER_OVERLAY * 255.0) as u8),
             press_overlay: Color32::from_white_alpha((core::PRESS_OVERLAY * 255.0) as u8),
+            scrim: core::SCRIM,
 
             // Status.
             success: core::GREEN_500,
@@ -172,6 +175,7 @@ impl Theme {
             ring: core::TEAL_400,
             hover_overlay: Color32::from_black_alpha((core::HOVER_OVERLAY * 255.0) as u8),
             press_overlay: Color32::from_black_alpha((core::PRESS_OVERLAY * 255.0) as u8),
+            scrim: core::SCRIM,
 
             // Status (same hues; soft bg tints).
             success: core::GREEN_500,

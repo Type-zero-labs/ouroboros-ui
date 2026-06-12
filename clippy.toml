@@ -1,0 +1,8 @@
+# Intentionally empty — this file exists to *stop* clippy's upward config search.
+#
+# Clippy resolves clippy.toml by walking up from the crate directory. When this repo is
+# checked out as the studio's `ui/` submodule, the studio's clippy.toml (which disallows
+# raw `egui::ComboBox`/`DragValue`/`Slider` constructors per ds-governance) would
+# otherwise leak into the DS build — but the DS is the one sanctioned place that wraps
+# those widgets (`atoms::NumericField`, `atoms::Slider`, `organisms::Select` are exactly
+# the substitutes the rule points consumers to). See docs/governance.md.

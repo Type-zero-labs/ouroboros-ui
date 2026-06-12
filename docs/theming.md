@@ -45,6 +45,7 @@ Dark mode layers the zinc ramp by elevation: `background` 950 → `card`/`popove
 | `ring` | `TEAL_300` | focus ring |
 | `hover_overlay` | white @ 6% | hover veil (dark veil in light mode) |
 | `press_overlay` | white @ 12% | pressed veil |
+| `scrim` | black @ 60% (`core::SCRIM`) | backdrop veil behind modals and loading overlays — black in **both** modes (a scrim dims, it doesn't invert). Need a lighter/heavier scrim? derive it (`theme.scrim.gamma_multiply(..)`), don't mint a new literal. |
 
 ### Status (solid + soft bg)
 
