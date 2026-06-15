@@ -31,6 +31,8 @@ A scrubbable numeric input bound to a `&mut f32`, modeled on Unity's Numeric Fie
 | `.step(step: f32) -> Self` | Stepper increment (default `1.0`). |
 | `.stepper(self) -> Self` | Flank with `−`/`+` buttons. |
 | `.suffix(suffix: impl Into<String>) -> Self` | Append a unit string. |
+| `.full_width(self) -> Self` | Fill the available width (drops the `FIELD_NUM_W` cap; the floor still applies). |
+| `.fixed_width(self) -> Self` | Pin a constant width (`NUMERIC_STEPPER_W`), ignoring `available_width` — for a stepper in a squeezed panel so the value never slides behind the `−`. Takes precedence over `.full_width()`. |
 | `.enabled(enabled: bool) -> Self` / `.disabled()` | Enable/disable. |
 | `.error(error: bool) -> Self` | Force the destructive border. |
 | `.size(s: Size) -> Self` / `.sm()` / `.lg()` | Size (`core::Size`). |
@@ -65,6 +67,6 @@ Atom: paints the box/border/veil directly and embeds an egui `DragValue` in a ch
 
 - Binding is `&mut f32`. The stepper buttons mutate the value directly (clamped to range) when clicked; the returned `Response` is the `DragValue`'s.
 - Stepper buttons get glyphs `light::MINUS` / `light::PLUS`; the `+` is pinned right and the value fills the remaining width.
-- Greedily takes `ui.available_width()`.
+- **Width model:** by default fills `available_width` clamped to `NUMERIC_MIN_W..=FIELD_NUM_W` (stepper floors higher at `NUMERIC_STEPPER_MIN_W`) so numbers stay column-aligned. `.full_width()` drops the cap; `.fixed_width()` ignores `available_width` entirely and pins `NUMERIC_STEPPER_W` — use it for steppers in resizable inspector panels where the box must not shrink under the value.
 
 See [tokens](../../tokens.md) · [theming](../../theming.md) · [guards](../../guards.md).

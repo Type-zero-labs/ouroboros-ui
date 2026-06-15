@@ -6,7 +6,9 @@
 //!
 //! Width is intrinsically constrained: the field fills the available width clamped to
 //! [`layout::NUMERIC_MIN_W`]`..=`[`layout::FIELD_NUM_W`], so numbers stay moderate and
-//! column-aligned instead of ballooning to the panel. `.full_width()` drops the cap.
+//! column-aligned instead of ballooning to the panel. `.full_width()` drops the cap;
+//! `.fixed_width()` pins a constant [`layout::NUMERIC_STEPPER_W`] (for a stepper in a
+//! squeezed panel — the value never slides behind the `−`).
 
 use crate::atoms::Button;
 use crate::tokens::core::{self, Size};
@@ -28,6 +30,7 @@ pub struct NumericField<'a> {
     suffix: Option<String>,
     stepper: bool,
     full_width: bool,
+    fixed_width: bool,
     enabled: bool,
     error: bool,
     size: Size,
@@ -45,6 +48,7 @@ impl<'a> NumericField<'a> {
             suffix: None,
             stepper: false,
             full_width: false,
+            fixed_width: false,
             enabled: true,
             error: false,
             size: Size::default(),
@@ -75,6 +79,13 @@ impl<'a> NumericField<'a> {
     /// [`layout::NUMERIC_MIN_W`] floor still applies).
     pub fn full_width(mut self) -> Self {
         self.full_width = true;
+        self
+    }
+    /// Use a **fixed** width ([`layout::NUMERIC_STEPPER_W`]) that ignores `available_width`.
+    /// For [`stepper`](Self::stepper) fields in a squeezed panel: the box never shrinks, so the
+    /// value never slides behind the `−`/`+` buttons. Takes precedence over [`full_width`](Self::full_width).
+    pub fn fixed_width(mut self) -> Self {
+        self.fixed_width = true;
         self
     }
     pub fn suffix(mut self, suffix: impl Into<String>) -> Self {
@@ -120,7 +131,11 @@ impl<'a> NumericField<'a> {
         } else {
             layout::NUMERIC_MIN_W
         };
-        let width = if self.full_width {
+        let width = if self.fixed_width {
+            // A constant width, independent of the panel: the stepper keeps its shape under
+            // squeeze so the value never paints over the flanking buttons.
+            layout::NUMERIC_STEPPER_W.max(floor)
+        } else if self.full_width {
             ui.available_width().max(floor)
         } else {
             ui.available_width()

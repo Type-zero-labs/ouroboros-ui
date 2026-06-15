@@ -16,7 +16,7 @@ use ouroboros_ui::atoms::{
 };
 use ouroboros_ui::auto_layout::{AutoLayout, CrossAlign, MainAlign};
 use ouroboros_ui::cells::{
-    ListItem, MenuItem, PropertyRow, TableCell, TableRow, ToolbarButton, TreeNode,
+    ListItem, MenuItem, PropertyRow, ResponsiveRow, TableCell, TableRow, ToolbarButton, TreeNode,
 };
 use ouroboros_ui::graph::{
     EdgeStyle, GraphView, HandleSpec, NodeFrame, NodeId, NodeKindId, NodeSearch, NodeStatus, Port,
@@ -28,8 +28,8 @@ use ouroboros_ui::molecules::{
     ToggleGroup, VectorField,
 };
 use ouroboros_ui::organisms::{
-    Accordion, Column, Dialog, DialogChoice, DropdownMenu, Menubar, PanelSpec, Popover, Select,
-    Sidebar, Splitter, TabView, Table, Toast, Toolbar, TreeItem, TreeView,
+    Accordion, Column, Dialog, DialogChoice, DropdownMenu, Menubar, Panel, PanelSpec, Popover,
+    Select, Sidebar, Splitter, TabView, Table, Toast, Toolbar, TreeItem, TreeView,
 };
 use ouroboros_ui::theme::typography;
 use ouroboros_ui::tokens::{core, layout};
@@ -85,6 +85,7 @@ enum Page {
     ColorField,
     SearchField,
     PropertyRow,
+    ResponsiveRow,
     ListItem,
     MenuItem,
     TreeNode,
@@ -103,6 +104,7 @@ enum Page {
     Accordion,
     Menubar,
     Splitter,
+    Panel,
     GraphLive,
     GraphNode,
     GraphEdge,
@@ -160,6 +162,7 @@ impl Page {
             Page::ColorField => "Color field",
             Page::SearchField => "Search field",
             Page::PropertyRow => "Property row",
+            Page::ResponsiveRow => "Responsive row",
             Page::ListItem => "List item",
             Page::MenuItem => "Menu item",
             Page::TreeNode => "Tree node",
@@ -178,6 +181,7 @@ impl Page {
             Page::Accordion => "Accordion",
             Page::Menubar => "Menubar",
             Page::Splitter => "Splitter",
+            Page::Panel => "Panel",
             Page::GraphLive => "Live graph",
             Page::GraphNode => "Node variants",
             Page::GraphEdge => "Edge variants",
@@ -254,6 +258,7 @@ const NAV: &[(&str, &[Page])] = &[
         "CELLS",
         &[
             Page::PropertyRow,
+            Page::ResponsiveRow,
             Page::ListItem,
             Page::MenuItem,
             Page::TreeNode,
@@ -277,6 +282,7 @@ const NAV: &[(&str, &[Page])] = &[
             Page::Accordion,
             Page::Menubar,
             Page::Splitter,
+            Page::Panel,
         ],
     ),
     (
@@ -472,6 +478,7 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::ColorField => page_color_field(ui, theme),
         Page::SearchField => page_search_field(ui, theme),
         Page::PropertyRow => page_property_row(ui, theme),
+        Page::ResponsiveRow => page_responsive_row(ui, theme),
         Page::ListItem => page_list_item(ui, theme),
         Page::MenuItem => page_menu_item(ui, theme),
         Page::TreeNode => page_tree_node(ui, theme),
@@ -490,6 +497,7 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::Accordion => page_accordion(ui, theme),
         Page::Menubar => page_menubar(ui, theme),
         Page::Splitter => page_splitter(ui, theme),
+        Page::Panel => page_panel(ui, theme),
         Page::GraphLive => page_graph_live(ui, theme),
         Page::GraphNode => page_graph_node(ui, theme),
         Page::GraphEdge => page_graph_edge(ui, theme),
@@ -813,6 +821,49 @@ fn page_select(ui: &mut Ui, _theme: &Theme) {
             ui.add_space(core::SPACE_2);
         }
     });
+}
+
+fn page_panel(ui: &mut Ui, _theme: &Theme) {
+    caption(
+        ui,
+        "Docked panel chrome — bg + flush edge + header + token-padded body",
+    );
+    let id = egui::Id::new("panel_demo");
+    let mut vals = ui.data(|d| d.get_temp::<[f32; 3]>(id).unwrap_or([1.0, 0.5, 0.2]));
+    ui.horizontal_top(|ui| {
+        // Right-docked inspector: left edge + header + responsive rows.
+        ui.allocate_ui(vec2(280.0, 240.0), |ui| {
+            Panel::new("panel_inspector")
+                .left_edge()
+                .title("Inspector")
+                .show(ui, |ui| {
+                    for (i, name) in ["Mass", "Drag", "Bounce"].iter().enumerate() {
+                        ResponsiveRow::new(*name).show(ui, |ui| {
+                            NumericField::new(&mut vals[i]).speed(0.05).show(ui)
+                        });
+                    }
+                });
+        });
+        ui.add_space(core::SPACE_4);
+        // Left-docked panel with a footer action bar.
+        ui.allocate_ui(vec2(220.0, 240.0), |ui| {
+            Panel::new("panel_footer")
+                .right_edge()
+                .title("Properties")
+                .footer(|ui| {
+                    let _ = Button::new("Apply").sm().show(ui);
+                })
+                .show(ui, |ui| {
+                    ResponsiveRow::new("X").show(ui, |ui| {
+                        NumericField::new(&mut vals[0]).speed(0.05).show(ui)
+                    });
+                    ResponsiveRow::new("Y").show(ui, |ui| {
+                        NumericField::new(&mut vals[1]).speed(0.05).show(ui)
+                    });
+                });
+        });
+    });
+    ui.data_mut(|d| d.insert_temp(id, vals));
 }
 
 fn page_accordion(ui: &mut Ui, _theme: &Theme) {
@@ -1203,6 +1254,32 @@ fn page_property_row(ui: &mut Ui, _theme: &Theme) {
     ui.data_mut(|d| d.insert_temp(id, vals));
 }
 
+fn page_responsive_row(ui: &mut Ui, _theme: &Theme) {
+    caption(
+        ui,
+        "Inspector rows that stack when narrow (< INSPECTOR_ROW_STACK_MIN)",
+    );
+    let id = egui::Id::new("resprow_demo");
+    let mut vals = ui.data(|d| d.get_temp::<[f32; 3]>(id).unwrap_or([1.0, 0.05, 0.6]));
+    subhead(ui, "Wide (≥ threshold) — aligned label column");
+    ui.allocate_ui(vec2(360.0, 120.0), |ui| {
+        for (i, name) in ["Mass", "Drag", "Bounce"].iter().enumerate() {
+            ResponsiveRow::new(*name).show(ui, |ui| {
+                NumericField::new(&mut vals[i]).speed(0.05).show(ui)
+            });
+        }
+    });
+    subhead(ui, "Narrow (< threshold) — label stacked above control");
+    ui.allocate_ui(vec2(180.0, 200.0), |ui| {
+        for (i, name) in ["Mass", "Drag", "Bounce"].iter().enumerate() {
+            ResponsiveRow::new(*name).show(ui, |ui| {
+                NumericField::new(&mut vals[i]).speed(0.05).show(ui)
+            });
+        }
+    });
+    ui.data_mut(|d| d.insert_temp(id, vals));
+}
+
 fn page_list_item(ui: &mut Ui, _theme: &Theme) {
     caption(ui, "Selectable list rows");
     let id = egui::Id::new("li_demo");
@@ -1556,6 +1633,23 @@ fn page_numeric_field(ui: &mut Ui, _theme: &Theme) {
             .show(ui);
     });
     ui.data_mut(|d| d.insert_temp(id2, s));
+    subhead(
+        ui,
+        "Stepper · fixed width (.fixed_width()) — constant under squeeze",
+    );
+    let id2f = egui::Id::new("num_step_fixed");
+    let mut sf = ui.data(|d| d.get_temp::<f32>(id2f).unwrap_or(3.0));
+    // Allocated into a wide box, but `.fixed_width()` pins it to NUMERIC_STEPPER_W so the
+    // value never slides behind the `−` when the panel is squeezed (ds-inspector).
+    ui.allocate_ui(vec2(320.0, core::CONTROL_MD), |ui| {
+        NumericField::new(&mut sf)
+            .range(0.0, 10.0)
+            .step(1.0)
+            .stepper()
+            .fixed_width()
+            .show(ui);
+    });
+    ui.data_mut(|d| d.insert_temp(id2f, sf));
     subhead(ui, "Sizes (Sm / Md / Lg)");
     let idz = egui::Id::new("num_sizes");
     let mut z = ui.data(|d| d.get_temp::<f32>(idz).unwrap_or(5.0));

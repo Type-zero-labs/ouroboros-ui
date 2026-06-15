@@ -8,6 +8,7 @@
 pub mod list_item;
 pub mod menu_item;
 pub mod property_row;
+pub mod responsive_row;
 pub mod table_cell;
 pub mod table_row;
 pub mod toolbar_button;
@@ -16,6 +17,7 @@ pub mod tree_node;
 pub use list_item::ListItem;
 pub use menu_item::MenuItem;
 pub use property_row::PropertyRow;
+pub use responsive_row::ResponsiveRow;
 pub use table_cell::{CellAlign, TableCell};
 pub use table_row::TableRow;
 pub use toolbar_button::ToolbarButton;

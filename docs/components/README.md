@@ -1,6 +1,6 @@
 # Component catalog
 
-58 components across four atomic-design layers, plus the **[graph](#graph)** peer layer
+60 components across four atomic-design layers, plus the **[graph](#graph)** peer layer
 (node editor). Each has its own page with design intent, anatomy, variants/states, API, and
 usage examples. Layer rules: atoms paint, everything above composes; the graph layer is the
 sanctioned exception that paints (still via tokens). See [guards](../guards.md).
@@ -48,11 +48,12 @@ sanctioned exception that paints (still via tokens). See [guards](../guards.md).
 
 ## Cells
 
-7 compound row/item building blocks. Compose atoms; never paint.
+8 compound row/item building blocks. Compose atoms; never paint.
 
 - [ListItem](./cells/list_item.md) — selectable list row
 - [MenuItem](./cells/menu_item.md) — menu row (icon + label + shortcut)
 - [PropertyRow](./cells/property_row.md) — inspector row (fixed label column + control)
+- [ResponsiveRow](./cells/responsive_row.md) — inspector row that stacks label↔control when narrow
 - [TableCell](./cells/table_cell.md) — a single table cell with alignment
 - [TableRow](./cells/table_row.md) — a row of table cells
 - [ToolbarButton](./cells/toolbar_button.md) — dense toolbar control
@@ -86,10 +87,11 @@ sanctioned exception that paints (still via tokens). See [guards](../guards.md).
 
 ## Organisms
 
-13 full UI sections composed from cells, molecules, and atoms.
+14 full UI sections composed from cells, molecules, and atoms.
 
 ### Layout shells
 - [Splitter](./organisms/splitter.md) — the single layout primitive: screen root + resizable panes (`PanelSpec`, with `fixed(px)` non-resizable chrome bands)
+- [Panel](./organisms/panel.md) — docked panel chrome: bg + flush edge border + header/footer + padded scroll body (`PanelEdge`)
 - [Sidebar](./organisms/sidebar.md) — navigation panel
 - [Toolbar](./organisms/toolbar.md) — top/bottom tool bar
 - [Menubar](./organisms/menubar.md) — application menu bar
