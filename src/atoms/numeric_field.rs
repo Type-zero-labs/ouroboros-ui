@@ -182,9 +182,16 @@ impl<'a> NumericField<'a> {
         }
 
         let resp = if self.stepper {
-            let mut cui = ui.new_child(
+            // Three bands carved off the inner rect — minus | value | plus — so the value is
+            // centered across the FULL width between the two buttons (symmetric), not just the
+            // remainder after the minus button (which lived in a separate container before).
+            let btn_w = core::CONTROL_SM;
+            let (minus_rect, rest) = inner.split_left_right_at_x(inner.left() + btn_w);
+            let (value_rect, plus_rect) = rest.split_left_right_at_x(rest.right() - btn_w);
+
+            let mut mui = ui.new_child(
                 UiBuilder::new()
-                    .max_rect(inner)
+                    .max_rect(minus_rect)
                     .layout(Layout::left_to_right(Align::Center)),
             );
             let minus = Button::new("")
@@ -192,24 +199,33 @@ impl<'a> NumericField<'a> {
                 .icon_only()
                 .ghost()
                 .sm()
-                .show(&mut cui);
+                .show(&mut mui);
             if enabled && minus.clicked() {
                 *value = (*value - step).clamp(min, max);
             }
-            // `+` pinned right, value fills the remainder.
-            cui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                let plus = Button::new("")
-                    .icon_left(light::PLUS)
-                    .icon_only()
-                    .ghost()
-                    .sm()
-                    .show(ui);
-                if enabled && plus.clicked() {
-                    *value = (*value + step).clamp(min, max);
-                }
-                ui.add_enabled(enabled, drag!(value))
-            })
-            .inner
+
+            let mut vui = ui.new_child(
+                UiBuilder::new()
+                    .max_rect(value_rect)
+                    .layout(Layout::centered_and_justified(egui::Direction::LeftToRight)),
+            );
+            let r = vui.add_enabled(enabled, drag!(value));
+
+            let mut pui = ui.new_child(
+                UiBuilder::new()
+                    .max_rect(plus_rect)
+                    .layout(Layout::right_to_left(Align::Center)),
+            );
+            let plus = Button::new("")
+                .icon_left(light::PLUS)
+                .icon_only()
+                .ghost()
+                .sm()
+                .show(&mut pui);
+            if enabled && plus.clicked() {
+                *value = (*value + step).clamp(min, max);
+            }
+            r
         } else {
             let mut cui = ui.new_child(
                 UiBuilder::new()

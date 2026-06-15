@@ -152,12 +152,6 @@ impl<'a> Panel<'a> {
             }
         }
 
-        let mut bui = ui.new_child(
-            UiBuilder::new()
-                .max_rect(body_rect)
-                .layout(Layout::top_down(Align::Min)),
-        );
-
         let Panel {
             id,
             title,
@@ -168,28 +162,47 @@ impl<'a> Panel<'a> {
             ..
         } = self;
 
-        let header = move |ui: &mut Ui| {
-            if title.is_some() || action.is_some() {
-                Surface::new()
-                    .fill_none()
-                    .pad(layout::PANEL_PAD)
-                    .show(ui, |ui| {
-                        ui.horizontal(|ui| {
-                            if let Some(title) = title {
-                                Heading::new(title).heading().show(ui);
-                            }
-                            if let Some(action) = action {
-                                ui.with_layout(Layout::right_to_left(Align::Center), action);
-                            }
-                        });
-                    });
-                Divider::horizontal().show(ui);
-            }
+        // Reserve a fixed bottom band for the footer (a one-row action bar) so the scrolling body
+        // fills the remainder and never overlaps it.
+        let (content_rect, footer_rect) = if footer.is_some() {
+            let fh = layout::PANEL_PAD * 2.0 + core::CONTROL_MD;
+            let split_y = (body_rect.bottom() - fh).max(body_rect.top());
+            let (c, f) = body_rect.split_top_bottom_at_y(split_y);
+            (c, Some(f))
+        } else {
+            (body_rect, None)
         };
 
-        let body = move |ui: &mut Ui| {
-            let inner = move |ui: &mut Ui| {
-                Surface::new().fill_none().pad(body_pad).show(ui, |ui| {
+        // Header + scrollable body in the content rect. Inner surfaces are chrome-less
+        // (`fill_none` + `border_none`): padding only, no nested box/border/radius.
+        let mut bui = ui.new_child(
+            UiBuilder::new()
+                .max_rect(content_rect)
+                .layout(Layout::top_down(Align::Min)),
+        );
+        if title.is_some() || action.is_some() {
+            Surface::new()
+                .fill_none()
+                .border_none()
+                .pad(layout::PANEL_PAD)
+                .show(&mut bui, |ui| {
+                    ui.horizontal(|ui| {
+                        if let Some(title) = title {
+                            Heading::new(title).heading().show(ui);
+                        }
+                        if let Some(action) = action {
+                            ui.with_layout(Layout::right_to_left(Align::Center), action);
+                        }
+                    });
+                });
+            Divider::horizontal().show(&mut bui);
+        }
+        let inner = move |ui: &mut Ui| {
+            Surface::new()
+                .fill_none()
+                .border_none()
+                .pad(body_pad)
+                .show(ui, |ui| {
                     // Port of the studio `panel_body`: pin the content width to the available
                     // width and keep horizontal auto-shrink ON so a fill control doesn't ratchet
                     // the width on resize (egui #1297); consistent row gap inside.
@@ -197,35 +210,31 @@ impl<'a> Panel<'a> {
                     ui.spacing_mut().item_spacing.y = layout::PANEL_GAP;
                     content(ui);
                 });
-            };
-            if scroll {
-                egui::ScrollArea::vertical()
-                    .id_salt(id)
-                    .auto_shrink([true, false])
-                    .show(ui, inner);
-            } else {
-                inner(ui);
-            }
         };
-
-        // Footer pinned to the bottom: lay it bottom-up first, then header + body fill the top.
-        if let Some(footer) = footer {
-            bui.with_layout(Layout::bottom_up(Align::Min), |ui| {
-                Surface::new()
-                    .fill_none()
-                    .pad(layout::PANEL_PAD)
-                    .show(ui, |ui| {
-                        ui.with_layout(Layout::left_to_right(Align::Center), footer);
-                    });
-                Divider::horizontal().show(ui);
-                ui.with_layout(Layout::top_down(Align::Min), |ui| {
-                    header(ui);
-                    body(ui);
-                });
-            });
+        if scroll {
+            egui::ScrollArea::vertical()
+                .id_salt(id)
+                .auto_shrink([true, false])
+                .show(&mut bui, inner);
         } else {
-            header(&mut bui);
-            body(&mut bui);
+            inner(&mut bui);
+        }
+
+        // Footer band: a full-width divider on top, then the action bar.
+        if let (Some(footer), Some(fr)) = (footer, footer_rect) {
+            let mut fui = ui.new_child(
+                UiBuilder::new()
+                    .max_rect(fr)
+                    .layout(Layout::top_down(Align::Min)),
+            );
+            Divider::horizontal().show(&mut fui);
+            Surface::new()
+                .fill_none()
+                .border_none()
+                .pad(layout::PANEL_PAD)
+                .show(&mut fui, |ui| {
+                    ui.with_layout(Layout::left_to_right(Align::Center), footer);
+                });
         }
     }
 }

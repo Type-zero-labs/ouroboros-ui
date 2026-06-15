@@ -832,7 +832,7 @@ fn page_panel(ui: &mut Ui, _theme: &Theme) {
     let mut vals = ui.data(|d| d.get_temp::<[f32; 3]>(id).unwrap_or([1.0, 0.5, 0.2]));
     ui.horizontal_top(|ui| {
         // Right-docked inspector: left edge + header + responsive rows.
-        ui.allocate_ui(vec2(280.0, 240.0), |ui| {
+        ui.allocate_ui(vec2(280.0, 300.0), |ui| {
             Panel::new("panel_inspector")
                 .left_edge()
                 .title("Inspector")
@@ -846,7 +846,7 @@ fn page_panel(ui: &mut Ui, _theme: &Theme) {
         });
         ui.add_space(core::SPACE_4);
         // Left-docked panel with a footer action bar.
-        ui.allocate_ui(vec2(220.0, 240.0), |ui| {
+        ui.allocate_ui(vec2(220.0, 300.0), |ui| {
             Panel::new("panel_footer")
                 .right_edge()
                 .title("Properties")
