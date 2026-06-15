@@ -200,7 +200,8 @@ impl<'a> NumericField<'a> {
                 .ghost()
                 .sm()
                 .show(&mut mui);
-            if enabled && minus.clicked() {
+            let minus_clicked = enabled && minus.clicked();
+            if minus_clicked {
                 *value = (*value - step).clamp(min, max);
             }
 
@@ -209,7 +210,7 @@ impl<'a> NumericField<'a> {
                     .max_rect(value_rect)
                     .layout(Layout::centered_and_justified(egui::Direction::LeftToRight)),
             );
-            let r = vui.add_enabled(enabled, drag!(value));
+            let mut r = vui.add_enabled(enabled, drag!(value));
 
             let mut pui = ui.new_child(
                 UiBuilder::new()
@@ -222,8 +223,16 @@ impl<'a> NumericField<'a> {
                 .ghost()
                 .sm()
                 .show(&mut pui);
-            if enabled && plus.clicked() {
+            let plus_clicked = enabled && plus.clicked();
+            if plus_clicked {
                 *value = (*value + step).clamp(min, max);
+            }
+
+            // The `−`/`+` buttons mutate the value directly; fold their clicks into the
+            // returned response so callers gated on `.changed()` (e.g. dirty-tracking
+            // editors) react to stepper edits, not just keyboard/drag edits.
+            if minus_clicked || plus_clicked {
+                r.mark_changed();
             }
             r
         } else {
