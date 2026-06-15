@@ -22,6 +22,11 @@ pub const PANEL_MAX: f32 = 480.0;
 pub const TOOLBAR_HEIGHT: f32 = 40.0;
 /// Bottom status bar height.
 pub const STATUSBAR_HEIGHT: f32 = 24.0;
+/// Canonical inner padding of a [`Panel`](crate::organisms::Panel) body/header/footer (= `core::SPACE_4`):
+/// the single source of truth for panel content inset, replacing per-panel `Frame::inner_margin`.
+pub const PANEL_PAD: f32 = super::core::SPACE_4;
+/// Canonical gap between rows inside a [`Panel`](crate::organisms::Panel) body (= `core::SPACE_2`).
+pub const PANEL_GAP: f32 = super::core::SPACE_2;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Content grid — a 12-column grid for laying out forms / cards inside a panel.
@@ -52,6 +57,12 @@ pub const FIELD_HORIZONTAL_MIN: f32 = 480.0;
 /// Fixed label column for an inspector [`PropertyRow`](crate::cells::PropertyRow) (aligned rows).
 pub const PROPERTY_LABEL_WIDTH: f32 = 120.0;
 
+/// Available width below which a responsive inspector row
+/// ([`ResponsiveRow`](crate::cells::ResponsiveRow)) stacks the label above the control instead of
+/// keeping the aligned column. Lower than [`FIELD_HORIZONTAL_MIN`] because inspector side panels
+/// (≈280–480px) are narrower than full-width form fields.
+pub const INSPECTOR_ROW_STACK_MIN: f32 = 220.0;
+
 /// Row height for table cells/headers ([`TableCell`](crate::cells::TableCell)).
 pub const TABLE_ROW_HEIGHT: f32 = 28.0;
 
@@ -73,6 +84,11 @@ pub const NUMERIC_STEPPER_MIN_W: f32 = 88.0;
 /// Canonical width cap of a numeric/value field (= the studio's FIELD_NUM_W): numbers
 /// stay moderate and column-aligned instead of ballooning to the panel width.
 pub const FIELD_NUM_W: f32 = 120.0;
+/// Fixed width of a **stepper** numeric field ([`NumericField::fixed_width`](crate::atoms::NumericField::fixed_width)):
+/// a constant, comfortable width (two sm icon buttons + a readable number) that ignores
+/// `available_width` so the value never slides behind the `−` when a panel is squeezed.
+/// ≥ [`NUMERIC_STEPPER_MIN_W`].
+pub const NUMERIC_STEPPER_W: f32 = 120.0;
 /// Floor for a slider track.
 pub const SLIDER_MIN_W: f32 = 120.0;
 /// Floor for a progress track.

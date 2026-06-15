@@ -945,3 +945,95 @@ fn numeric_field_stepper_floors_higher() {
         w.get()
     );
 }
+
+#[test]
+fn numeric_field_fixed_width_is_constant() {
+    // `.fixed_width()` pins a stepper to NUMERIC_STEPPER_W regardless of the available width,
+    // so a squeezed panel can't push the value behind the `−` button (the ds-inspector squash).
+    let wide = Rc::new(Cell::new(0.0f32));
+    let narrow = Rc::new(Cell::new(0.0f32));
+    let (wd, nw) = (wide.clone(), narrow.clone());
+    rendered(move |ui| {
+        ui.allocate_ui(egui::vec2(600.0, core::CONTROL_MD), |ui| {
+            let mut v = 5.0f32;
+            NumericField::new(&mut v).stepper().fixed_width().show(ui);
+            wd.set(ui.min_rect().width());
+        });
+        ui.allocate_ui(egui::vec2(40.0, core::CONTROL_MD), |ui| {
+            let mut v = 5.0f32;
+            NumericField::new(&mut v).stepper().fixed_width().show(ui);
+            nw.set(ui.min_rect().width());
+        });
+    });
+    assert!(
+        (wide.get() - layout::NUMERIC_STEPPER_W).abs() <= 0.5,
+        "fixed-width stepper should be NUMERIC_STEPPER_W ({}) in a wide ui, got {}",
+        layout::NUMERIC_STEPPER_W,
+        wide.get()
+    );
+    assert!(
+        (narrow.get() - layout::NUMERIC_STEPPER_W).abs() <= 0.5,
+        "fixed-width stepper should stay NUMERIC_STEPPER_W ({}) even in a 40px ui, got {}",
+        layout::NUMERIC_STEPPER_W,
+        narrow.get()
+    );
+}
+
+#[test]
+fn responsive_row_stacks_when_narrow() {
+    // Wide (≥ INSPECTOR_ROW_STACK_MIN): label column + control on one line (~CONTROL_MD tall).
+    // Narrow (< threshold): the label stacks above the control, so the row is taller — the
+    // ds-inspector fix for inspector rows clipping in a squeezed side panel.
+    use ouroboros_ui::cells::ResponsiveRow;
+    let wide_h = Rc::new(Cell::new(0.0f32));
+    let narrow_h = Rc::new(Cell::new(0.0f32));
+    let (wh, nh) = (wide_h.clone(), narrow_h.clone());
+    rendered(move |ui| {
+        ui.allocate_ui(egui::vec2(360.0, 80.0), |ui| {
+            let mut v = 1.0f32;
+            ResponsiveRow::new("Mass").show(ui, |ui| NumericField::new(&mut v).show(ui));
+            wh.set(ui.min_rect().height());
+        });
+        ui.allocate_ui(egui::vec2(160.0, 80.0), |ui| {
+            let mut v = 1.0f32;
+            ResponsiveRow::new("Mass").show(ui, |ui| NumericField::new(&mut v).show(ui));
+            nh.set(ui.min_rect().height());
+        });
+    });
+    assert!(
+        narrow_h.get() > wide_h.get() + 1.0,
+        "narrow row (160px < threshold) should stack and be taller than wide (360px): wide {} vs narrow {}",
+        wide_h.get(),
+        narrow_h.get()
+    );
+}
+
+#[test]
+fn panel_fills_mounted_rect() {
+    // A Panel mounts into a fixed rect (a Splitter band) and fills it — bg + edge + header + body
+    // span the whole rect, so a docked inspector has no gaps around its chrome.
+    use ouroboros_ui::organisms::Panel;
+    let size = Rc::new(Cell::new((0.0f32, 0.0f32)));
+    let sink = size.clone();
+    rendered(move |ui| {
+        ui.allocate_ui(egui::vec2(300.0, 200.0), |ui| {
+            let resp = Panel::new("test_panel")
+                .left_edge()
+                .title("Inspector")
+                .show(ui, |ui| {
+                    let mut v = 1.0f32;
+                    NumericField::new(&mut v).show(ui);
+                });
+            sink.set((resp.rect.width(), resp.rect.height()));
+        });
+    });
+    let (w, h) = size.get();
+    assert!(
+        (w - 300.0).abs() <= 2.0,
+        "panel should fill the 300px mounted width, got {w}"
+    );
+    assert!(
+        (h - 200.0).abs() <= 2.0,
+        "panel should fill the 200px mounted height, got {h}"
+    );
+}
