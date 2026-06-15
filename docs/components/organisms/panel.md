@@ -32,6 +32,7 @@ A canonical **docked panel**: a background, an optional flush hairline on its do
 | `.edge(e: PanelEdge) -> Self` / `.left_edge()` / `.right_edge()` | Flush hairline on the docking edge. |
 | `.fill(f: SurfaceFill) -> Self` | Background fill (default `Background`). |
 | `.no_scroll() -> Self` | Don't wrap the body in a `ScrollArea`. |
+| `.body_pad(px: f32) -> Self` | Body inner padding (default `PANEL_PAD`); `0.0` = **flush** for content that manages its own insets (e.g. full-bleed accordion section headers). |
 | `.show(self, ui: &mut Ui, content: impl FnOnce(&mut Ui)) -> Response` | Paint the chrome; run `content` in the padded body. |
 
 ## Usage

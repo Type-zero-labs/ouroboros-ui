@@ -42,6 +42,7 @@ pub struct Panel<'a> {
     edge: PanelEdge,
     fill: SurfaceFill,
     scroll: bool,
+    body_pad: f32,
 }
 
 impl<'a> Panel<'a> {
@@ -54,6 +55,7 @@ impl<'a> Panel<'a> {
             edge: PanelEdge::None,
             fill: SurfaceFill::Background,
             scroll: true,
+            body_pad: layout::PANEL_PAD,
         }
     }
 
@@ -92,6 +94,12 @@ impl<'a> Panel<'a> {
     /// Don't wrap the body in a `ScrollArea` (the content manages its own height).
     pub fn no_scroll(mut self) -> Self {
         self.scroll = false;
+        self
+    }
+    /// Body inner padding (default [`layout::PANEL_PAD`]). Pass `0.0` for a **flush** body when the
+    /// content manages its own insets (e.g. full-bleed accordion section headers).
+    pub fn body_pad(mut self, px: f32) -> Self {
+        self.body_pad = px;
         self
     }
 
@@ -156,6 +164,7 @@ impl<'a> Panel<'a> {
             action,
             footer,
             scroll,
+            body_pad,
             ..
         } = self;
 
@@ -180,17 +189,14 @@ impl<'a> Panel<'a> {
 
         let body = move |ui: &mut Ui| {
             let inner = move |ui: &mut Ui| {
-                Surface::new()
-                    .fill_none()
-                    .pad(layout::PANEL_PAD)
-                    .show(ui, |ui| {
-                        // Port of the studio `panel_body`: pin the content width to the available
-                        // width and keep horizontal auto-shrink ON so a fill control doesn't ratchet
-                        // the width on resize (egui #1297); consistent row gap inside.
-                        ui.set_min_width(ui.available_width());
-                        ui.spacing_mut().item_spacing.y = layout::PANEL_GAP;
-                        content(ui);
-                    });
+                Surface::new().fill_none().pad(body_pad).show(ui, |ui| {
+                    // Port of the studio `panel_body`: pin the content width to the available
+                    // width and keep horizontal auto-shrink ON so a fill control doesn't ratchet
+                    // the width on resize (egui #1297); consistent row gap inside.
+                    ui.set_min_width(ui.available_width());
+                    ui.spacing_mut().item_spacing.y = layout::PANEL_GAP;
+                    content(ui);
+                });
             };
             if scroll {
                 egui::ScrollArea::vertical()
