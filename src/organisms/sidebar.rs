@@ -52,8 +52,10 @@ impl<'a> Sidebar<'a> {
             for (i, (icon, label)) in items.into_iter().enumerate() {
                 let active = *selected == i;
                 if icons_only {
+                    // Active icon-rail item reads as a selected toggle: primary fill (TEAL_200)
+                    // + dark on-primary glyph. Distinct from the muted Secondary it used to be.
                     let variant = if active {
-                        ButtonVariant::Secondary
+                        ButtonVariant::Default
                     } else {
                         ButtonVariant::Ghost
                     };
