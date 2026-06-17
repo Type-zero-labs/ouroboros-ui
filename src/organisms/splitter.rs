@@ -297,7 +297,15 @@ impl<'a> Splitter<'a> {
                     Axis::Horizontal
                 };
                 let active = state.collapsed[i] || state.collapsed[i + 1];
-                let mut hui = ui.new_child(UiBuilder::new().max_rect(d_rect));
+                // Stable id per divider so egui tracks the drag across frames.
+                // Without this the handle gets an auto-id that shifts as the
+                // surrounding dynamic UI changes — hover works but `dragged()`
+                // never latches, so the divider can't be dragged.
+                let mut hui = ui.new_child(UiBuilder::new().max_rect(d_rect).id_salt((
+                    id,
+                    "split_handle",
+                    i,
+                )));
                 let h = SplitterHandle::new(line).active(active).show(&mut hui);
                 if h.dragged() {
                     drag_for = Some((i, main(h.drag_delta())));
