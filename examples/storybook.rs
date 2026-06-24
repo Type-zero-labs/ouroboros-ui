@@ -28,8 +28,8 @@ use ouroboros_ui::molecules::{
     ToggleGroup, VectorField,
 };
 use ouroboros_ui::organisms::{
-    Accordion, Column, Dialog, DialogChoice, DropdownMenu, Menubar, Panel, PanelSpec, Popover,
-    Select, Sidebar, Splitter, TabView, Table, Toast, Toolbar, TreeItem, TreeView,
+    Accordion, Autocomplete, Column, Dialog, DialogChoice, DropdownMenu, Menubar, Panel, PanelSpec,
+    Popover, Select, Sidebar, Splitter, TabView, Table, Toast, Toolbar, TreeItem, TreeView,
 };
 use ouroboros_ui::theme::typography;
 use ouroboros_ui::tokens::{core, layout};
@@ -101,6 +101,7 @@ enum Page {
     Popover,
     DropdownMenu,
     Select,
+    Autocomplete,
     Accordion,
     Menubar,
     Splitter,
@@ -178,6 +179,7 @@ impl Page {
             Page::Popover => "Popover",
             Page::DropdownMenu => "Dropdown menu",
             Page::Select => "Select",
+            Page::Autocomplete => "Autocomplete",
             Page::Accordion => "Accordion",
             Page::Menubar => "Menubar",
             Page::Splitter => "Splitter",
@@ -279,6 +281,7 @@ const NAV: &[(&str, &[Page])] = &[
             Page::Popover,
             Page::DropdownMenu,
             Page::Select,
+            Page::Autocomplete,
             Page::Accordion,
             Page::Menubar,
             Page::Splitter,
@@ -494,6 +497,7 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::Popover => page_popover(ui, theme),
         Page::DropdownMenu => page_dropdown_menu(ui, theme),
         Page::Select => page_select(ui, theme),
+        Page::Autocomplete => page_autocomplete(ui, theme),
         Page::Accordion => page_accordion(ui, theme),
         Page::Menubar => page_menubar(ui, theme),
         Page::Splitter => page_splitter(ui, theme),
@@ -821,6 +825,40 @@ fn page_select(ui: &mut Ui, _theme: &Theme) {
             ui.add_space(core::SPACE_2);
         }
     });
+}
+
+fn page_autocomplete(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Search + click to add (combobox / command)");
+    let qid = egui::Id::new("autocomplete_demo_query");
+    let lastid = egui::Id::new("autocomplete_demo_last");
+    let mut query = ui.data(|d| d.get_temp::<String>(qid).unwrap_or_default());
+    let items = [
+        "Fabre",
+        "Poring",
+        "Lunatic",
+        "Picky",
+        "Willow",
+        "Red Potion",
+        "Blue Potion",
+        "Knife",
+        "Sword",
+        "Novice",
+        "Swordsman",
+        "Fireball",
+    ];
+    let picked = Autocomplete::new(&mut query, items)
+        .placeholder("Add entity…")
+        .id_source("autocomplete_demo")
+        .show(ui);
+    if let Some(i) = picked {
+        ui.data_mut(|d| d.insert_temp(lastid, items[i].to_string()));
+        query.clear();
+    }
+    ui.data_mut(|d| d.insert_temp(qid, query));
+    if let Some(last) = ui.data(|d| d.get_temp::<String>(lastid)) {
+        ui.add_space(core::SPACE_2);
+        Text::new(format!("Added: {last}")).muted().show(ui);
+    }
 }
 
 fn page_panel(ui: &mut Ui, _theme: &Theme) {
