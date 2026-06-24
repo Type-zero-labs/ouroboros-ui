@@ -1484,6 +1484,11 @@ fn page_alert(ui: &mut Ui, _theme: &Theme) {
             Alert::new(msg).variant(v).title("Notice").show(ui);
             ui.add_space(core::SPACE_2);
         }
+        caption(ui, "With trailing action");
+        Alert::new("Project got moved or couldn't be found.")
+            .error()
+            .action("Explore files")
+            .show_with_action(ui);
     });
 }
 
