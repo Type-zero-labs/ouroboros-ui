@@ -20,7 +20,7 @@ pub mod tabs;
 pub mod toggle_group;
 pub mod vector_field;
 
-pub use alert::{Alert, AlertVariant};
+pub use alert::{Alert, AlertOutput, AlertVariant};
 pub use breadcrumb::Breadcrumb;
 pub use card::{Card, CardSize};
 pub use checkbox_card::CheckboxCard;
