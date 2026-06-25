@@ -52,12 +52,17 @@ impl<'a> Select<'a> {
             .get(*selected)
             .cloned()
             .unwrap_or_else(|| self.placeholder.clone());
-        let response = Button::new(current)
+        let mut response = Button::new(current)
             .variant(ButtonVariant::Outline)
             .icon_right(light::CARET_DOWN)
             .size(self.size)
             .id_source("select_trigger")
             .show(ui);
+        // The trigger `Response` comes from the button's own allocation, so it
+        // never reports `.changed()` on its own when a popup item is picked.
+        // Track the selection and mark the response changed so callers can rely
+        // on `select.show(ui).changed()` instead of diffing `*selected` by hand.
+        let mut changed = false;
         egui::Popup::menu(&response).show(|ui: &mut Ui| {
             for (i, option) in options.iter().enumerate() {
                 if MenuItem::new(option)
@@ -65,11 +70,17 @@ impl<'a> Select<'a> {
                     .show(ui)
                     .clicked()
                 {
-                    *selected = i;
+                    if *selected != i {
+                        *selected = i;
+                        changed = true;
+                    }
                     ui.close();
                 }
             }
         });
+        if changed {
+            response.mark_changed();
+        }
         response
     }
 }
