@@ -284,8 +284,8 @@ impl GraphCtx<'_> {
             );
 
             // Labeled variant: a caption just inside the node, beside the dot.
-            if let HandleVariant::Labeled(text) = spec.variant {
-                let w = 72.0;
+            if let HandleVariant::Labeled(text) = &spec.variant {
+                let w = 96.0;
                 let x = match spec.side {
                     PortSide::In => pos.x + r * 2.0,
                     PortSide::Out => pos.x - r * 2.0 - w,
@@ -298,7 +298,7 @@ impl GraphCtx<'_> {
                 let mut c = self
                     .ui
                     .new_child(UiBuilder::new().max_rect(area).layout(layout));
-                Text::new(text).caption().muted().show(&mut c);
+                Text::new(text.as_str()).caption().muted().show(&mut c);
             }
 
             self.handle_positions.push((port, pos));
