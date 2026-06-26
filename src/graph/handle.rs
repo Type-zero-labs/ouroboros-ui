@@ -9,16 +9,16 @@ use egui::{Pos2, Rect};
 use super::{PortId, PortSide};
 
 /// Visual style of a handle.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum HandleVariant {
     #[default]
     Base,
     /// A handle with a caption label beside it (inside the node).
-    Labeled(&'static str),
+    Labeled(String),
 }
 
 /// Declares one port on a node: its id, which side it sits on, and whether it accepts drags.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct HandleSpec {
     pub id: PortId,
     pub side: PortSide,
@@ -51,8 +51,8 @@ impl HandleSpec {
         self
     }
     /// Add a caption label beside the handle.
-    pub fn label(mut self, text: &'static str) -> Self {
-        self.variant = HandleVariant::Labeled(text);
+    pub fn label(mut self, text: impl Into<String>) -> Self {
+        self.variant = HandleVariant::Labeled(text.into());
         self
     }
 }
