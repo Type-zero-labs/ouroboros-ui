@@ -20,6 +20,10 @@ serde = { version = "1", features = ["derive"] }
 eframe = "0.34.1"
 egui_kittest = "0.34"
 
+# Web build of the storybook example (cargo build --example storybook --target wasm32-unknown-unknown)
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-futures = "0.4"
+
 [[example]]
 name = "storybook"
 path = "examples/storybook.rs"

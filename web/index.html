@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ouroboros-ui — live storybook</title>
+<meta name="description" content="Live storybook of ouroboros-ui: the shadcn/ui design language native in Rust/egui, running in your browser via WebAssembly.">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #09090b; /* zinc-950 — matches the DS dark background */
+  }
+  #storybook_canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #boot {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    color: #a1a1aa;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+  }
+  #boot .bar {
+    width: 220px;
+    height: 2px;
+    background: #27272a;
+    overflow: hidden;
+  }
+  #boot .bar::after {
+    content: "";
+    display: block;
+    width: 40%;
+    height: 100%;
+    background: #e4e4e7;
+    animation: slide 1.1s ease-in-out infinite;
+  }
+  @keyframes slide {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+  }
+</style>
+</head>
+<body>
+<div id="boot">
+  <div>OUROBOROS-UI · LOADING STORYBOOK (WASM)</div>
+  <div class="bar"></div>
+</div>
+<canvas id="storybook_canvas"></canvas>
+<script type="module">
+  import init from './pkg/storybook.js';
+  init().then(() => {
+    document.getElementById('boot')?.remove();
+  }).catch((e) => {
+    const el = document.querySelector('#boot div');
+    if (el) el.textContent = 'FAILED TO LOAD — ' + e;
+    throw e;
+  });
+</script>
+</body>
+</html>
