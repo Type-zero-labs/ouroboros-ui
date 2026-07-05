@@ -19,8 +19,26 @@
 //! [egui]: https://github.com/emilk/egui
 //! [shadcn/ui]: https://ui.shadcn.com
 
+pub mod atoms;
+pub mod auto_layout;
+pub mod cells;
+pub mod graph;
+pub mod molecules;
+pub mod organisms;
 pub mod theme;
 pub mod tokens;
 
+// Figma-style flow layout — the content primitive used inside panels. Re-exported at the crate
+// root (like the layer modules' own re-exports) so callers reach it without the module path.
+pub use auto_layout::{
+    AutoLayout, AutoLayoutLayout, CrossAlign, Gap, LayoutDirection, MainAlign, Padding, SizeMode,
+    Sizing,
+};
+pub use theme::typography::{TypeStyle, Weight};
 pub use theme::Mode;
+pub use tokens::core::Size;
 pub use tokens::semantic::Theme;
+
+// Re-export the icon font crate so consumers reach glyphs without a separate dependency
+// (e.g. `ouroboros_ui::egui_phosphor::light::GEAR`).
+pub use egui_phosphor;

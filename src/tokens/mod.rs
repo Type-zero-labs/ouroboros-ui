@@ -3,4 +3,7 @@
 
 pub mod component;
 pub mod core;
+pub mod layout;
 pub mod semantic;
+
+pub use core::Size;

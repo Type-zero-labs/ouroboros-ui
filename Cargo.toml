@@ -8,15 +8,21 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 description = "Token-first design system for egui — the shadcn language reimplemented natively."
-repository = "https://github.com/type-zero-labs/ouroboros-ui"
+repository = "https://github.com/Type-zero-labs/ouroboros-ui"
 
 [dependencies]
 egui = "0.34.1"
-egui-phosphor = { version = "0.12", default-features = false, features = ["bold"] }
+egui_extras = { version = "0.34", default-features = false }
+egui-phosphor = { version = "0.12", default-features = false, features = ["light"] }
 serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]
 eframe = "0.34.1"
+egui_kittest = "0.34"
+
+# Web build of the storybook example (cargo build --example storybook --target wasm32-unknown-unknown)
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-futures = "0.4"
 
 [[example]]
 name = "storybook"
