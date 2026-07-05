@@ -5,3 +5,5 @@ Cargo.lock
 
 # wasm-bindgen output (built from examples/storybook.rs)
 web/pkg/
+# mdBook output
+book/

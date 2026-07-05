@@ -8,6 +8,10 @@ egui-native immediate-mode rendering.
 This is the full documentation set: how the system is built, how to use it, and a
 reference page for every component.
 
+> **[▶ Live storybook](https://ouroboros-ui.typezerolabs.com/storybook/)** — every
+> component and token, running in your browser (WebAssembly). Source:
+> [`examples/storybook.rs`](https://github.com/Type-zero-labs/ouroboros-ui/blob/main/examples/storybook.rs).
+
 ## Start here
 
 | Doc | What it covers |
