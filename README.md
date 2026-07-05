@@ -49,6 +49,33 @@ if Button::new("Save").show(ui).clicked() {
 
 Every component is a builder: `Component::new(..).setter(..).show(ui) -> Response`.
 
+## Wiring the guards into your agent loop
+
+The guards matter most when the code is machine-generated. If you develop with a coding
+agent (Claude Code, Cursor, …), run them after every edit so the agent gets the failure
+as feedback and self-corrects — the reviewer becomes the build:
+
+```jsonc
+// .claude/settings.json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{
+          "type": "command",
+          "command": "cargo test -q --test no_raw_values --test no_painter_in_molecules 2>&1 | tail -20 || exit 2"
+        }]
+      }
+    ]
+  }
+}
+```
+
+In practice: the agent invents a plausible gray, the guard fails, the agent reads the
+error and reaches for the token instead. No design review required — drift is caught at
+zero distance.
+
 ## Storybook
 
 A living visual reference with every component and token:
