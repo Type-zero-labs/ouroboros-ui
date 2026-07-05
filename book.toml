@@ -1,0 +1,16 @@
+[book]
+title = "ouroboros-ui"
+description = "Token-first design system for egui — the shadcn/ui design language, native in Rust. Governance tests fail the build on violations."
+authors = ["Mauricio Juba"]
+language = "en"
+src = "docs"
+
+[output.html]
+default-theme = "ayu"
+preferred-dark-theme = "ayu"
+git-repository-url = "https://github.com/Type-zero-labs/ouroboros-ui"
+site-url = "/"
+
+[output.html.fold]
+enable = true
+level = 1
