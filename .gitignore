@@ -2,3 +2,6 @@
 **/*.rs.bk
 Cargo.lock
 .DS_Store
+
+# wasm-bindgen output (built from examples/storybook.rs)
+web/pkg/

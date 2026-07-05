@@ -299,24 +299,29 @@ const NAV: &[(&str, &[Page])] = &[
     ),
 ];
 
-fn main() -> eframe::Result<()> {
-    let mut installed = false;
-    let mut mode = Mode::Dark;
-    let mut page = Page::Colors;
-    eframe::run_ui_native(
-        "ouroboros-ui storybook",
-        eframe::NativeOptions::default(),
-        move |ui, _frame| {
-            if !installed {
-                // `set_fonts` only takes effect next frame — install, then skip this frame.
-                Theme::install(ui.ctx(), mode);
-                installed = true;
-                ui.ctx().request_repaint();
-                return;
-            }
-            let theme = Theme::get(ui);
-            ui.painter()
-                .rect_filled(ui.clip_rect(), 0.0, theme.background);
+// State + frame body shared by the native and web entry points.
+struct Storybook {
+    installed: bool,
+    mode: Mode,
+    page: Page,
+}
+
+impl Storybook {
+    fn new() -> Self {
+        Self { installed: false, mode: Mode::Dark, page: Page::Colors }
+    }
+
+    fn frame_ui(&mut self, ui: &mut Ui) {
+        if !self.installed {
+            // `set_fonts` only takes effect next frame — install, then skip this frame.
+            Theme::install(ui.ctx(), self.mode);
+            self.installed = true;
+            ui.ctx().request_repaint();
+            return;
+        }
+        let theme = Theme::get(ui);
+        ui.painter()
+            .rect_filled(ui.clip_rect(), 0.0, theme.background);
 
             egui::Panel::top("header")
                 .frame(header_frame(&theme))
@@ -326,7 +331,7 @@ fn main() -> eframe::Result<()> {
                         ui.add_space(core::SPACE_3);
                         Text::new("design system").muted().show(ui);
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            let label = match mode {
+                            let label = match self.mode {
                                 Mode::Dark => "◐ Dark",
                                 Mode::Light => "◑ Light",
                             };
@@ -337,11 +342,11 @@ fn main() -> eframe::Result<()> {
                                 .show(ui)
                                 .clicked()
                             {
-                                mode = match mode {
+                                self.mode = match self.mode {
                                     Mode::Dark => Mode::Light,
                                     Mode::Light => Mode::Dark,
                                 };
-                                Theme::apply(ui.ctx(), mode);
+                                Theme::apply(ui.ctx(), self.mode);
                                 ui.ctx().request_repaint();
                             }
                         });
@@ -355,7 +360,7 @@ fn main() -> eframe::Result<()> {
                 .show_inside(ui, |ui| {
                     egui::ScrollArea::vertical()
                         .id_salt("nav_scroll")
-                        .show(ui, |ui| nav(ui, &theme, &mut page));
+                        .show(ui, |ui| nav(ui, &theme, &mut self.page));
                 });
 
             egui::CentralPanel::default()
@@ -365,16 +370,59 @@ fn main() -> eframe::Result<()> {
                         .id_salt("content_scroll")
                         .show(ui, |ui| {
                             ui.set_max_width(760.0);
-                            Heading::new(page.label()).h1().show(ui);
+                            Heading::new(self.page.label()).h1().show(ui);
                             ui.add_space(core::SPACE_3);
                             Divider::horizontal().show(ui);
                             ui.add_space(core::SPACE_5);
-                            render_page(ui, &theme, page);
+                            render_page(ui, &theme, self.page);
                             ui.add_space(core::SPACE_8);
                         });
                 });
-        },
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn main() -> eframe::Result<()> {
+    let mut app = Storybook::new();
+    eframe::run_ui_native(
+        "ouroboros-ui storybook",
+        eframe::NativeOptions::default(),
+        move |ui, _frame| app.frame_ui(ui),
     )
+}
+
+// ── Web (wasm32) entry — same storybook, in a browser canvas ─────────────────
+
+#[cfg(target_arch = "wasm32")]
+impl eframe::App for Storybook {
+    fn ui(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
+        self.frame_ui(ui);
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn main() {
+    use eframe::wasm_bindgen::JsCast as _;
+    let web_options = eframe::WebOptions::default();
+    wasm_bindgen_futures::spawn_local(async move {
+        let document = eframe::web_sys::window()
+            .expect("no window")
+            .document()
+            .expect("no document");
+        let canvas = document
+            .get_element_by_id("storybook_canvas")
+            .expect("no #storybook_canvas element")
+            .dyn_into::<eframe::web_sys::HtmlCanvasElement>()
+            .expect("#storybook_canvas is not a canvas");
+        eframe::WebRunner::new()
+            .start(
+                canvas,
+                web_options,
+                Box::new(|_cc| Ok(Box::new(Storybook::new()))),
+            )
+            .await
+            .expect("failed to start the storybook");
+    });
 }
 
 // ── Frames (token-driven) ─────────────────────────────────────────────────────
