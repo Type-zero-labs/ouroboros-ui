@@ -1,7 +1,7 @@
 # Layout & auto-layout
 
-Two pieces: **layout tokens** (`src/tokens/layout.rs`) — fixed dimensions and z-order
-roles a layout reads — and the **`AutoLayout`** engine (`src/auto_layout.rs`) — a
+Two pieces: **layout tokens** (`src/tokens/layout.rs`) — fixed dimensions a layout
+reads — and the **`AutoLayout`** engine (`src/auto_layout.rs`) — a
 Figma-style flow layout for egui.
 
 ---
@@ -22,47 +22,11 @@ reads. Tune them to the real studio shell.
 | `TOOLBAR_HEIGHT` | 40 | top toolbar |
 | `STATUSBAR_HEIGHT` | 24 | bottom status bar |
 
-### Content grid
+### Component-level thresholds
 
-`GRID_COLUMNS` 12 · `GRID_GUTTER` 16 (= `SPACE_4`) · `CONTAINER_MAX` 1200 (max readable
-width before centering).
-
-### Breakpoints (window width, px)
-
-| Const | px | Below this |
-|-------|----|------------|
-| `BREAKPOINT_COMPACT` | 720 | compact — single column, collapsed panels |
-| `BREAKPOINT_NORMAL` | 1024 | normal — one side panel |
-| `BREAKPOINT_WIDE` | 1440 | wide — both side panels, roomy |
-
-Component-level thresholds: `FIELD_HORIZONTAL_MIN` 480 (a [`Field`](./components/molecules/field.md)
+`FIELD_HORIZONTAL_MIN` 480 (a [`Field`](./components/molecules/field.md)
 goes side-by-side at/above this, else stacks), `PROPERTY_LABEL_WIDTH` 120 (fixed label
 column for [`PropertyRow`](./components/cells/property_row.md)), `TABLE_ROW_HEIGHT` 28.
-
-### `SizeClass`
-
-```rust
-pub enum SizeClass { Compact, Normal, Wide }
-SizeClass::from_width(available_width) -> SizeClass
-```
-
-Classifies an available width against the breakpoints (`< NORMAL` → Compact,
-`< WIDE` → Normal, else Wide) so a component can adapt density.
-
-### `Layer` — z-order roles
-
-Stacking roles for floating surfaces, mapped onto `egui::Order`. Ordered base → tooltip.
-
-```rust
-pub enum Layer { Base, Dropdown, Popover, Modal, Toast, Tooltip }
-```
-
-| Method | Returns |
-|--------|---------|
-| `order()` | the `egui::Order` (Base→Middle; Dropdown/Popover/Modal/Toast→Foreground; Tooltip→Tooltip) |
-| `priority()` | relative priority within a shared order (higher = on top; the enum's discriminant) |
-
-egui's order set is coarse; finer ordering within a layer is by creation/`priority`.
 
 ---
 
@@ -110,19 +74,16 @@ AutoLayout::horizontal()  // or ::vertical()
     .gap(8.0)                          // fixed gap…
     .gap_auto()                        // …or space-between
     .gap_cross(8.0)                    // gap between wrapped lines (defaults to main gap)
-    .pad(12.0)                         // .padding(Padding) / .pad_xy(x, y)
+    .pad(12.0)                         // or .pad_xy(x, y)
     .main_align(MainAlign::Center)
     .cross_align(CrossAlign::Center)
     .wrap()                            // reflow onto new lines (horizontal only)
-    .allow_overflow()                  // opt out of budget clamping + cell clipping
     .fixed(28.0, |ui| { /* icon */ })  // child with fixed main size
     .fill(|ui| {})                     // flexible spacer / growing child
     .fill_min(220.0, |ui| {})          // fill that floors at 220px
     .fill_clamped(80.0, 160.0, |ui| {})// fill clamped to [80, 160]px
     .hug(|ui| { /* button */ })        // child sized to content
-    .hug_max(240.0, |ui| {})           // hug capped at 240px
-    .child(SizeMode::Fill, |ui| {})    // explicit form…
-    .sized(Sizing::fill().min(120.0), |ui| {}) // …or with a prebuilt Sizing
+    .child(Sizing::fill().min(120.0), |ui| {}) // explicit form (SizeMode or Sizing)
     .show(ui) -> Response
 ```
 
@@ -186,9 +147,6 @@ then **once for real** at computed cells. The algorithm:
    cell is **clipped as a last resort** (with a small bleed for focus rings): with correct
    sizing it never bites, it only stops legitimate overflow (e.g. floors inside a panel
    squeezed below their sum) from painting over siblings.
-
-`allow_overflow()` opts out of both the budget clamp and the cell clipping — the legacy
-behavior, for the rare container that scrolls itself.
 
 ### Wrap
 

@@ -247,43 +247,16 @@ pub enum Easing {
 }
 
 impl Easing {
-    /// Map progress through the curve.
+    /// Map progress through the curve — delegates to [`egui::emath::easing`].
     pub fn apply(self, t: f32) -> f32 {
+        use egui::emath::easing;
         let t = t.clamp(0.0, 1.0);
         match self {
-            Easing::Linear => t,
-            Easing::EaseOut => 1.0 - (1.0 - t) * (1.0 - t),
-            Easing::EaseInOut => {
-                if t < 0.5 {
-                    2.0 * t * t
-                } else {
-                    1.0 - (-2.0 * t + 2.0).powi(2) / 2.0
-                }
-            }
-            // ease-out-back: overshoots past 1 near the end, then settles.
-            Easing::Spring => {
-                const C1: f32 = 1.70158;
-                const C3: f32 = C1 + 1.0;
-                let u = t - 1.0;
-                1.0 + C3 * u * u * u + C1 * u * u
-            }
-            // ease-out-bounce: decaying parabolic bounces (standard 4-segment form).
-            Easing::Bounce => {
-                const N1: f32 = 7.5625;
-                const D1: f32 = 2.75;
-                if t < 1.0 / D1 {
-                    N1 * t * t
-                } else if t < 2.0 / D1 {
-                    let t = t - 1.5 / D1;
-                    N1 * t * t + 0.75
-                } else if t < 2.5 / D1 {
-                    let t = t - 2.25 / D1;
-                    N1 * t * t + 0.9375
-                } else {
-                    let t = t - 2.625 / D1;
-                    N1 * t * t + 0.984375
-                }
-            }
+            Easing::Linear => easing::linear(t),
+            Easing::EaseOut => easing::quadratic_out(t),
+            Easing::EaseInOut => easing::quadratic_in_out(t),
+            Easing::Spring => easing::back_out(t),
+            Easing::Bounce => easing::bounce_out(t),
         }
     }
 }

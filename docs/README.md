@@ -28,7 +28,7 @@ reference page for every component.
 | [Tokens (core)](./tokens.md) | Raw primitives: color ramps, spacing, radius, shadows, sizing, motion, opacity. |
 | [Theming (semantic)](./theming.md) | The `Theme` struct, the four palettes (dark / light / zinc-dark / zinc-light), `Mode`, `install`/`apply`/`get`. |
 | [Typography](./typography.md) | Iosevka faces, weights, the named type styles (`display`…`kbd`), icon fonts. |
-| [Layout & auto-layout](./layout.md) | Panel/grid/breakpoint tokens, the `Layer` z-order, and the Figma-style `AutoLayout` flow engine. |
+| [Layout & auto-layout](./layout.md) | Panel and control-width tokens, and the Figma-style `AutoLayout` flow engine. |
 
 ## Component reference
 

@@ -1,26 +1,24 @@
 //! TableRow cell — the row model for the [`Table`](crate::organisms::Table) organism.
 //!
-//! Holds a row's [`TableCell`]s plus row-level state (selected / selectable / key). It is a
+//! Holds a row's [`TableCell`]s plus row-level state (selected / selectable). It is a
 //! *descriptor*, not a renderer: the Table organism lays the cells out across the column widths
 //! (via `egui_extras`) and reads this state to drive selection. Never paints.
 
 use crate::cells::TableCell;
 
 /// A table row: its cells plus selection state.
-pub struct TableRow<'a> {
-    pub(crate) cells: Vec<TableCell<'a>>,
+pub struct TableRow {
+    pub(crate) cells: Vec<TableCell>,
     pub(crate) selected: bool,
     pub(crate) selectable: bool,
-    pub(crate) key: Option<u64>,
 }
 
-impl<'a> TableRow<'a> {
-    pub fn new(cells: impl IntoIterator<Item = TableCell<'a>>) -> Self {
+impl TableRow {
+    pub fn new(cells: impl IntoIterator<Item = TableCell>) -> Self {
         Self {
             cells: cells.into_iter().collect(),
             selected: false,
             selectable: true,
-            key: None,
         }
     }
 
@@ -32,11 +30,6 @@ impl<'a> TableRow<'a> {
     /// Whether the row may be selected (default `true`).
     pub fn selectable(mut self, selectable: bool) -> Self {
         self.selectable = selectable;
-        self
-    }
-    /// Stable identity for the row (selection/tree operations).
-    pub fn key(mut self, key: u64) -> Self {
-        self.key = Some(key);
         self
     }
 }

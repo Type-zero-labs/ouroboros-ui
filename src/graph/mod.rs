@@ -17,7 +17,7 @@
 //!
 //! ## Two internal tiers
 //!
-//! - **paint tier** (`viewport`, `grid`, `edge`, `handle`, `resizer`): touch the painter, only
+//! - **paint tier** (`grid`, `edge`, `handle`, `resizer`): touch the painter, only
 //!   via tokens.
 //! - **compose tier** (`node`, `controls`, `minimap`, `toolbar`, `search`): reuse `Surface` and
 //!   the atoms; never paint inline.
@@ -41,7 +41,6 @@ pub mod search;
 pub mod state;
 pub mod tokens;
 pub mod toolbar;
-pub mod viewport;
 
 pub use canvas::{GraphCtx, GraphResponse, GraphView};
 pub use edge::{EdgeResult, EdgeStyle};
@@ -50,7 +49,6 @@ pub use node::{NodeFrame, NodeResult, NodeStatus};
 pub use search::NodeSearch;
 pub use state::GraphViewState;
 pub use tokens::GraphTokens;
-pub use viewport::Viewport;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared identity vocabulary. Ids are defined by the *caller* (stable across frames):

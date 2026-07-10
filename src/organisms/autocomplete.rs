@@ -18,9 +18,11 @@ pub struct Autocomplete<'a> {
     query: &'a mut String,
     items: Vec<String>,
     placeholder: Option<String>,
-    max_results: usize,
     id_source: Id,
 }
+
+/// Cap on the number of result rows rendered.
+const MAX_RESULTS: usize = 50;
 
 impl<'a> Autocomplete<'a> {
     pub fn new<S: Into<String>>(query: &'a mut String, items: impl IntoIterator<Item = S>) -> Self {
@@ -28,19 +30,12 @@ impl<'a> Autocomplete<'a> {
             query,
             items: items.into_iter().map(Into::into).collect(),
             placeholder: None,
-            max_results: 50,
             id_source: Id::new("autocomplete"),
         }
     }
 
     pub fn placeholder(mut self, text: impl Into<String>) -> Self {
         self.placeholder = Some(text.into());
-        self
-    }
-
-    /// Cap the number of result rows rendered (default 50).
-    pub fn max_results(mut self, n: usize) -> Self {
-        self.max_results = n;
         self
     }
 
@@ -68,7 +63,6 @@ impl<'a> Autocomplete<'a> {
 
         let items = self.items;
         let id_source = self.id_source;
-        let max_results = self.max_results;
         let mut clicked = None;
         ui.add_space(core::SPACE_1);
         Surface::new().pad(core::SPACE_1).show(ui, |ui| {
@@ -78,7 +72,7 @@ impl<'a> Autocomplete<'a> {
                 if !label.to_lowercase().contains(&query) {
                     continue;
                 }
-                if shown >= max_results {
+                if shown >= MAX_RESULTS {
                     break;
                 }
                 shown += 1;

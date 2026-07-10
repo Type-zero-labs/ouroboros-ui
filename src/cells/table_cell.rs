@@ -1,9 +1,8 @@
 //! TableCell cell — one cell of a table: a container that places content inside a column.
 //!
 //! A `cell` and a `header` are the same container; they differ **basically in the text weight**
-//! (header = stronger) plus role. Content is text by default, or an arbitrary widget via
-//! [`TableCell::custom`]. Padding + alignment are token-driven; composes the [`Text`] atom (and
-//! optionally a [`ColorSwatch`] status dot) — never paints.
+//! (header = stronger) plus role. Padding + alignment are token-driven; composes the [`Text`]
+//! atom (and optionally a [`ColorSwatch`] status dot) — never paints.
 
 use crate::atoms::{ColorSwatch, Text};
 use crate::tokens::core;
@@ -18,35 +17,20 @@ pub enum CellAlign {
     End,
 }
 
-enum Content<'a> {
-    Text(String),
-    Custom(Box<dyn FnMut(&mut Ui) + 'a>),
-}
-
 /// One table cell. `show(ui)` fills the column cell it's given (by the Table organism).
-pub struct TableCell<'a> {
-    content: Content<'a>,
+pub struct TableCell {
+    text: String,
     header: bool,
     align: CellAlign,
     status: Option<Color32>,
     muted: bool,
 }
 
-impl<'a> TableCell<'a> {
-    /// A text cell (the default).
+impl TableCell {
+    /// A text cell.
     pub fn text(text: impl Into<String>) -> Self {
         Self {
-            content: Content::Text(text.into()),
-            header: false,
-            align: CellAlign::Start,
-            status: None,
-            muted: false,
-        }
-    }
-    /// A cell holding an arbitrary widget.
-    pub fn custom(add: impl FnMut(&mut Ui) + 'a) -> Self {
-        Self {
-            content: Content::Custom(Box::new(add)),
+            text: text.into(),
             header: false,
             align: CellAlign::Start,
             status: None,
@@ -74,7 +58,7 @@ impl<'a> TableCell<'a> {
         self.status = Some(color);
         self
     }
-    /// Render the text in the muted foreground (ignored for custom content).
+    /// Render the text in the muted foreground.
     pub fn muted(mut self) -> Self {
         self.muted = true;
         self
@@ -95,18 +79,13 @@ impl<'a> TableCell<'a> {
                     .show(ui);
                 ui.add_space(core::SPACE_1);
             }
-            match self.content {
-                Content::Text(text) => {
-                    let mut t = Text::new(text);
-                    if self.header {
-                        t = t.label_strong();
-                    } else if self.muted {
-                        t = t.muted();
-                    }
-                    t.show(ui);
-                }
-                Content::Custom(mut add) => add(ui),
+            let mut t = Text::new(self.text);
+            if self.header {
+                t = t.label_strong();
+            } else if self.muted {
+                t = t.muted();
             }
+            t.show(ui);
         })
         .response
     }

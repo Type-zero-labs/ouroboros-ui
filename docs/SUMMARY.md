@@ -89,4 +89,3 @@
     - [NodeSearch](./components/graph/search.md)
     - [GraphViewState · NodeDrag · ConnectDrag · MarqueeDrag](./components/graph/state.md)
     - [GraphTokens](./components/graph/tokens.md)
-    - [Viewport](./components/graph/viewport.md)

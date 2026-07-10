@@ -126,7 +126,6 @@ data; the library owns view-state and reports intents.
 - [edge](./graph/edge.md) — `EdgeStyle`/`EdgeResult` + `ctx.edge`
 - [handle](./graph/handle.md) — `HandleSpec`/`HandleVariant` (ports)
 - [search](./graph/search.md) — `NodeSearch` palette
-- [viewport](./graph/viewport.md) — standalone world↔screen transform helper
 - [extras](./graph/extras.md) — `grid`, `resizer`, `minimap`, `toolbar`, `controls`
 
 ---

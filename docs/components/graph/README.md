@@ -26,7 +26,7 @@ the same purity contract the atoms have. See [guards](../../guards.md).
 
 | Tier | Modules | Rule |
 |------|---------|------|
-| **paint** | `viewport`, `grid`, `edge`, `handle`, `resizer` | touch the painter, but only via tokens |
+| **paint** | `grid`, `edge`, `handle`, `resizer` | touch the painter, but only via tokens |
 | **compose** | `node`, `controls`, `minimap`, `toolbar`, `search` | reuse `Surface` + atoms; never paint inline |
 
 ## Data-model-agnostic contract
@@ -75,7 +75,6 @@ caller model ──describe──▶ GraphView::show(|ctx| { ctx.node(..); ctx.e
 | [edge](./edge.md) | `EdgeStyle`/`EdgeResult` + `ctx.edge(...)`. Paint-tier bezier wires. |
 | [handle](./handle.md) | `HandleSpec`/`HandleVariant` — ports, declared on `NodeFrame`. Paint-tier. |
 | [search](./search.md) | `NodeSearch` — the node-creation palette. Compose-tier. |
-| [viewport](./viewport.md) | `Viewport` — a standalone world↔screen transform helper (the live canvas uses `egui::Scene`, not this). |
 | [extras](./extras.md) | Internal support pieces: `grid`, `resizer`, `minimap`, `toolbar`, `controls`. |
 
 ## Minimal usage

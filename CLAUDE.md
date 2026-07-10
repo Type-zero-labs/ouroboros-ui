@@ -38,4 +38,4 @@ tokens, never literals. The guards (`tests/no_raw_values.rs`,
 [docs/architecture.md](./docs/architecture.md) (layer model) ·
 [docs/governance.md](./docs/governance.md) (the law) ·
 [docs/layout.md](./docs/layout.md) (AutoLayout/panels) ·
-[docs/components/](./docs/components/README.md) (catalog, 71 components)
+[docs/components/](./docs/components/README.md) (catalog, 70 components)

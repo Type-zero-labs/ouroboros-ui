@@ -24,7 +24,6 @@ A text input (or multi-line [`Textarea`](../atoms/textarea.md)) with addons shar
 | `.text(slot: Slot, text: impl Into<String>) -> Self` | Add a text addon in `slot`. |
 | `.button(slot: Slot, glyph: &'static str, action: impl FnMut() + 'a) -> Self` | Add a clickable icon-button addon; `action` runs on click. |
 | `.leading_icon(glyph: &'static str) -> Self` | Sugar — icon in `LeadingInline`. |
-| `.trailing_icon(glyph: &'static str) -> Self` | Sugar — icon in `TrailingInline`. |
 | `.leading_text(text: impl Into<String>) -> Self` | Sugar — text in `LeadingInline`. |
 | `.show(self, ui: &mut Ui) -> Response` | Render; returns the field `Response` (`.changed()` on edit). |
 

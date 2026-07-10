@@ -96,9 +96,6 @@ impl<'a> InputGroup<'a> {
     pub fn leading_icon(self, glyph: &'static str) -> Self {
         self.icon(Slot::LeadingInline, glyph)
     }
-    pub fn trailing_icon(self, glyph: &'static str) -> Self {
-        self.icon(Slot::TrailingInline, glyph)
-    }
     pub fn leading_text(self, text: impl Into<String>) -> Self {
         self.text(Slot::LeadingInline, text)
     }

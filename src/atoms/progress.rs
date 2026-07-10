@@ -31,11 +31,6 @@ impl Progress {
         self.circular = Some(core::CONTROL_LG);
         self
     }
-    /// Circular ring at a specific diameter.
-    pub fn circular_size(mut self, size: f32) -> Self {
-        self.circular = Some(size);
-        self
-    }
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let theme = Theme::get(ui);

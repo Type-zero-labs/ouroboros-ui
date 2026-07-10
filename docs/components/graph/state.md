@@ -80,6 +80,5 @@ let selected: usize = ui.data(|d| {
 
 - **Single source of camera truth.** There is exactly one `GraphViewState` per `GraphView` id; clobbering it (e.g. inserting a fresh `default()`) resets the camera to the auto-fit sentinel and clears selection.
 - **`scene_rect` is world, not screen.** A smaller `scene_rect` means *more zoomed in* (the window covers less world). This is the opposite mental model from a screen rect.
-- **Not the same as [`Viewport`](./viewport.md).** `Viewport` is a standalone pan+zoom transform helper that the live canvas does **not** use; the canvas drives `scene_rect` through `egui::Scene`. Don't confuse the two camera representations.
 - **Identity vocab.** `NodeId`, `Port`, `PortSide` — see [identity](./identity.md).
 - Foundation: [architecture](../../architecture.md) · [tokens](../../tokens.md) · [theming](../../theming.md) · [guards](../../guards.md). Layer overview: [README](./README.md).

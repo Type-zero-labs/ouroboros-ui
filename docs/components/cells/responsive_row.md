@@ -11,7 +11,7 @@ The responsive sibling of [`PropertyRow`](property_row.md). Wide, it keeps the U
   - **Wide** (`available_width >= threshold`): a label slot of `label_width` × `core::CONTROL_MD` holding a muted [`Text`](../atoms/text.md), then the consumer control anchored right (`Layout::right_to_left`) — the gap flexes on resize.
   - **Narrow** (`available_width < threshold`): a vertical stack — muted label, `core::SPACE_1` gap, then the control filling the width.
 - **Variants / states** — no visual variants; the single axis is the wide↔narrow switch driven by available width. Mirrors [`Field`](../molecules/field.md)'s responsive orientation, with a lower default threshold tuned for inspector panels.
-- **Tokens / layout consumed** — `layout::PROPERTY_LABEL_WIDTH` (default label column), `layout::INSPECTOR_ROW_STACK_MIN` (default stack threshold), `core::CONTROL_MD`, `core::SPACE_1`.
+- **Tokens / layout consumed** — `layout::PROPERTY_LABEL_WIDTH` (default label column), `layout::INSPECTOR_ROW_STACK_MIN` (stack threshold), `core::CONTROL_MD`, `core::SPACE_1`.
 - **Layering** — cell: composes the [`Text`](../atoms/text.md) atom + the consumer control; never paints (the `no_painter_in_molecules` guard scans cells).
 - **Accessibility** — inherits from the embedded control.
 
@@ -21,7 +21,6 @@ The responsive sibling of [`PropertyRow`](property_row.md). Wide, it keeps the U
 |-----------|--------|
 | `ResponsiveRow::new(label: impl Into<String>) -> Self` | A row labelled `label`; defaults `PROPERTY_LABEL_WIDTH` / `INSPECTOR_ROW_STACK_MIN`. |
 | `.label_width(width: f32) -> Self` | Override the aligned label-column width (wide layout). |
-| `.threshold(px: f32) -> Self` | Override the available width below which the row stacks. |
 | `.show(self, ui: &mut Ui, control: impl FnOnce(&mut Ui) -> Response) -> Response` | Lay out label + control; returns the control's `Response`. |
 
 ## Usage
