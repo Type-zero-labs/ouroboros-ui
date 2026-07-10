@@ -57,9 +57,6 @@ impl Field {
     pub fn horizontal(self) -> Self {
         self.orientation(FieldOrientation::Horizontal)
     }
-    pub fn responsive(self) -> Self {
-        self.orientation(FieldOrientation::Responsive)
-    }
 
     pub fn show(self, ui: &mut Ui, control: impl FnOnce(&mut Ui) -> Response) -> Response {
         let theme = Theme::get(ui);

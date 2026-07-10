@@ -11,11 +11,11 @@ use crate::tokens::{core, layout};
 use egui::{vec2, Align, Layout, Response, Ui};
 
 /// An inspector property row that goes vertical (label above control) when the available width
-/// drops below its threshold. Builder; `show` runs `control` in the value slot.
+/// drops below [`layout::INSPECTOR_ROW_STACK_MIN`]. Builder; `show` runs `control` in the value
+/// slot.
 pub struct ResponsiveRow {
     label: String,
     label_width: f32,
-    threshold: f32,
 }
 
 impl ResponsiveRow {
@@ -23,7 +23,6 @@ impl ResponsiveRow {
         Self {
             label: label.into(),
             label_width: layout::PROPERTY_LABEL_WIDTH,
-            threshold: layout::INSPECTOR_ROW_STACK_MIN,
         }
     }
     /// Width of the aligned label column (wide layout). Default [`layout::PROPERTY_LABEL_WIDTH`].
@@ -31,16 +30,11 @@ impl ResponsiveRow {
         self.label_width = width;
         self
     }
-    /// Available width below which the row stacks. Default [`layout::INSPECTOR_ROW_STACK_MIN`].
-    pub fn threshold(mut self, px: f32) -> Self {
-        self.threshold = px;
-        self
-    }
 
     pub fn show(self, ui: &mut Ui, control: impl FnOnce(&mut Ui) -> Response) -> Response {
         let label = self.label;
         let label_width = self.label_width;
-        if ui.available_width() >= self.threshold {
+        if ui.available_width() >= layout::INSPECTOR_ROW_STACK_MIN {
             // Wide: aligned label column then a right-anchored control (PropertyRow behaviour) —
             // the gap between them flexes on resize, a filling control still fills the remainder.
             ui.horizontal(|ui| {
@@ -57,7 +51,7 @@ impl ResponsiveRow {
             .inner
         } else {
             // Narrow: label stacked above a full-width control — never clips when the panel is
-            // squeezed below the threshold (the ds-inspector <260px clip fix).
+            // squeezed below the stack threshold (the ds-inspector <260px clip fix).
             ui.vertical(|ui| {
                 Text::new(label).muted().show(ui);
                 ui.add_space(core::SPACE_1);

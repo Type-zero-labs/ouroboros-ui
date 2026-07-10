@@ -18,7 +18,6 @@ A **determinate** progress indicator (`fraction` in `0..=1`), rendered as a cont
   | `new(fraction)` | continuous bar, `SPACE_2` tall, full width |
   | `.steps(n)` | `n` segments (≥1) |
   | `.circular()` | ring at `CONTROL_LG` (38px) diameter |
-  | `.circular_size(d)` | ring at diameter `d` |
 
   No interactive states (sense is `hover`).
 
@@ -32,7 +31,6 @@ A **determinate** progress indicator (`fraction` in `0..=1`), rendered as a cont
 | `Progress::new(fraction: f32) -> Self` | Construct; `fraction` clamped to `0..=1`. |
 | `.steps(n: usize) -> Self` | Render `n` discrete segments (min 1). |
 | `.circular(self) -> Self` | Render as a ring at the default diameter. |
-| `.circular_size(size: f32) -> Self` | Render as a ring at `size` diameter. |
 | `.show(self, ui: &mut Ui) -> Response` | Paint and return the hover `Response`. |
 
 ## Usage

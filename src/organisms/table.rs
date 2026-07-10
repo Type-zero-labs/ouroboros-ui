@@ -42,7 +42,6 @@ pub enum ColWidth {
 pub struct Column {
     label: String,
     width: ColWidth,
-    min_width: Option<f32>,
     align: CellAlign,
 }
 
@@ -51,7 +50,6 @@ impl Column {
         Self {
             label: label.into(),
             width: ColWidth::default(),
-            min_width: None,
             align: CellAlign::Start,
         }
     }
@@ -71,10 +69,6 @@ impl Column {
     pub fn remainder(self) -> Self {
         self.width(ColWidth::Remainder)
     }
-    pub fn min_width(mut self, px: f32) -> Self {
-        self.min_width = Some(px);
-        self
-    }
     /// Header alignment (cells carry their own alignment).
     pub fn align(mut self, align: CellAlign) -> Self {
         self.align = align;
@@ -89,9 +83,9 @@ impl Column {
 }
 
 /// A column-defined data table. Builder; `show` returns the area [`Response`].
-pub struct Table<'a> {
+pub struct Table {
     columns: Vec<Column>,
-    rows: Vec<TableRow<'a>>,
+    rows: Vec<TableRow>,
     size: Size,
     striped: bool,
     border: bool,
@@ -103,7 +97,7 @@ pub struct Table<'a> {
     id_salt: Option<Id>,
 }
 
-impl<'a> Table<'a> {
+impl Table {
     pub fn new() -> Self {
         Self {
             columns: Vec::new(),
@@ -124,11 +118,11 @@ impl<'a> Table<'a> {
         self.columns = columns.into_iter().collect();
         self
     }
-    pub fn rows(mut self, rows: impl IntoIterator<Item = TableRow<'a>>) -> Self {
+    pub fn rows(mut self, rows: impl IntoIterator<Item = TableRow>) -> Self {
         self.rows = rows.into_iter().collect();
         self
     }
-    pub fn row(mut self, row: TableRow<'a>) -> Self {
+    pub fn row(mut self, row: TableRow) -> Self {
         self.rows.push(row);
         self
     }
@@ -227,36 +221,13 @@ impl<'a> Table<'a> {
         let response = ui
             .scope(|ui| {
                 table_visuals(ui, &theme);
-                let mut tb = TableBuilder::new(ui)
+                let tb = TableBuilder::new(ui)
                     .id_salt(id)
                     .striped(self.striped)
                     .cell_layout(Layout::left_to_right(Align::Center));
-                for col in &self.columns {
-                    let mut c = match col.width {
-                        ColWidth::Auto => ExtraColumn::auto(),
-                        ColWidth::Exact(w) => ExtraColumn::exact(w),
-                        ColWidth::Initial(w) => ExtraColumn::initial(w),
-                        ColWidth::Remainder => ExtraColumn::remainder(),
-                    };
-                    if let Some(m) = col.min_width {
-                        c = c.at_least(m);
-                    }
-                    tb = tb.column(c.clip(true));
-                }
 
-                let columns = &self.columns;
-                let ncols = columns.len();
-                tb.header(row_h, |mut header| {
-                    for col in columns {
-                        header.col(|ui| {
-                            TableCell::text(col.label.clone())
-                                .header()
-                                .align(col.align)
-                                .show(ui);
-                        });
-                    }
-                })
-                .body(|mut body| {
+                let ncols = self.columns.len();
+                columns_and_header(tb, &self.columns, row_h).body(|mut body| {
                     for _ in 0..n_rows {
                         let mut row_rects: Vec<Rect> = Vec::with_capacity(ncols);
                         body.row(row_h, |mut row| {
@@ -301,31 +272,8 @@ impl<'a> Table<'a> {
             if let Some(h) = self.height.or(self.max_height) {
                 tb = tb.max_scroll_height(h);
             }
-            for col in &self.columns {
-                let mut c = match col.width {
-                    ColWidth::Auto => ExtraColumn::auto(),
-                    ColWidth::Exact(w) => ExtraColumn::exact(w),
-                    ColWidth::Initial(w) => ExtraColumn::initial(w),
-                    ColWidth::Remainder => ExtraColumn::remainder(),
-                };
-                if let Some(m) = col.min_width {
-                    c = c.at_least(m);
-                }
-                tb = tb.column(c.clip(true));
-            }
 
-            let columns = &self.columns;
-            tb.header(row_h, |mut header| {
-                for col in columns {
-                    header.col(|ui| {
-                        TableCell::text(col.label.clone())
-                            .header()
-                            .align(col.align)
-                            .show(ui);
-                    });
-                }
-            })
-            .body(|mut body| {
+            columns_and_header(tb, &self.columns, row_h).body(|mut body| {
                 for (i, trow) in self.rows.into_iter().enumerate() {
                     body.row(row_h, |mut row| {
                         if self.selectable && current == Some(i) {
@@ -351,10 +299,38 @@ impl<'a> Table<'a> {
     }
 }
 
-impl Default for Table<'_> {
+impl Default for Table {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Map the [`Column`] specs onto the `egui_extras` builder and emit the header row — the
+/// setup shared by [`Table::build`] and [`Table::layout`]. Returns the body-ready table.
+fn columns_and_header<'u>(
+    mut tb: TableBuilder<'u>,
+    columns: &[Column],
+    row_h: f32,
+) -> egui_extras::Table<'u> {
+    for col in columns {
+        let c = match col.width {
+            ColWidth::Auto => ExtraColumn::auto(),
+            ColWidth::Exact(w) => ExtraColumn::exact(w),
+            ColWidth::Initial(w) => ExtraColumn::initial(w),
+            ColWidth::Remainder => ExtraColumn::remainder(),
+        };
+        tb = tb.column(c.clip(true));
+    }
+    tb.header(row_h, |mut header| {
+        for col in columns {
+            header.col(|ui| {
+                TableCell::text(col.label.clone())
+                    .header()
+                    .align(col.align)
+                    .show(ui);
+            });
+        }
+    })
 }
 
 /// Output of [`Table::layout`] — one content rect per body cell (`rects[row][col]`), plus the

@@ -26,15 +26,15 @@ A column-defined data table on [`egui_extras::TableBuilder`](https://docs.rs/egu
 
 ## API
 
-### `Table<'a>`
+### `Table`
 
 | Method | Effect |
 |---|---|
 | `Table::new() -> Self` | Empty table; defaults `empty_text = "No data"`, others off. |
 | `Table::default()` | Same as `new()`. |
 | `.columns(impl IntoIterator<Item = Column>) -> Self` | Set the columns. |
-| `.rows(impl IntoIterator<Item = TableRow<'a>>) -> Self` | Set the rows. |
-| `.row(TableRow<'a>) -> Self` | Append one row. |
+| `.rows(impl IntoIterator<Item = TableRow>) -> Self` | Set the rows. |
+| `.row(TableRow) -> Self` | Append one row. |
 | `.size(Size) -> Self` / `.sm()` / `.lg()` | Row height. |
 | `.striped(bool) -> Self` | Zebra rows. |
 | `.border(bool) -> Self` | Outer card border. |
@@ -55,7 +55,6 @@ A header label + layout descriptor.
 | `Column::new(label: impl Into<String>) -> Self` | New column; default width `Remainder`, align `Start`. |
 | `.width(ColWidth) -> Self` | Set sizing mode. |
 | `.exact(px)` / `.initial(px)` / `.auto()` / `.remainder()` | Width shortcuts (`ColWidth` variants). |
-| `.min_width(px) -> Self` | Floor the column width (`at_least`). |
 | `.align(CellAlign) -> Self` / `.center()` / `.end()` | Header alignment (cells carry their own alignment). |
 
 ### ColWidth

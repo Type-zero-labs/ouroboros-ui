@@ -19,8 +19,7 @@
 //! is idempotent per frame: resizing a panel out and back yields the same rects, with
 //! no ratchet). Measurement is bounded by that budget, leftover is distributed among
 //! `Fill` children respecting `min`/`max` (with redistribution when one clamps), and
-//! cells are clipped as a last resort so content never paints over a sibling. Opt out
-//! with [`AutoLayout::allow_overflow`].
+//! cells are clipped as a last resort so content never paints over a sibling.
 //!
 //! `Hug` measures content against the budget: a greedy child (one that expands to
 //! `available_width`) measures *as the whole budget* — for controls that should fill,
@@ -280,7 +279,6 @@ pub struct AutoLayout<'a> {
     main_align: MainAlign,
     cross_align: CrossAlign,
     wrap: bool,
-    allow_overflow: bool,
     children: Vec<Child<'a>>,
 }
 
@@ -294,7 +292,6 @@ impl<'a> AutoLayout<'a> {
             main_align: MainAlign::default(),
             cross_align: CrossAlign::default(),
             wrap: false,
-            allow_overflow: false,
             children: Vec::new(),
         }
     }
@@ -321,10 +318,6 @@ impl<'a> AutoLayout<'a> {
         self
     }
 
-    pub fn padding(mut self, padding: Padding) -> Self {
-        self.padding = padding;
-        self
-    }
     pub fn pad(mut self, v: f32) -> Self {
         self.padding = Padding::all(v);
         self
@@ -355,13 +348,6 @@ impl<'a> AutoLayout<'a> {
         self
     }
 
-    /// Let the frame exceed the available space instead of clamping + clipping —
-    /// restores the legacy overflow behavior for the rare container that scrolls itself.
-    pub fn allow_overflow(mut self) -> Self {
-        self.allow_overflow = true;
-        self
-    }
-
     /// Add a child with an explicit main-axis [`Sizing`] (a bare [`SizeMode`] converts).
     pub fn child(mut self, main: impl Into<Sizing>, add: impl FnMut(&mut Ui) + 'a) -> Self {
         self.children.push(Child {
@@ -373,10 +359,6 @@ impl<'a> AutoLayout<'a> {
     /// Child sized to its content.
     pub fn hug(self, add: impl FnMut(&mut Ui) + 'a) -> Self {
         self.child(Sizing::hug(), add)
-    }
-    /// Child sized to its content, capped at `max` px.
-    pub fn hug_max(self, max: f32, add: impl FnMut(&mut Ui) + 'a) -> Self {
-        self.child(Sizing::hug().max(max), add)
     }
     /// Child that grows to share leftover space (also a flexible spacer when empty).
     pub fn fill(self, add: impl FnMut(&mut Ui) + 'a) -> Self {
@@ -393,11 +375,6 @@ impl<'a> AutoLayout<'a> {
     /// Child with a fixed main-axis size.
     pub fn fixed(self, px: f32, add: impl FnMut(&mut Ui) + 'a) -> Self {
         self.child(Sizing::fixed(px), add)
-    }
-    /// Child with an explicit [`Sizing`] (alias of [`AutoLayout::child`] for call sites
-    /// that build the sizing separately).
-    pub fn sized(self, s: Sizing, add: impl FnMut(&mut Ui) + 'a) -> Self {
-        self.child(s, add)
     }
 
     /// Add a child with a main-axis [`Sizing`] but **no content closure**, for use with
@@ -598,7 +575,7 @@ impl<'a> AutoLayout<'a> {
         let content_main: f32 = main_nat.iter().sum::<f32>() + gap_total;
         let content_cross = cross_nat.iter().cloned().fold(0.0_f32, f32::max);
 
-        // ── Container sizing: never exceed a finite WIDTH budget (unless opted out).
+        // ── Container sizing: never exceed a finite WIDTH budget.
         // On the y axis the frame hugs its content — height overflow is the scroll's
         // job, and clamping to `available_height()` would crush flows below the fold. ──
         let needs_avail = self.gap == Gap::Auto
@@ -607,12 +584,12 @@ impl<'a> AutoLayout<'a> {
         let main_size = if needs_avail {
             if !inner_main.is_finite() {
                 content_main
-            } else if main_is_width && !self.allow_overflow {
+            } else if main_is_width {
                 inner_main
             } else {
                 content_main.max(inner_main)
             }
-        } else if main_is_width && !self.allow_overflow && inner_main.is_finite() {
+        } else if main_is_width && inner_main.is_finite() {
             content_main.min(inner_main)
         } else {
             content_main
@@ -648,12 +625,10 @@ impl<'a> AutoLayout<'a> {
                 cross_ext.max(0.0),
             );
             let mut cui = ui.new_child(UiBuilder::new().max_rect(cell));
-            if !self.allow_overflow {
-                // Last-resort guard: with correct sizing the cell fits the frame and this
-                // never bites; it only clips legitimate overflow (e.g. mins inside a panel
-                // squeezed below its floors) instead of painting over siblings.
-                cui.set_clip_rect(cell.expand(CLIP_BLEED).intersect(ui.clip_rect()));
-            }
+            // Last-resort guard: with correct sizing the cell fits the frame and this
+            // never bites; it only clips legitimate overflow (e.g. mins inside a panel
+            // squeezed below its floors) instead of painting over siblings.
+            cui.set_clip_rect(cell.expand(CLIP_BLEED).intersect(ui.clip_rect()));
             (child.add)(&mut cui);
             cursor += main_ext + fixed_gap + between_extra;
         }
@@ -778,11 +753,7 @@ impl<'a> AutoLayout<'a> {
         };
         let widest = lines.iter().map(line_main).fold(0.0_f32, f32::max);
         let main_size = if inner_main.is_finite() {
-            if self.allow_overflow {
-                widest.max(inner_main)
-            } else {
-                inner_main
-            }
+            inner_main
         } else {
             widest
         };
@@ -821,9 +792,7 @@ impl<'a> AutoLayout<'a> {
                     cross_ext.max(0.0),
                 );
                 let mut cui = ui.new_child(UiBuilder::new().max_rect(cell));
-                if !self.allow_overflow {
-                    cui.set_clip_rect(cell.expand(CLIP_BLEED).intersect(ui.clip_rect()));
-                }
+                cui.set_clip_rect(cell.expand(CLIP_BLEED).intersect(ui.clip_rect()));
                 (self.children[i].add)(&mut cui);
                 cursor += main_ext + fixed_gap + between_extra;
             }

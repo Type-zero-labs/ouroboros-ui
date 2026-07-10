@@ -308,7 +308,11 @@ struct Storybook {
 
 impl Storybook {
     fn new() -> Self {
-        Self { installed: false, mode: Mode::Dark, page: Page::Colors }
+        Self {
+            installed: false,
+            mode: Mode::Dark,
+            page: Page::Colors,
+        }
     }
 
     fn frame_ui(&mut self, ui: &mut Ui) {
@@ -323,61 +327,61 @@ impl Storybook {
         ui.painter()
             .rect_filled(ui.clip_rect(), 0.0, theme.background);
 
-            egui::Panel::top("header")
-                .frame(header_frame(&theme))
-                .show_inside(ui, |ui| {
-                    ui.horizontal(|ui| {
-                        Heading::new("ouroboros-ui").h2().show(ui);
-                        ui.add_space(core::SPACE_3);
-                        Text::new("design system").muted().show(ui);
-                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            let label = match self.mode {
-                                Mode::Dark => "◐ Dark",
-                                Mode::Light => "◑ Light",
+        egui::Panel::top("header")
+            .frame(header_frame(&theme))
+            .show_inside(ui, |ui| {
+                ui.horizontal(|ui| {
+                    Heading::new("ouroboros-ui").h2().show(ui);
+                    ui.add_space(core::SPACE_3);
+                    Text::new("design system").muted().show(ui);
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        let label = match self.mode {
+                            Mode::Dark => "◐ Dark",
+                            Mode::Light => "◑ Light",
+                        };
+                        if Button::new(label)
+                            .ghost()
+                            .sm()
+                            .id_source("toggle")
+                            .show(ui)
+                            .clicked()
+                        {
+                            self.mode = match self.mode {
+                                Mode::Dark => Mode::Light,
+                                Mode::Light => Mode::Dark,
                             };
-                            if Button::new(label)
-                                .ghost()
-                                .sm()
-                                .id_source("toggle")
-                                .show(ui)
-                                .clicked()
-                            {
-                                self.mode = match self.mode {
-                                    Mode::Dark => Mode::Light,
-                                    Mode::Light => Mode::Dark,
-                                };
-                                Theme::apply(ui.ctx(), self.mode);
-                                ui.ctx().request_repaint();
-                            }
-                        });
+                            Theme::apply(ui.ctx(), self.mode);
+                            ui.ctx().request_repaint();
+                        }
                     });
                 });
+            });
 
-            egui::Panel::left("nav")
-                .resizable(false)
-                .exact_size(190.0)
-                .frame(nav_frame(&theme))
-                .show_inside(ui, |ui| {
-                    egui::ScrollArea::vertical()
-                        .id_salt("nav_scroll")
-                        .show(ui, |ui| nav(ui, &theme, &mut self.page));
-                });
+        egui::Panel::left("nav")
+            .resizable(false)
+            .exact_size(190.0)
+            .frame(nav_frame(&theme))
+            .show_inside(ui, |ui| {
+                egui::ScrollArea::vertical()
+                    .id_salt("nav_scroll")
+                    .show(ui, |ui| nav(ui, &theme, &mut self.page));
+            });
 
-            egui::CentralPanel::default()
-                .frame(content_frame(&theme))
-                .show_inside(ui, |ui| {
-                    egui::ScrollArea::vertical()
-                        .id_salt("content_scroll")
-                        .show(ui, |ui| {
-                            ui.set_max_width(760.0);
-                            Heading::new(self.page.label()).h1().show(ui);
-                            ui.add_space(core::SPACE_3);
-                            Divider::horizontal().show(ui);
-                            ui.add_space(core::SPACE_5);
-                            render_page(ui, &theme, self.page);
-                            ui.add_space(core::SPACE_8);
-                        });
-                });
+        egui::CentralPanel::default()
+            .frame(content_frame(&theme))
+            .show_inside(ui, |ui| {
+                egui::ScrollArea::vertical()
+                    .id_salt("content_scroll")
+                    .show(ui, |ui| {
+                        ui.set_max_width(760.0);
+                        Heading::new(self.page.label()).h1().show(ui);
+                        ui.add_space(core::SPACE_3);
+                        Divider::horizontal().show(ui);
+                        ui.add_space(core::SPACE_5);
+                        render_page(ui, &theme, self.page);
+                        ui.add_space(core::SPACE_8);
+                    });
+            });
     }
 }
 

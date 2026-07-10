@@ -108,7 +108,7 @@ instead — *paint, but only through tokens*:
   **extended to scan `src/graph`**, so it has the same purity contract as atoms.
 - The `no_painter_in_molecules` guard **deliberately skips it** — painting here is allowed.
 
-Internally it splits into a **paint tier** (`viewport`/`grid`/`edge`/`handle`/`resizer`) and
+Internally it splits into a **paint tier** (`grid`/`edge`/`handle`/`resizer`) and
 a **compose tier** (`node`/`controls`/`minimap`/`toolbar`/`search`, which reuse `Surface` +
 atoms). And it follows a **data-model-agnostic contract**: the caller owns the node/edge
 data, the library owns only view-state and reports back *intents*. Full docs:

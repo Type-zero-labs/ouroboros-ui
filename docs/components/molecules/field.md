@@ -27,7 +27,6 @@ A labeled form field. `show` runs the `control` closure and lays out the label +
 | `.error(error: impl Into<String>) -> Self` | Error caption below the control (takes priority over hint). |
 | `.orientation(orientation: FieldOrientation) -> Self` | Set layout mode. |
 | `.horizontal() -> Self` | Sugar for `FieldOrientation::Horizontal`. |
-| `.responsive() -> Self` | Sugar for `FieldOrientation::Responsive`. |
 | `.show(self, ui: &mut Ui, control: impl FnOnce(&mut Ui) -> Response) -> Response` | Render; returns the **control's** `Response` (not a wrapper). |
 
 > Note the closure signature: `control` must return a `Response` (e.g. the return of an `Input`/`Switch`/`Slider` `.show(ui)`).

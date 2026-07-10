@@ -2,20 +2,19 @@
 
 > **Layer:** cell · **Path:** `src/cells/table_cell.rs` · **Exports:** `table_cell::{CellAlign, TableCell}`
 
-One cell of a table: a container that places its content (text by default, or an arbitrary widget) inside the column it is handed. A cell and a header are the same container — they differ chiefly in text weight (header = `label_strong`). Padding and alignment are token-driven; optionally a leading status dot ([`ColorSwatch`](../atoms/color_swatch.md)) precedes the content. Carries a lifetime `'a` because `custom` may borrow.
+One cell of a table: a container that places its text content inside the column it is handed. A cell and a header are the same container — they differ chiefly in text weight (header = `label_strong`). Padding and alignment are token-driven; optionally a leading status dot ([`ColorSwatch`](../atoms/color_swatch.md)) precedes the content.
 
 ## Design
 
-- **Purpose / when to use** — Building block for the [`Table`](../organisms/table.md) organism (and ad-hoc fixed-width row layouts). Use `text(...)` for the common case, `custom(...)` to embed any widget.
-- **Anatomy** — A `ui.with_layout(...)` block: leading `core::SPACE_2` pad, optional circular [`ColorSwatch`](../atoms/color_swatch.md) status dot + `core::SPACE_1` gap, then the content — a [`Text`](../atoms/text.md) atom (weight/muted per flags) or the `custom` closure's widget.
+- **Purpose / when to use** — Building block for the [`Table`](../organisms/table.md) organism (and ad-hoc fixed-width row layouts).
+- **Anatomy** — A `ui.with_layout(...)` block: leading `core::SPACE_2` pad, optional circular [`ColorSwatch`](../atoms/color_swatch.md) status dot + `core::SPACE_1` gap, then the content — a [`Text`](../atoms/text.md) atom (weight/muted per flags).
 - **Variants / states**
 
   | Modifier | Effect |
   |----------|--------|
-  | `text(s)` | text content (default) |
-  | `custom(add)` | arbitrary widget content |
+  | `text(s)` | text content |
   | `header()` | `Text::label_strong()` (stronger weight) |
-  | `muted()` | `Text::muted()` foreground (text content only; ignored for `custom`) |
+  | `muted()` | `Text::muted()` foreground |
   | `status(color)` | leading circular color dot, `core::SPACE_2` diameter |
   | align: `align(CellAlign)` / `center()` / `end()` | content alignment within the cell |
 
@@ -35,14 +34,13 @@ One cell of a table: a container that places its content (text by default, or an
 
 | Method | Signature | Effect |
 |--------|-----------|--------|
-| `text` | `text(text: impl Into<String>) -> Self` | Text cell (the default content kind). |
-| `custom` | `custom(add: impl FnMut(&mut Ui) + 'a) -> Self` | Cell holding an arbitrary widget via the closure. |
+| `text` | `text(text: impl Into<String>) -> Self` | Text cell. |
 | `header` | `header(self) -> Self` | Render as a header (strong text weight). |
 | `align` | `align(self, align: CellAlign) -> Self` | Set horizontal alignment. |
 | `center` | `center(self) -> Self` | Shorthand for `align(CellAlign::Center)`. |
 | `end` | `end(self) -> Self` | Shorthand for `align(CellAlign::End)`. |
 | `status` | `status(self, color: Color32) -> Self` | Leading status dot in `color`. |
-| `muted` | `muted(self) -> Self` | Muted text foreground (text cells only). |
+| `muted` | `muted(self) -> Self` | Muted text foreground. |
 | `show` | `show(self, ui: &mut Ui) -> Response` | Fill the column cell it is given; returns the layout block `Response`. |
 
 ## Usage
@@ -66,17 +64,11 @@ TableRow::new([
 ]);
 ```
 
-```rust
-// custom widget inside a cell
-TableCell::custom(|ui| { Button::new("Open").show(ui); }).center().show(ui);
-```
-
 ## Composition
 
-Composes the [`Text`](../atoms/text.md) atom and (optionally) the [`ColorSwatch`](../atoms/color_swatch.md) atom; `custom` cells embed whatever the closure adds. The cell never paints — alignment is an egui `Layout`, visuals come from the atoms. Enforced by [`tests/no_painter_in_molecules.rs`](../../guards.md).
+Composes the [`Text`](../atoms/text.md) atom and (optionally) the [`ColorSwatch`](../atoms/color_swatch.md) atom. The cell never paints — alignment is an egui `Layout`, visuals come from the atoms. Enforced by [`tests/no_painter_in_molecules.rs`](../../guards.md).
 
 ## Notes
 
-- `muted()` is ignored for `custom` content (only text honors it).
 - The cell fills the width it is handed; the surrounding column width is set by the [`Table`](../organisms/table.md) organism (via `egui_extras`) — the cell itself does not size the column.
-- `'a` lifetime: a `custom` closure may borrow from the surrounding scope, which propagates through [`TableRow<'a>`](table_row.md).
+- For inline-editable cells (arbitrary widgets in a grid), use [`Table::layout`](../organisms/table.md) and draw atoms into the returned rects.
