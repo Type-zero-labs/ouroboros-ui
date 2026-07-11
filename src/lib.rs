@@ -14,7 +14,8 @@
 //! - [`tokens::component`] — thin per-component override structs (default to semantic).
 //! - [`theme`] — [`Mode`] enum, `Theme::resolve(Mode)`, install/get, typography.
 //!
-//! Foundation milestone: tokens + theme/modes + storybook. Components come later.
+//! Component layers: `atoms` → `cells` → `molecules` → `organisms` (60 components,
+//! every one with a storybook page) plus the peer `graph` layer (node editor).
 //!
 //! [egui]: https://github.com/emilk/egui
 //! [shadcn/ui]: https://ui.shadcn.com

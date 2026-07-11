@@ -27,7 +27,7 @@ that works.
 
 ### 1. Use — the catalog first
 
-The DS has **71 components** across atoms → cells → molecules → organisms plus the graph
+The DS has **60 components** across atoms → cells → molecules → organisms plus the graph
 peer layer. Before building anything, check whether it already exists:
 
 - **[Component catalog](./components/README.md)** — every component documented by layer,
