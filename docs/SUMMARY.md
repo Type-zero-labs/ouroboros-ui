@@ -66,6 +66,7 @@
     - [VectorField](./components/molecules/vector_field.md)
   - [Organisms]()
     - [Accordion](./components/organisms/accordion.md)
+    - [Autocomplete](./components/organisms/autocomplete.md)
     - [Dialog](./components/organisms/dialog.md)
     - [DropdownMenu](./components/organisms/dropdown_menu.md)
     - [Menubar](./components/organisms/menubar.md)

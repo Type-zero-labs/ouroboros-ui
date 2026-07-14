@@ -10,8 +10,8 @@ pub mod typography;
 use crate::tokens::semantic::Theme;
 use egui::{FontDefinitions, Id, TextStyle};
 
-/// Color mode. First-class infrastructure; `Dark` is populated, `Light` is a stub
-/// that currently resolves to `Dark` (filled in a later milestone).
+/// Color mode. Both palettes are fully populated (`semantic::dark()` /
+/// `semantic::light()`); `apply` also flips egui's `ThemePreference`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum Mode {
     #[default]
