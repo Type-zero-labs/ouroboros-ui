@@ -17,8 +17,9 @@ use ouroboros_ui::cells::{
 };
 use ouroboros_ui::egui_phosphor::light;
 use ouroboros_ui::molecules::{
-    Alert, Breadcrumb, Card, CheckboxCard, Collapsible, ColorField, Field, FieldSeparator,
-    FieldSet, InputGroup, RadioGroup, SearchField, Slot, Tabs, ToggleGroup, VectorField,
+    Alert, Breadcrumb, Card, CheckboxCard, Collapsible, ColorField, EmptyState, Field,
+    FieldSeparator, FieldSet, InputGroup, RadioGroup, SearchField, Slot, Tabs, ToggleGroup,
+    VectorField,
 };
 use ouroboros_ui::organisms::{
     Accordion, Column, Menubar, PanelSpec, Select, Sidebar, Splitter, TabView, Table, Toolbar,
@@ -341,6 +342,34 @@ fn molecules_engine_render() {
         let mut s = String::new();
         SearchField::new(&mut s).placeholder("x").show(ui);
     });
+}
+
+#[test]
+fn empty_state_renders_and_primary_clicks() {
+    let clicked = Rc::new(Cell::new(false));
+    let sink = clicked.clone();
+    let mut installed = false;
+    let mut harness = Harness::new_ui(move |ui| {
+        if !installed {
+            Theme::install(ui.ctx(), Mode::Dark);
+            installed = true;
+            return;
+        }
+        let out = EmptyState::new("No scenes yet")
+            .icon(light::STACK)
+            .description("Create the first one to get started.")
+            .primary_action("Create Scene")
+            .secondary_action("Learn more")
+            .show(ui);
+        if out.primary_clicked {
+            sink.set(true);
+        }
+    });
+    harness.run();
+    harness.run();
+    harness.get_by_label("Create Scene").click();
+    harness.run();
+    assert!(clicked.get(), "primary CTA click should be reported");
 }
 
 #[test]

@@ -23,8 +23,8 @@ use ouroboros_ui::graph::{
     PortId, PortSide,
 };
 use ouroboros_ui::molecules::{
-    Alert, AlertVariant, Breadcrumb, Card, CheckboxCard, Collapsible, ColorField, Field,
-    FieldSeparator, FieldSet, InputGroup, RadioCard, RadioGroup, SearchField, Slot, Tabs,
+    Alert, AlertVariant, Breadcrumb, Card, CheckboxCard, Collapsible, ColorField, EmptyState,
+    Field, FieldSeparator, FieldSet, InputGroup, RadioCard, RadioGroup, SearchField, Slot, Tabs,
     ToggleGroup, VectorField,
 };
 use ouroboros_ui::organisms::{
@@ -79,6 +79,7 @@ enum Page {
     Tabs,
     Collapsible,
     Alert,
+    EmptyState,
     ToggleGroup,
     Breadcrumb,
     VectorField,
@@ -157,6 +158,7 @@ impl Page {
             Page::Tabs => "Tabs",
             Page::Collapsible => "Collapsible",
             Page::Alert => "Alert",
+            Page::EmptyState => "Empty state",
             Page::ToggleGroup => "Toggle group",
             Page::Breadcrumb => "Breadcrumb",
             Page::VectorField => "Vector field",
@@ -249,6 +251,7 @@ const NAV: &[(&str, &[Page])] = &[
             Page::Tabs,
             Page::Collapsible,
             Page::Alert,
+            Page::EmptyState,
             Page::ToggleGroup,
             Page::Breadcrumb,
             Page::VectorField,
@@ -527,6 +530,7 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::Tabs => page_tabs(ui, theme),
         Page::Collapsible => page_collapsible(ui, theme),
         Page::Alert => page_alert(ui, theme),
+        Page::EmptyState => page_empty_state(ui, theme),
         Page::ToggleGroup => page_toggle_group(ui, theme),
         Page::Breadcrumb => page_breadcrumb(ui, theme),
         Page::VectorField => page_vector_field(ui, theme),
@@ -1269,6 +1273,60 @@ fn page_dialog(ui: &mut Ui, _theme: &Theme) {
         }
     }
     ui.data_mut(|d| d.insert_temp(cid, copen));
+
+    ui.add_space(core::SPACE_4);
+    caption(
+        ui,
+        "Form modal pattern (.show com Fields — criação de objeto)",
+    );
+    let fid = egui::Id::new("dlg_form_open");
+    let mut fopen = ui.data(|d| d.get_temp::<bool>(fid).unwrap_or(false));
+    if Button::new("New scene…")
+        .secondary()
+        .id_source("dlg_f_trigger")
+        .show(ui)
+        .clicked()
+    {
+        fopen = true;
+    }
+    if fopen {
+        let name_id = egui::Id::new("dlg_form_name");
+        let mut name = ui.data(|d| d.get_temp::<String>(name_id).unwrap_or_default());
+        let mut dismiss = false;
+        let close = Dialog::new("Create scene")
+            .description("Name the scene and confirm to create it.")
+            .id_source("dlg_form")
+            .show(ui.ctx(), |ui| {
+                Field::new("Name").show(ui, |ui| {
+                    Input::new(&mut name).id_source("dlg_form_input").show(ui)
+                });
+                ui.add_space(core::SPACE_3);
+                ui.horizontal(|ui| {
+                    if Button::new("Create")
+                        .enabled(!name.is_empty())
+                        .id_source("dlg_form_create")
+                        .show(ui)
+                        .clicked()
+                    {
+                        dismiss = true;
+                    }
+                    ui.add_space(core::SPACE_2);
+                    if Button::new("Cancel")
+                        .ghost()
+                        .id_source("dlg_form_cancel")
+                        .show(ui)
+                        .clicked()
+                    {
+                        dismiss = true;
+                    }
+                });
+            });
+        ui.data_mut(|d| d.insert_temp(name_id, name));
+        if close || dismiss {
+            fopen = false;
+        }
+    }
+    ui.data_mut(|d| d.insert_temp(fid, fopen));
 }
 
 fn page_toast(ui: &mut Ui, _theme: &Theme) {
@@ -1579,6 +1637,25 @@ fn page_alert(ui: &mut Ui, _theme: &Theme) {
             .error()
             .action("Explore files")
             .show_with_action(ui);
+    });
+}
+
+fn page_empty_state(ui: &mut Ui, _theme: &Theme) {
+    caption(ui, "Placeholder centrado com CTA (scene-hub-shell)");
+    ui.allocate_ui(vec2(520.0, 320.0), |ui| {
+        let out = EmptyState::new("No scenes yet")
+            .icon(light::STACK)
+            .description(
+                "Scenes are the entry points of your game.\nCreate the first one to get started.",
+            )
+            .primary_action("Create Scene")
+            .primary_icon(light::PLUS)
+            .secondary_action("Learn more")
+            .secondary_icon(light::BOOK_OPEN)
+            .show(ui);
+        if out.primary_clicked || out.secondary_clicked {
+            // demo: sem efeito
+        }
     });
 }
 
