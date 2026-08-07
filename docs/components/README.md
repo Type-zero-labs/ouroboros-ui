@@ -82,6 +82,7 @@ sanctioned exception that paints (still via tokens). See [guards](../guards.md).
 - [Tabs](./molecules/tabs.md) — tab switcher (default/pill)
 - [Breadcrumb](./molecules/breadcrumb.md) — navigation trail
 - [Collapsible](./molecules/collapsible.md) — expand/collapse section
+- [EmptyState](./molecules/empty_state.md) — centered "nothing here yet" placeholder with CTAs
 
 ---
 
