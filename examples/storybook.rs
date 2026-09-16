@@ -1190,7 +1190,7 @@ fn page_sidebar(ui: &mut Ui, _theme: &Theme) {
                 .show(ui);
         });
         ui.add_space(core::SPACE_4);
-        // Icon rail with 24px glyphs (ICON_XL) — a denser editor-style rail.
+        // Icon rail with ICON_XL glyphs — a denser editor-style rail.
         ui.allocate_ui(vec2(56.0, 180.0), |ui| {
             Sidebar::new(&mut sel)
                 .item(light::HOUSE, "Home")
@@ -2426,8 +2426,11 @@ fn page_spacing(ui: &mut Ui, theme: &Theme) {
         ("SPACE_4", core::SPACE_4),
         ("SPACE_5", core::SPACE_5),
         ("SPACE_6", core::SPACE_6),
+        ("SPACE_7", core::SPACE_7),
         ("SPACE_8", core::SPACE_8),
+        ("SPACE_9", core::SPACE_9),
         ("SPACE_10", core::SPACE_10),
+        ("SPACE_11", core::SPACE_11),
         ("SPACE_12", core::SPACE_12),
     ] {
         ui.horizontal(|ui| {
@@ -2509,9 +2512,9 @@ fn page_sizing(ui: &mut Ui, theme: &Theme) {
     caption(ui, "Control heights");
     ui.horizontal(|ui| {
         for (name, h) in [
-            ("SM 26", core::CONTROL_SM),
-            ("MD 32", core::CONTROL_MD),
-            ("LG 38", core::CONTROL_LG),
+            ("SM", core::CONTROL_SM),
+            ("MD", core::CONTROL_MD),
+            ("LG", core::CONTROL_LG),
         ] {
             let (rect, _) = ui.allocate_exact_size(vec2(96.0, h), Sense::hover());
             ui.painter()
@@ -2525,7 +2528,7 @@ fn page_sizing(ui: &mut Ui, theme: &Theme) {
             ui.painter().text(
                 rect.center(),
                 egui::Align2::CENTER_CENTER,
-                name,
+                format!("{name} {h}"),
                 typography::caption().font_id(),
                 theme.muted_foreground,
             );
@@ -2534,15 +2537,10 @@ fn page_sizing(ui: &mut Ui, theme: &Theme) {
     });
     subhead(ui, "Icon sizes");
     ui.horizontal(|ui| {
-        for (sz, lbl) in [
-            (core::ICON_SM, "14"),
-            (core::ICON_MD, "16"),
-            (core::ICON_LG, "20"),
-            (core::ICON_XL, "24"),
-        ] {
+        for sz in [core::ICON_SM, core::ICON_MD, core::ICON_LG, core::ICON_XL] {
             ui.vertical(|ui| {
                 Icon::new(light::CUBE).size(sz).show(ui);
-                Text::new(lbl).caption().muted().show(ui);
+                Text::new(format!("{sz}")).caption().muted().show(ui);
             });
             ui.add_space(core::SPACE_4);
         }

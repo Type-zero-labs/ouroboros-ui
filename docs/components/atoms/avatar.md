@@ -12,7 +12,7 @@ A circular avatar that renders centered, uppercased initials over a `muted`-fill
 
   | Size | Diameter token | Type style |
   |------|----------------|------------|
-  | `Sm` | `core::CONTROL_SM` (26px) | `typography::caption()` |
+  | `Sm` | `core::CONTROL_SM` (24px) | `typography::caption()` |
   | `Md` (default) | `core::CONTROL_MD` (32px) | `typography::label()` |
   | `Lg` | `core::CONTROL_LG` (38px) | `typography::body_strong()` |
 

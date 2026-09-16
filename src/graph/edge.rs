@@ -9,6 +9,7 @@
 use egui::{Pos2, Shape, Stroke, Vec2};
 
 use crate::atoms::{Badge, Button};
+use crate::theme::typography;
 use crate::tokens::core;
 
 use super::canvas::GraphCtx;
@@ -161,7 +162,7 @@ impl GraphCtx<'_> {
         match style {
             EdgeStyle::WithButton => {
                 // A small floating icon-button at the midpoint (own child ui in scene coords).
-                let size = Vec2::splat(self.tokens.handle_hit_radius * 2.0);
+                let size = Vec2::splat(core::CONTROL_SM);
                 let rect = egui::Rect::from_center_size(mid, size);
                 let mut child = self.ui.new_child(egui::UiBuilder::new().max_rect(rect));
                 let r = Button::new("")
@@ -174,7 +175,8 @@ impl GraphCtx<'_> {
                 button_clicked = r.clicked();
             }
             EdgeStyle::WithLabel => {
-                let rect = egui::Rect::from_center_size(mid, Vec2::new(80.0, 22.0));
+                let height = typography::caption().line_height + core::SPACE_1 * 2.0;
+                let rect = egui::Rect::from_center_size(mid, Vec2::new(80.0, height));
                 let mut child = self.ui.new_child(egui::UiBuilder::new().max_rect(rect));
                 Badge::new("edge").show(&mut child);
             }

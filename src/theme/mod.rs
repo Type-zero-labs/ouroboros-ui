@@ -7,7 +7,7 @@
 
 pub mod typography;
 
-use crate::tokens::semantic::Theme;
+use crate::tokens::{core, semantic::Theme};
 use egui::{FontDefinitions, Id, TextStyle};
 
 /// Color mode. Both palettes are fully populated (`semantic::dark()` /
@@ -49,6 +49,15 @@ impl Theme {
         });
 
         ctx.global_style_mut(|style| {
+            // Containers and popup chrome inherit the same density as DS components.
+            style.spacing.item_spacing = egui::vec2(core::SPACE_2, core::SPACE_2);
+            style.spacing.button_padding = egui::vec2(core::SPACE_3, core::SPACE_1);
+            style.spacing.window_margin = egui::Margin::same(core::SPACE_4 as i8);
+            style.spacing.menu_margin = egui::Margin::same(core::SPACE_2 as i8);
+            style.spacing.icon_width = core::ICON_MD;
+            style.spacing.icon_width_inner = core::ICON_SM;
+            style.spacing.icon_spacing = core::SPACE_2;
+
             style.visuals.dark_mode = matches!(mode, Mode::Dark);
             style.visuals.panel_fill = theme.background;
             style.visuals.window_fill = theme.card;

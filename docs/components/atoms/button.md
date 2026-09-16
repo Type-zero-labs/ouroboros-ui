@@ -14,9 +14,9 @@ A labeled, optionally-iconed click control with the shadcn variant set. Icon(s) 
 
   | Size | Height | Icon size | Pad-x | Text style |
   |------|--------|-----------|-------|------------|
-  | `Sm` | `CONTROL_SM` 26 | `ICON_SM` 14 | `SPACE_3` | `Size::text_style()` |
-  | `Md` (default) | `CONTROL_MD` 32 | `ICON_MD` 16 | `SPACE_4` | … |
-  | `Lg` | `CONTROL_LG` 38 | `ICON_LG` 20 | `SPACE_4` | … |
+  | `Sm` | `CONTROL_SM` 24 | `ICON_SM` 12 | `SPACE_3` | `Size::text_style()` |
+  | `Md` (default) | `CONTROL_MD` 32 | `ICON_MD` 14 | `SPACE_4` | … |
+  | `Lg` | `CONTROL_LG` 38 | `ICON_LG` 16 | `SPACE_4` | … |
 
   **States**: hover (`theme.hover_overlay` ramped by `core::hover_t`), pressed (`theme.press_overlay`), focused (focus ring), disabled (`enabled(false)` → colors via `core::disabled_color`, sense drops to hover), loading (spinner arc, clicks ignored, width preserved).
 

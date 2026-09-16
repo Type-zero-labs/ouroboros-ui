@@ -163,7 +163,7 @@ fn style(family: FontFamily, size: f32, leading: f32, tracking: f32) -> TypeStyl
 
 // ── Named roles (classic weight emphasis) ────────────────────────────────────
 
-/// Largest title — Bold 30.
+/// Largest title — Bold 28.
 pub fn display() -> TypeStyle {
     style(
         sans(Weight::Bold),
@@ -172,7 +172,7 @@ pub fn display() -> TypeStyle {
         core::TRACKING_NORMAL,
     )
 }
-/// H1 — SemiBold 24.
+/// H1 — SemiBold 22.
 pub fn h1() -> TypeStyle {
     style(
         sans(Weight::SemiBold),
@@ -181,7 +181,7 @@ pub fn h1() -> TypeStyle {
         core::TRACKING_NORMAL,
     )
 }
-/// H2 — SemiBold 20.
+/// H2 — SemiBold 18.
 pub fn h2() -> TypeStyle {
     style(
         sans(Weight::SemiBold),
@@ -190,7 +190,7 @@ pub fn h2() -> TypeStyle {
         core::TRACKING_NORMAL,
     )
 }
-/// Section heading — SemiBold 16.
+/// Section heading — SemiBold 14.
 pub fn heading() -> TypeStyle {
     style(
         sans(Weight::SemiBold),
@@ -199,7 +199,7 @@ pub fn heading() -> TypeStyle {
         core::TRACKING_SM,
     )
 }
-/// Body — Light 14 (the default text weight).
+/// Body — Light 12 (the default text weight).
 pub fn body() -> TypeStyle {
     style(
         sans(Weight::Light),
@@ -208,7 +208,7 @@ pub fn body() -> TypeStyle {
         core::TRACKING_MD,
     )
 }
-/// Emphasized body — Medium 14.
+/// Emphasized body — Medium 12.
 pub fn body_strong() -> TypeStyle {
     style(
         sans(Weight::Medium),
@@ -217,7 +217,7 @@ pub fn body_strong() -> TypeStyle {
         core::TRACKING_MD,
     )
 }
-/// Label — Light 13 (the default label weight).
+/// Label — Light 11 (the default label weight).
 pub fn label() -> TypeStyle {
     style(
         sans(Weight::Light),
@@ -226,7 +226,7 @@ pub fn label() -> TypeStyle {
         core::TRACKING_LG,
     )
 }
-/// Emphasized label — Medium 13 (where a label needs more weight).
+/// Emphasized label — Medium 11 (where a label needs more weight).
 pub fn label_strong() -> TypeStyle {
     style(
         sans(Weight::Medium),
@@ -235,7 +235,7 @@ pub fn label_strong() -> TypeStyle {
         core::TRACKING_LG,
     )
 }
-/// Caption / small — Regular 12.
+/// Caption / small — Regular 10.
 pub fn caption() -> TypeStyle {
     style(
         sans(Weight::Regular),
@@ -244,7 +244,7 @@ pub fn caption() -> TypeStyle {
         core::TRACKING_WIDE,
     )
 }
-/// Inline code — IosevkaTerm Regular 13.
+/// Inline code — IosevkaTerm Regular 11.
 pub fn code() -> TypeStyle {
     style(
         mono(false),
@@ -253,7 +253,7 @@ pub fn code() -> TypeStyle {
         core::TRACKING_LG,
     )
 }
-/// Keyboard key — IosevkaTerm Bold 12 (mono Medium not vendored; Bold reads as a key cap).
+/// Keyboard key — IosevkaTerm Bold 10 (mono Medium not vendored; Bold reads as a key cap).
 pub fn kbd() -> TypeStyle {
     style(
         mono(true),

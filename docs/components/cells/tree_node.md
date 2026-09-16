@@ -19,7 +19,7 @@ An indented hierarchy row: a depth-based indent, an optional expand/collapse car
   | not expandable | `core::ICON_SM` spacer (keeps labels aligned with carets) |
   | indent | `depth as f32 * core::SPACE_4` leading space |
 
-- **Tokens / layout consumed** — `core::SPACE_4` (16px per depth level), `core::SPACE_1` (4px outer pad + gaps), `core::ICON_SM` (14px caret slot), `core::RADIUS_SM` (4px). See [tokens](../../tokens.md).
+- **Tokens / layout consumed** — `core::SPACE_4` (8px per depth level), `core::SPACE_1` (2px outer pad + gaps), `core::ICON_SM` (12px caret slot), `core::RADIUS_SM` (4px). See [tokens](../../tokens.md).
 - **Accessibility** — Selection/expansion are visual inputs; pair with a real tree model.
 
 ## API

@@ -91,7 +91,7 @@ impl Button {
         self
     }
     /// Override the glyph box size (px), independent of [`Self::size`]. Defaults to the
-    /// size's icon box (`Size::icon_size`). Use e.g. `core::ICON_XL` for a 24px rail icon.
+    /// size's icon box (`Size::icon_size`). Use e.g. `core::ICON_XL` for a 20px rail icon.
     pub fn icon_px(mut self, px: f32) -> Self {
         self.icon_px = Some(px);
         self

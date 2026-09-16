@@ -42,7 +42,7 @@ pub use egui_phosphor; // icon glyphs, no separate dependency
 ### 1. core — raw primitives
 
 `src/tokens/core.rs`. Pure `const`s with **no meaning**: the Zinc neutral ramp
-(50→950), the Teal brand ramp (200→600), status hues, the 4px spacing scale, radius
+(50→950), the Teal brand ramp (200→600), status hues, the twelve-step spacing scale, radius
 scale, shadows, type sizes, control/icon sizing, motion durations + easing, opacity.
 
 Nothing here references anything. It is a leaf. The only non-trivial logic is the

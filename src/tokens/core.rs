@@ -56,21 +56,24 @@ pub const BLUE_400: Color32 = Color32::from_rgb(96, 165, 250);
 pub const BLUE_500: Color32 = Color32::from_rgb(59, 130, 246);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Spacing scale — 4px base, Tailwind numeric keys (key N = N×4px). Contiguous
-// 1–6 then 8/10/12 for the larger gaps. Used for padding, gaps, margins.
+// Spacing scale — twelve ordered steps: 2/4/6/8/12/16/20/24/28/32/36/40px.
+// Keys name steps, not multiples. Used for padding, gaps, margins.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Zero spacing — the semantic "no gap / no padding" sentinel (tight tables, full-bleed).
 pub const SPACE_0: f32 = 0.0;
-pub const SPACE_1: f32 = 4.0;
-pub const SPACE_2: f32 = 8.0;
-pub const SPACE_3: f32 = 12.0;
-pub const SPACE_4: f32 = 16.0;
-pub const SPACE_5: f32 = 20.0;
-pub const SPACE_6: f32 = 24.0;
-pub const SPACE_8: f32 = 32.0;
-pub const SPACE_10: f32 = 40.0;
-pub const SPACE_12: f32 = 48.0;
+pub const SPACE_1: f32 = 2.0;
+pub const SPACE_2: f32 = 4.0;
+pub const SPACE_3: f32 = 6.0;
+pub const SPACE_4: f32 = 8.0;
+pub const SPACE_5: f32 = 12.0;
+pub const SPACE_6: f32 = 16.0;
+pub const SPACE_7: f32 = 20.0;
+pub const SPACE_8: f32 = 24.0;
+pub const SPACE_9: f32 = 28.0;
+pub const SPACE_10: f32 = 32.0;
+pub const SPACE_11: f32 = 36.0;
+pub const SPACE_12: f32 = 40.0;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Corner radius — shadcn classic base (0.5rem). FULL is the pill/circle sentinel.
@@ -127,16 +130,16 @@ pub const fn shadow(offset: [i8; 2], blur: u8, spread: u8, color: Color32) -> Sh
 // Typography — raw primitives only. The theme/typography layer composes these into
 // named styles (Display/H1/Body/Code…) over the registered Iosevka faces.
 //
-// Type size scale (px). Dense IDE calibration; body anchors at TEXT_BASE (14).
+// Type size scale (px). Dense IDE calibration; body anchors at TEXT_BASE (12).
 // ─────────────────────────────────────────────────────────────────────────────
 
-pub const TEXT_XS: f32 = 12.0;
-pub const TEXT_SM: f32 = 13.0;
-pub const TEXT_BASE: f32 = 14.0;
-pub const TEXT_LG: f32 = 16.0;
-pub const TEXT_XL: f32 = 20.0;
-pub const TEXT_2XL: f32 = 24.0;
-pub const TEXT_3XL: f32 = 30.0;
+pub const TEXT_XS: f32 = 10.0;
+pub const TEXT_SM: f32 = 11.0;
+pub const TEXT_BASE: f32 = 12.0;
+pub const TEXT_LG: f32 = 14.0;
+pub const TEXT_XL: f32 = 18.0;
+pub const TEXT_2XL: f32 = 22.0;
+pub const TEXT_3XL: f32 = 28.0;
 
 /// Line-height multipliers (× font size). Tight = headings/display; normal = body;
 /// relaxed = long-form blocks.
@@ -160,15 +163,15 @@ pub const TRACKING_WIDE: f32 = 1.0;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Control heights (button / input / select).
-pub const CONTROL_SM: f32 = 26.0;
+pub const CONTROL_SM: f32 = 24.0;
 pub const CONTROL_MD: f32 = 32.0;
 pub const CONTROL_LG: f32 = 38.0;
 
 /// Icon box sizes.
-pub const ICON_SM: f32 = 14.0;
-pub const ICON_MD: f32 = 16.0;
-pub const ICON_LG: f32 = 20.0;
-pub const ICON_XL: f32 = 24.0;
+pub const ICON_SM: f32 = 12.0;
+pub const ICON_MD: f32 = 14.0;
+pub const ICON_LG: f32 = 16.0;
+pub const ICON_XL: f32 = 20.0;
 
 /// Default border / divider stroke.
 pub const BORDER_THIN: f32 = 1.0;

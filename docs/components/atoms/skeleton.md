@@ -8,7 +8,7 @@ A loading placeholder block: a `muted` rounded rect that gently pulses (opacity)
 
 - **Purpose / when to use** — reserve layout space and signal loading before real content arrives. For an active spinner use [`Spinner`](spinner.md); for known progress use [`Progress`](progress.md).
 - **Anatomy** — a single `muted`-filled rounded rect (`RADIUS_SM`). When pulsing, its opacity oscillates via a sine of `ui.input(time)` between `OPACITY_MUTED` and `1.0`, requesting a repaint each frame.
-- **Variants / sizes / states** — `width(f32)` (default: `ui.available_width()`), `height(f32)` (default `SPACE_4` = 16px), `still()` to disable the pulse. No interactive states (sense `hover`).
+- **Variants / sizes / states** — `width(f32)` (default: `ui.available_width()`), `height(f32)` (default `SPACE_4` = 8px), `still()` to disable the pulse. No interactive states (sense `hover`).
 - **Tokens consumed** — `theme.muted` (fill), `core::RADIUS_SM`, `core::SPACE_4` (default height), `core::OPACITY_MUTED` (pulse floor).
 - **Accessibility** — bare hover `Response`; no `widget_info`.
 
@@ -16,7 +16,7 @@ A loading placeholder block: a `muted` rounded rect that gently pulses (opacity)
 
 | Signature | Effect |
 |-----------|--------|
-| `Skeleton::new() -> Self` | Construct (pulsing, full-width, 16px tall). |
+| `Skeleton::new() -> Self` | Construct (pulsing, full-width, 8px tall). |
 | `Skeleton::default()` | Same as `new()`. |
 | `.width(width: f32) -> Self` | Fixed width. |
 | `.height(height: f32) -> Self` | Set height. |

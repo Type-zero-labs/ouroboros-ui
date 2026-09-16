@@ -9,6 +9,7 @@
 use egui::{Align, Layout, Pos2, Rect, Sense, Stroke, UiBuilder, Vec2};
 
 use crate::atoms::{Badge, BadgeVariant, Divider, Heading, Surface, Text, Tooltip};
+use crate::theme::typography;
 use crate::tokens::core;
 
 use super::canvas::GraphCtx;
@@ -290,7 +291,9 @@ impl GraphCtx<'_> {
                     PortSide::In => pos.x + r * 2.0,
                     PortSide::Out => pos.x - r * 2.0 - w,
                 };
-                let area = Rect::from_min_size(Pos2::new(x, pos.y - 9.0), Vec2::new(w, 18.0));
+                let height = typography::caption().line_height;
+                let area =
+                    Rect::from_min_size(Pos2::new(x, pos.y - height / 2.0), Vec2::new(w, height));
                 let layout = match spec.side {
                     PortSide::In => Layout::left_to_right(Align::Center),
                     PortSide::Out => Layout::right_to_left(Align::Center),

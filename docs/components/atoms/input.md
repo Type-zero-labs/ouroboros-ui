@@ -12,7 +12,7 @@ A single-line text field over a `&mut String`. A token-painted box (fill `muted`
 
   | Size | Height | Pad-x |
   |------|--------|-------|
-  | `Sm` | `CONTROL_SM` 26 | `SPACE_3` |
+  | `Sm` | `CONTROL_SM` 24 | `SPACE_3` |
   | `Md` (default) | `CONTROL_MD` 32 | `SPACE_4` |
   | `Lg` | `CONTROL_LG` 38 | `SPACE_4` |
 

@@ -8,7 +8,7 @@ A swatch displaying an arbitrary `Color32` (consumer data, **not** a theme token
 
 - **Purpose / when to use** — the base of a color field: show the current color and let the user click to edit. The fill color is application data, not a token.
 - **Anatomy** — a filled square (`RADIUS_SM` corners) or circle, with a `theme.border` stroke. Fill = the supplied `Color32`.
-- **Variants / sizes / states** — square (default) or `circle()`. Size is a free `f32` (default `core::ICON_LG` = 20px). Senses `click` but paints no hover/focus/disabled state.
+- **Variants / sizes / states** — square (default) or `circle()`. Size is a free `f32` (default `core::ICON_LG` = 16px). Senses `click` but paints no hover/focus/disabled state.
 - **Tokens consumed** — `theme.border` (stroke), `core::RADIUS_SM` (square corners), `core::ICON_LG` (default size). The fill is intentionally non-token (consumer color).
 - **Accessibility** — bare `Response` from `Sense::click()`; no `widget_info`.
 

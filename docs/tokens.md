@@ -54,20 +54,24 @@ The semantic layer composites the soft `*_bg` variants by applying ~15% alpha
 
 ---
 
-## Spacing — 4px base
+## Spacing — twelve steps
 
-Tailwind numeric keys (key `N` = `N × 4px`). Contiguous 1–6, then 8/10/12 for larger
-gaps. Used for padding, gaps, margins.
+Ordered steps `SPACE_1` through `SPACE_12`: 2, 4, 6, 8, 12, 16, 20, 24, 28, 32,
+36, 40px. Keys identify steps, not multiples. Used for padding, gaps, margins across
+atoms, cells, molecules, organisms and graph chrome.
 
 | Const | px | Const | px |
 |-------|----|-------|----|
-| `SPACE_0` | 0 | `SPACE_5` | 20 |
-| `SPACE_1` | 4 | `SPACE_6` | 24 |
-| `SPACE_2` | 8 | `SPACE_8` | 32 |
-| `SPACE_3` | 12 | `SPACE_10` | 40 |
-| `SPACE_4` | 16 | `SPACE_12` | 48 |
+| `SPACE_1` | 2 | `SPACE_7` | 20 |
+| `SPACE_2` | 4 | `SPACE_8` | 24 |
+| `SPACE_3` | 6 | `SPACE_9` | 28 |
+| `SPACE_4` | 8 | `SPACE_10` | 32 |
+| `SPACE_5` | 12 | `SPACE_11` | 36 |
+| `SPACE_6` | 16 | `SPACE_12` | 40 |
 
-`SPACE_0` is the semantic "no gap / no padding" sentinel (tight tables, full-bleed).
+`SPACE_0` remains 0: the semantic "no gap / no padding" sentinel (tight tables,
+full-bleed). `Theme::apply` also sets egui's container gaps, button padding and
+window/menu margins from this scale, so composed widgets inherit the same density.
 
 ## Corner radius
 
@@ -100,14 +104,14 @@ fixed triple (egui's `Shadow` is foreign, hence a free fn not an inherent constr
 
 Raw values only — the [typography layer](./typography.md) composes these into named styles.
 
-**Type sizes (px)** — dense IDE calibration; body anchors at `TEXT_BASE` (14).
+**Type sizes (px)** — dense IDE calibration; body anchors at `TEXT_BASE` (12).
 
 | Const | px | Const | px |
 |-------|----|-------|----|
-| `TEXT_XS` | 12 | `TEXT_XL` | 20 |
-| `TEXT_SM` | 13 | `TEXT_2XL` | 24 |
-| `TEXT_BASE` | 14 | `TEXT_3XL` | 30 |
-| `TEXT_LG` | 16 | | |
+| `TEXT_XS` | 10 | `TEXT_XL` | 18 |
+| `TEXT_SM` | 11 | `TEXT_2XL` | 22 |
+| `TEXT_BASE` | 12 | `TEXT_3XL` | 28 |
+| `TEXT_LG` | 14 | | |
 
 **Line-height multipliers** (× font size): `LEADING_TIGHT` 1.2 (headings/display),
 `LEADING_NORMAL` 1.45 (body), `LEADING_RELAXED` 1.6 (long-form).
@@ -120,8 +124,8 @@ Raw values only — the [typography layer](./typography.md) composes these into 
 
 ## Sizing
 
-**Control heights** — `CONTROL_SM` 26 · `CONTROL_MD` 32 · `CONTROL_LG` 38.
-**Icon box** — `ICON_SM` 14 · `ICON_MD` 16 · `ICON_LG` 20 · `ICON_XL` 24.
+**Control heights** — `CONTROL_SM` 24 · `CONTROL_MD` 32 · `CONTROL_LG` 38.
+**Icon box** — `ICON_SM` 12 · `ICON_MD` 14 · `ICON_LG` 16 · `ICON_XL` 20.
 **Strokes** — `BORDER_THIN` 1 (divider) · `BORDER_FOCUS` 2 (focus ring) · `RING_OFFSET` 2
 (gap to ring). **Hit target** — `HIT_MIN` 32 (minimum interactive size).
 
@@ -136,9 +140,9 @@ pub enum Size { Sm, Md /* default */, Lg }
 
 | Method | Sm | Md | Lg |
 |--------|----|----|----|
-| `height()` | 26 | 32 | 38 |
-| `icon_size()` | 14 | 16 | 20 |
-| `pad_x()` | 12 | 16 | 16 |
+| `height()` | 24 | 32 | 38 |
+| `icon_size()` | 12 | 14 | 16 |
+| `pad_x()` | 6 | 8 | 8 |
 | `text_style()`¹ | label | label | body_strong |
 
 ¹ defined in `theme::typography` (keeps `core` a leaf — see [typography.md](./typography.md)).

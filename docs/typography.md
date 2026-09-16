@@ -33,17 +33,17 @@ atom when it lays out the galley.
 
 | Style | Face / weight | Size | Tracking | Use |
 |-------|---------------|------|----------|-----|
-| `display()` | Iosevka Bold | 30 | normal | largest title |
-| `h1()` | Iosevka SemiBold | 24 | normal | page title |
-| `h2()` | Iosevka SemiBold | 20 | normal | section title |
-| `heading()` | Iosevka SemiBold | 16 | sm | sub-section heading |
-| `body()` | Iosevka **Light** | 14 | md | default body text |
-| `body_strong()` | Iosevka Medium | 14 | md | emphasized body |
-| `label()` | Iosevka **Light** | 13 | lg | default label |
-| `label_strong()` | Iosevka Medium | 13 | lg | emphasized label |
-| `caption()` | Iosevka Regular | 12 | wide | small / caption |
-| `code()` | IosevkaTerm Regular | 13 | lg | inline code |
-| `kbd()` | IosevkaTerm Bold | 12 | wide | keyboard key cap |
+| `display()` | Iosevka Bold | 28 | normal | largest title |
+| `h1()` | Iosevka SemiBold | 22 | normal | page title |
+| `h2()` | Iosevka SemiBold | 18 | normal | section title |
+| `heading()` | Iosevka SemiBold | 14 | sm | sub-section heading |
+| `body()` | Iosevka **Light** | 12 | md | default body text |
+| `body_strong()` | Iosevka Medium | 12 | md | emphasized body |
+| `label()` | Iosevka **Light** | 11 | lg | default label |
+| `label_strong()` | Iosevka Medium | 11 | lg | emphasized label |
+| `caption()` | Iosevka Regular | 10 | wide | small / caption |
+| `code()` | IosevkaTerm Regular | 11 | lg | inline code |
+| `kbd()` | IosevkaTerm Bold | 10 | wide | keyboard key cap |
 
 Notes on the choices:
 

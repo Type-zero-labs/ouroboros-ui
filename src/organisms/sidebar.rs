@@ -36,7 +36,7 @@ impl<'a> Sidebar<'a> {
         self
     }
     /// Override the rail glyph box size (px) in [`Self::icons_only`] mode. Defaults to the
-    /// button's icon size; pass e.g. `core::ICON_XL` (24px) for a larger rail. Additive —
+    /// button's icon size; pass e.g. `core::ICON_XL` (20px) for a larger rail. Additive —
     /// no effect on the default (non-icon-only) sidebar.
     pub fn icon_size(mut self, px: f32) -> Self {
         self.icon_px = Some(px);

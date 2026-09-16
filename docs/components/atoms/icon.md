@@ -12,10 +12,10 @@ A single Phosphor glyph at an icon-size token, in a theme color. The glyph is a 
 
   | Size shorthand | Token |
   |----------------|-------|
-  | `.sm()` | `ICON_SM` 14 |
-  | `.md()` (default) | `ICON_MD` 16 |
-  | `.lg()` | `ICON_LG` 20 |
-  | `.xl()` | `ICON_XL` 24 |
+  | `.sm()` | `ICON_SM` 12 |
+  | `.md()` (default) | `ICON_MD` 14 |
+  | `.lg()` | `ICON_LG` 16 |
+  | `.xl()` | `ICON_XL` 20 |
   | `.size(f32)` | arbitrary px |
 
   Color: defaults to `theme.foreground`; `.muted()` → `theme.muted_foreground`; `.color(c)` → explicit. No interactive states.
