@@ -134,6 +134,10 @@ impl GraphView {
             .drag_pan_buttons(DragPanButtons::MIDDLE | DragPanButtons::SECONDARY);
         let show_grid = self.show_grid;
         let connect_in = state.connect;
+        // First show (or a state that went bad): egui's Scene fits the child ui's `min_rect`,
+        // which nodes placed by `max_rect` never grow — the view ends up at max zoom on nothing.
+        // We re-anchor on the real content bounds below, at 100 %.
+        let needs_home = !(state.scene_rect.is_finite() && state.scene_rect.size() != Vec2::ZERO);
 
         let inner = scene.show(&mut child, &mut state.scene_rect, |sui| {
             let to_global = sui
@@ -248,6 +252,12 @@ impl GraphView {
 
         state.connect = out.connect;
         state.edge_selection = out.edge_selection;
+        if needs_home {
+            if let Some(b) = out.content_bounds {
+                state.scene_rect =
+                    Rect::from_min_size(b.min - Vec2::splat(core::SPACE_8), rect.size());
+            }
+        }
 
         // Selection: a clicked node toggles (shift) or replaces; a click on truly empty space
         // (no node and no edge) clears everything.
