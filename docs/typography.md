@@ -116,3 +116,5 @@ impl Size {
 }
 ```
 </content>
+
+> **Icon glyphs and Inter.** Inter ships ~1.5k glyphs in the Private Use Area, the same range Phosphor uses, and egui picks the first face that has a codepoint. The bundled Inter TTFs therefore have U+E000–U+F8FF removed from their `cmap` (fonttools). Redo that when updating Inter, or every icon renders as an Inter arrow.

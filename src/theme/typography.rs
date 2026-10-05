@@ -117,6 +117,10 @@ pub fn register(fonts: &mut FontDefinitions) {
         .or_default()
         .insert(0, MONO_REGULAR.to_owned());
 
+    // Phosphor fica **depois** do texto (ela também tem a–z). Os TTF da Inter foram gravados
+    // sem a faixa PUA (U+E000–U+F8FF) no cmap — a Inter tem 1.490 glifos ali e eles ganhavam
+    // dos ícones. Ao trocar a Inter, repita: fonttools, apagar do cmap de cada tabela
+    // Unicode os códigos 0xE000..=0xF8FF (OFL sem nome reservado permite).
     // Phosphor Light — registers the "phosphor" face and appends it to Proportional only.
     egui_phosphor::add_to_fonts(fonts, egui_phosphor::Variant::Light);
 
