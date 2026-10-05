@@ -92,19 +92,27 @@ pub struct Theme {
     pub info_bg: Color32,
     pub neutral: Color32,
     pub neutral_bg: Color32,
+
+    // ── Shell (Figma-like) ───────────────────────────────────
+    /// Active module on the rail.
+    pub rail_active: Color32,
+    /// Translucent fill for search/inputs on panels.
+    pub field: Color32,
+    /// Translucent fill for neutral icon buttons (collapse, toolbar).
+    pub button_neutral: Color32,
 }
 
 impl Theme {
     /// The dark (zinc) palette — the populated mode.
     pub fn dark() -> Self {
         Self {
-            // Surfaces — layered 950 / 900 / 800.
-            background: core::ZINC_950,
-            foreground: core::ZINC_50,
-            card: core::ZINC_900,
-            card_foreground: core::ZINC_50,
-            popover: core::ZINC_900,
-            popover_foreground: core::ZINC_50,
+            // Surfaces — Figma frame: canvas zinc-900, panels/buttons zinc-800.
+            background: core::ZINC_900,
+            foreground: core::ZINC_100,
+            card: core::ZINC_800,
+            card_foreground: core::ZINC_100,
+            popover: core::ZINC_800,
+            popover_foreground: core::ZINC_100,
             muted: core::ZINC_800,
             muted_foreground: core::ZINC_400,
             disabled_foreground: core::ZINC_600,
@@ -123,7 +131,7 @@ impl Theme {
             // Borders & focus.
             border: core::ZINC_800,
             border_strong: core::ZINC_700,
-            input: core::ZINC_800,
+            input: core::ZINC_700,
             ring: core::TEAL_300,
             hover_overlay: Color32::from_white_alpha((core::HOVER_OVERLAY * 255.0) as u8),
             press_overlay: Color32::from_white_alpha((core::PRESS_OVERLAY * 255.0) as u8),
@@ -140,6 +148,10 @@ impl Theme {
             info_bg: tint(core::BLUE_500, STATUS_BG_ALPHA),
             neutral: core::ZINC_500,
             neutral_bg: tint(core::ZINC_500, STATUS_BG_ALPHA),
+
+            rail_active: core::TEAL_SLATE,
+            field: core::WHITE_4,
+            button_neutral: core::WHITE_4,
         }
     }
 
@@ -188,6 +200,10 @@ impl Theme {
             info_bg: tint(core::BLUE_500, STATUS_BG_ALPHA),
             neutral: core::ZINC_500,
             neutral_bg: tint(core::ZINC_500, STATUS_BG_ALPHA),
+
+            rail_active: core::TEAL_200,
+            field: core::BLACK_4,
+            button_neutral: core::BLACK_4,
         }
     }
 

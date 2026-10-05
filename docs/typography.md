@@ -10,12 +10,14 @@ from [core](./tokens.md); this layer composes them into usable styles.
 
 Two type families are vendored under `assets/fonts/` and embedded with `include_bytes!`:
 
-- **Iosevka** (UI) — five weights: Light, Regular, Medium, SemiBold, Bold.
+- **Inter** (UI) — five weights: Light, Regular, Medium, SemiBold, Bold. Since the Oct 2026
+  redesign (Figma-like, compact), replacing Iosevka.
+- **Iosevka Medium** (panel/section titles — mono, like the Figma title style).
 - **IosevkaTerm** (code/keyboard) — Regular, Bold.
 - **Phosphor Light** — icon glyphs, via `egui-phosphor`.
 
 Each weight is registered under its own named `FontFamily::Name`, so a `TypeStyle` can
-target an exact face. The default `Proportional` stack is Iosevka Regular; `Monospace` is
+target an exact face. The default `Proportional` stack is Inter Regular; `Monospace` is
 IosevkaTerm. Phosphor is appended as an **icon fallback to every face**, so inline icons
 resolve no matter which type style renders them.
 
@@ -33,17 +35,17 @@ atom when it lays out the galley.
 
 | Style | Face / weight | Size | Tracking | Use |
 |-------|---------------|------|----------|-----|
-| `display()` | Iosevka Bold | 30 | normal | largest title |
-| `h1()` | Iosevka SemiBold | 24 | normal | page title |
-| `h2()` | Iosevka SemiBold | 20 | normal | section title |
-| `heading()` | Iosevka SemiBold | 16 | sm | sub-section heading |
-| `body()` | Iosevka **Light** | 14 | md | default body text |
-| `body_strong()` | Iosevka Medium | 14 | md | emphasized body |
-| `label()` | Iosevka **Light** | 13 | lg | default label |
-| `label_strong()` | Iosevka Medium | 13 | lg | emphasized label |
-| `caption()` | Iosevka Regular | 12 | wide | small / caption |
-| `code()` | IosevkaTerm Regular | 13 | lg | inline code |
-| `kbd()` | IosevkaTerm Bold | 12 | wide | keyboard key cap |
+| `display()` | Inter SemiBold | 24 | normal | largest title |
+| `h1()` | Inter SemiBold | 20 | normal | page title |
+| `h2()` | Inter SemiBold | 16 | normal | section title |
+| `heading()` | Iosevka **Medium** (mono) | 13 | normal | panel / section title (`database`) |
+| `body()` | Inter Regular | 12 | normal | default body text |
+| `body_strong()` | Inter Medium | 12 | normal | emphasized body |
+| `label()` | Inter Regular | 11 | normal | default label, controls |
+| `label_strong()` | Inter Medium | 11 | normal | emphasized label |
+| `caption()` | Inter Regular | 10 | normal | tree rows, placeholders, hints |
+| `code()` | IosevkaTerm Regular | 11 | normal | inline code |
+| `kbd()` | IosevkaTerm Bold | 10 | normal | keyboard key cap |
 
 Notes on the choices:
 

@@ -112,7 +112,7 @@ Theme::install(ctx, Mode::Dark);   // registers fonts + applies the palette
 
 `install` does two things:
 
-1. `typography::register(&mut fonts)` — loads the bundled Iosevka faces + Phosphor icons.
+1. `typography::register(&mut fonts)` — loads the bundled Inter + Iosevka (titles/code) faces + Phosphor icons.
 2. `Theme::apply(ctx, mode)` — applies visuals, stores the resolved theme, sets text styles.
 
 ### Switching mode at runtime

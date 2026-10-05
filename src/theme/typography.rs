@@ -1,7 +1,9 @@
 //! Typography — font registration and composite type styles.
 //!
-//! Registers the bundled Iosevka faces (UI mono) + IosevkaTerm (code) under per-weight
-//! named families, plus Phosphor **Light** icons via `egui-phosphor`. Exposes composite
+//! Registers the bundled **Inter** faces (UI text) + Iosevka Medium (panel titles, mono) +
+//! IosevkaTerm (code) under per-weight named families, plus Phosphor **Light** icons via
+//! `egui-phosphor`. The redesign of Oct 2026 (Figma-like, compact) moved the UI from Iosevka
+//! to Inter; the mono faces stay for titles, code and keys. Exposes composite
 //! [`TypeStyle`] tokens (family + size + line-height + tracking) for the named roles
 //! (`display`/`h1`/…/`code`). Sizes and leadings come from [`core`](crate::tokens::core).
 
@@ -9,15 +11,17 @@ use crate::tokens::core::{self, Size};
 use egui::{FontData, FontDefinitions, FontFamily, FontId};
 
 // Registration keys — one per vendored weight.
-const SANS_LIGHT: &str = "iosevka-light";
-const SANS_REGULAR: &str = "iosevka";
-const SANS_MEDIUM: &str = "iosevka-medium";
-const SANS_SEMIBOLD: &str = "iosevka-semibold";
-const SANS_BOLD: &str = "iosevka-bold";
+const SANS_LIGHT: &str = "inter-light";
+const SANS_REGULAR: &str = "inter";
+const SANS_MEDIUM: &str = "inter-medium";
+const SANS_SEMIBOLD: &str = "inter-semibold";
+const SANS_BOLD: &str = "inter-bold";
 const MONO_REGULAR: &str = "iosevka-term";
 const MONO_BOLD: &str = "iosevka-term-bold";
+/// Panel/section titles — mono Medium, like the Figma `txt-compact-small-plus` style.
+const MONO_TITLE: &str = "iosevka-medium";
 
-/// Font weight — selects which registered Iosevka face a style uses.
+/// Font weight — selects which registered Inter face a style uses.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Weight {
     Light,
@@ -44,32 +48,36 @@ fn mono(bold: bool) -> FontFamily {
     FontFamily::Name(if bold { MONO_BOLD } else { MONO_REGULAR }.into())
 }
 
+fn mono_title() -> FontFamily {
+    FontFamily::Name(MONO_TITLE.into())
+}
+
 /// Register all bundled faces + Phosphor icons into a [`FontDefinitions`].
 ///
 /// Sets the default Proportional stack to Iosevka Regular (Phosphor Light as icon
 /// fallback) and Monospace to IosevkaTerm; also registers each weight under its own
 /// named family so [`TypeStyle`] can target a specific face.
 pub fn register(fonts: &mut FontDefinitions) {
-    let faces: [(&str, &[u8]); 7] = [
+    let faces: [(&str, &[u8]); 8] = [
         (
             SANS_LIGHT,
-            include_bytes!("../../assets/fonts/Iosevka-Light.ttf"),
+            include_bytes!("../../assets/fonts/Inter-Light.ttf"),
         ),
         (
             SANS_REGULAR,
-            include_bytes!("../../assets/fonts/Iosevka-Regular.ttf"),
+            include_bytes!("../../assets/fonts/Inter-Regular.ttf"),
         ),
         (
             SANS_MEDIUM,
-            include_bytes!("../../assets/fonts/Iosevka-Medium.ttf"),
+            include_bytes!("../../assets/fonts/Inter-Medium.ttf"),
         ),
         (
             SANS_SEMIBOLD,
-            include_bytes!("../../assets/fonts/Iosevka-SemiBold.ttf"),
+            include_bytes!("../../assets/fonts/Inter-SemiBold.ttf"),
         ),
         (
             SANS_BOLD,
-            include_bytes!("../../assets/fonts/Iosevka-Bold.ttf"),
+            include_bytes!("../../assets/fonts/Inter-Bold.ttf"),
         ),
         (
             MONO_REGULAR,
@@ -78,6 +86,10 @@ pub fn register(fonts: &mut FontDefinitions) {
         (
             MONO_BOLD,
             include_bytes!("../../assets/fonts/IosevkaTerm-Bold.ttf"),
+        ),
+        (
+            MONO_TITLE,
+            include_bytes!("../../assets/fonts/Iosevka-Medium.ttf"),
         ),
     ];
 
@@ -93,7 +105,7 @@ pub fn register(fonts: &mut FontDefinitions) {
             .insert(0, name.to_owned());
     }
 
-    // Default stacks: Iosevka Regular for proportional text, IosevkaTerm for monospace.
+    // Default stacks: Inter Regular for proportional text, IosevkaTerm for monospace.
     fonts
         .families
         .entry(FontFamily::Proportional)
@@ -111,7 +123,7 @@ pub fn register(fonts: &mut FontDefinitions) {
     // Append Phosphor as an icon fallback to every named face + Monospace, so inline
     // icons resolve regardless of which TypeStyle (named family) renders them — not just
     // the default Proportional stack.
-    const ALL_FACES: [&str; 7] = [
+    const ALL_FACES: [&str; 8] = [
         SANS_LIGHT,
         SANS_REGULAR,
         SANS_MEDIUM,
@@ -119,6 +131,7 @@ pub fn register(fonts: &mut FontDefinitions) {
         SANS_BOLD,
         MONO_REGULAR,
         MONO_BOLD,
+        MONO_TITLE,
     ];
     for key in ALL_FACES {
         fonts
@@ -161,18 +174,20 @@ fn style(family: FontFamily, size: f32, leading: f32, tracking: f32) -> TypeStyl
     }
 }
 
-// ── Named roles (classic weight emphasis) ────────────────────────────────────
+// ── Named roles ──────────────────────────────────────────────────────────────
+// Compact, Figma-like scale (Oct 2026 redesign): rows and labels at 10–11 px Inter, body 12,
+// panel titles mono Medium 13. Tracking 0 — Inter is spaced for UI already.
 
-/// Largest title — Bold 30.
+/// Largest title — SemiBold 24.
 pub fn display() -> TypeStyle {
     style(
-        sans(Weight::Bold),
+        sans(Weight::SemiBold),
         core::TEXT_3XL,
         core::LEADING_TIGHT,
         core::TRACKING_NORMAL,
     )
 }
-/// H1 — SemiBold 24.
+/// H1 — SemiBold 20.
 pub fn h1() -> TypeStyle {
     style(
         sans(Weight::SemiBold),
@@ -181,7 +196,7 @@ pub fn h1() -> TypeStyle {
         core::TRACKING_NORMAL,
     )
 }
-/// H2 — SemiBold 20.
+/// H2 — SemiBold 16.
 pub fn h2() -> TypeStyle {
     style(
         sans(Weight::SemiBold),
@@ -190,76 +205,76 @@ pub fn h2() -> TypeStyle {
         core::TRACKING_NORMAL,
     )
 }
-/// Section heading — SemiBold 16.
+/// Panel / section title — mono Medium 13 (the "database" title of the Figma frame).
 pub fn heading() -> TypeStyle {
     style(
-        sans(Weight::SemiBold),
+        mono_title(),
         core::TEXT_LG,
         core::LEADING_TIGHT,
-        core::TRACKING_SM,
+        core::TRACKING_NORMAL,
     )
 }
-/// Body — Light 14 (the default text weight).
+/// Body — Regular 12 (the default text weight).
 pub fn body() -> TypeStyle {
     style(
-        sans(Weight::Light),
+        sans(Weight::Regular),
         core::TEXT_BASE,
         core::LEADING_NORMAL,
-        core::TRACKING_MD,
+        core::TRACKING_NORMAL,
     )
 }
-/// Emphasized body — Medium 14.
+/// Emphasized body — Medium 12.
 pub fn body_strong() -> TypeStyle {
     style(
         sans(Weight::Medium),
         core::TEXT_BASE,
         core::LEADING_NORMAL,
-        core::TRACKING_MD,
+        core::TRACKING_NORMAL,
     )
 }
-/// Label — Light 13 (the default label weight).
+/// Label — Regular 11 (controls, form labels).
 pub fn label() -> TypeStyle {
     style(
-        sans(Weight::Light),
+        sans(Weight::Regular),
         core::TEXT_SM,
         core::LEADING_NORMAL,
-        core::TRACKING_LG,
+        core::TRACKING_NORMAL,
     )
 }
-/// Emphasized label — Medium 13 (where a label needs more weight).
+/// Emphasized label — Medium 11.
 pub fn label_strong() -> TypeStyle {
     style(
         sans(Weight::Medium),
         core::TEXT_SM,
         core::LEADING_NORMAL,
-        core::TRACKING_LG,
+        core::TRACKING_NORMAL,
     )
 }
-/// Caption / small — Regular 12.
+/// Caption / small — Regular 10 (tree rows, placeholders, hints).
 pub fn caption() -> TypeStyle {
     style(
         sans(Weight::Regular),
         core::TEXT_XS,
         core::LEADING_NORMAL,
-        core::TRACKING_WIDE,
+        core::TRACKING_NORMAL,
     )
 }
-/// Inline code — IosevkaTerm Regular 13.
+/// Inline code — IosevkaTerm Regular 11.
 pub fn code() -> TypeStyle {
     style(
         mono(false),
         core::TEXT_SM,
         core::LEADING_NORMAL,
-        core::TRACKING_LG,
+        core::TRACKING_NORMAL,
     )
 }
-/// Keyboard key — IosevkaTerm Bold 12 (mono Medium not vendored; Bold reads as a key cap).
+/// Keyboard key — IosevkaTerm Bold 10.
 pub fn kbd() -> TypeStyle {
     style(
         mono(true),
         core::TEXT_XS,
         core::LEADING_NORMAL,
-        core::TRACKING_WIDE,
+        core::TRACKING_NORMAL,
     )
 }
 

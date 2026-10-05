@@ -56,6 +56,12 @@ pub const TINT_NONE: Color32 = Color32::WHITE;
 pub const BLUE_400: Color32 = Color32::from_rgb(96, 165, 250);
 /// Info (fill base) — blue-500.
 pub const BLUE_500: Color32 = Color32::from_rgb(59, 130, 246);
+/// Desaturated teal — the active rail item of the Figma frame (`#3a4f50`).
+pub const TEAL_SLATE: Color32 = Color32::from_rgb(58, 79, 80);
+/// Translucent white for fields and neutral buttons on dark panels (`#ffffff0a`).
+pub const WHITE_4: Color32 = Color32::from_rgba_premultiplied(10, 10, 10, 10);
+/// Translucent black for fields and neutral buttons on light panels.
+pub const BLACK_4: Color32 = Color32::from_rgba_premultiplied(0, 0, 0, 10);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Spacing scale — 4px base, Tailwind numeric keys (key N = N×4px). Contiguous
@@ -127,23 +133,23 @@ pub const fn shadow(offset: [i8; 2], blur: u8, spread: u8, color: Color32) -> Sh
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typography — raw primitives only. The theme/typography layer composes these into
-// named styles (Display/H1/Body/Code…) over the registered Iosevka faces.
+// named styles (Display/H1/Body/Code…) over the registered Inter / Iosevka faces.
 //
 // Type size scale (px). Dense IDE calibration; body anchors at TEXT_BASE (14).
 // ─────────────────────────────────────────────────────────────────────────────
 
-pub const TEXT_XS: f32 = 12.0;
-pub const TEXT_SM: f32 = 13.0;
-pub const TEXT_BASE: f32 = 14.0;
-pub const TEXT_LG: f32 = 16.0;
-pub const TEXT_XL: f32 = 20.0;
-pub const TEXT_2XL: f32 = 24.0;
-pub const TEXT_3XL: f32 = 30.0;
+pub const TEXT_XS: f32 = 10.0;
+pub const TEXT_SM: f32 = 11.0;
+pub const TEXT_BASE: f32 = 12.0;
+pub const TEXT_LG: f32 = 13.0;
+pub const TEXT_XL: f32 = 16.0;
+pub const TEXT_2XL: f32 = 20.0;
+pub const TEXT_3XL: f32 = 24.0;
 
 /// Line-height multipliers (× font size). Tight = headings/display; normal = body;
 /// relaxed = long-form blocks.
-pub const LEADING_TIGHT: f32 = 1.2;
-pub const LEADING_NORMAL: f32 = 1.45;
+pub const LEADING_TIGHT: f32 = 1.1;
+pub const LEADING_NORMAL: f32 = 1.3;
 pub const LEADING_RELAXED: f32 = 1.6;
 
 /// Letter-spacing (px, extra per glyph). For legibility the scale is **inverse to size**:
@@ -162,15 +168,15 @@ pub const TRACKING_WIDE: f32 = 1.0;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Control heights (button / input / select).
-pub const CONTROL_SM: f32 = 26.0;
-pub const CONTROL_MD: f32 = 32.0;
-pub const CONTROL_LG: f32 = 38.0;
+pub const CONTROL_SM: f32 = 24.0;
+pub const CONTROL_MD: f32 = 28.0;
+pub const CONTROL_LG: f32 = 32.0;
 
 /// Icon box sizes.
-pub const ICON_SM: f32 = 14.0;
-pub const ICON_MD: f32 = 16.0;
-pub const ICON_LG: f32 = 20.0;
-pub const ICON_XL: f32 = 24.0;
+pub const ICON_SM: f32 = 12.0;
+pub const ICON_MD: f32 = 14.0;
+pub const ICON_LG: f32 = 16.0;
+pub const ICON_XL: f32 = 20.0;
 
 /// Default border / divider stroke.
 pub const BORDER_THIN: f32 = 1.0;
@@ -179,7 +185,7 @@ pub const BORDER_FOCUS: f32 = 2.0;
 /// Gap between a widget's edge and its focus ring.
 pub const RING_OFFSET: f32 = 2.0;
 /// Minimum interactive target.
-pub const HIT_MIN: f32 = 32.0;
+pub const HIT_MIN: f32 = 24.0;
 
 /// Shared control size scale. One source of truth for every form control's footprint,
 /// so density (compact toolbar vs. roomy panel) is expressible uniformly. Numeric here
@@ -213,8 +219,8 @@ impl Size {
     /// Horizontal padding (px) — tighter at `Sm`.
     pub fn pad_x(self) -> f32 {
         match self {
-            Size::Sm => SPACE_3,
-            Size::Md | Size::Lg => SPACE_4,
+            Size::Sm | Size::Md => SPACE_2,
+            Size::Lg => SPACE_3,
         }
     }
 }
