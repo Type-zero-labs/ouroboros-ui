@@ -119,7 +119,10 @@ impl<'a> TileGrid<'a> {
         let anchor_id = ui.id().with(self.id_salt).with("anchor");
         let pointer = response.interact_pointer_pos();
         if response.drag_started() {
-            if let Some(p) = pointer {
+            // O tile do **aperto**: no quadro em que o arraste começa, o ponteiro já passou
+            // do limiar e pode estar no tile vizinho.
+            let origem = ui.input(|i| i.pointer.press_origin()).or(pointer);
+            if let Some(p) = origem {
                 ui.data_mut(|d| d.insert_temp(anchor_id, tile_at(p)));
             }
         }
@@ -131,7 +134,6 @@ impl<'a> TileGrid<'a> {
             let block = TileRect::spanning(a, tile_at(p));
             if response.drag_stopped() {
                 commit = Some(block);
-                ui.data_mut(|d| d.remove::<(u32, u32)>(anchor_id));
             } else {
                 painter.rect_stroke(
                     block_rect(block),
@@ -140,6 +142,10 @@ impl<'a> TileGrid<'a> {
                     StrokeKind::Inside,
                 );
             }
+        }
+        // Soltou (com ou sem posição — o cursor pode ter saído da janela): a âncora acaba.
+        if response.drag_stopped() {
+            ui.data_mut(|d| d.remove::<(u32, u32)>(anchor_id));
         }
         if let Some(block) = commit {
             *self.selection = Some(block);
