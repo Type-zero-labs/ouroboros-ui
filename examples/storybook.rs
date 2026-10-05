@@ -66,6 +66,7 @@ enum Page {
     Slider,
     NumericField,
     ColorSwatch,
+    TileGrid,
     Progress,
     Skeleton,
     Toggle,
@@ -145,6 +146,7 @@ impl Page {
             Page::Slider => "Slider",
             Page::NumericField => "Numeric field",
             Page::ColorSwatch => "Color swatch",
+            Page::TileGrid => "Tile grid",
             Page::Progress => "Progress",
             Page::Skeleton => "Skeleton",
             Page::Toggle => "Toggle",
@@ -233,6 +235,7 @@ const NAV: &[(&str, &[Page])] = &[
             Page::Slider,
             Page::NumericField,
             Page::ColorSwatch,
+            Page::TileGrid,
             Page::Progress,
             Page::Skeleton,
             Page::Toggle,
@@ -517,6 +520,7 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::Slider => page_slider(ui, theme),
         Page::NumericField => page_numeric_field(ui, theme),
         Page::ColorSwatch => page_color_swatch(ui, theme),
+        Page::TileGrid => page_tile_grid(ui, theme),
         Page::Progress => page_progress(ui, theme),
         Page::Skeleton => page_skeleton(ui, theme),
         Page::Toggle => page_toggle(ui, theme),
@@ -1869,6 +1873,56 @@ fn page_color_swatch(ui: &mut Ui, _theme: &Theme) {
         }
         ColorSwatch::new(core::BLUE_400).circle().show(ui);
     });
+}
+
+fn page_tile_grid(ui: &mut Ui, _theme: &Theme) {
+    use ouroboros_ui::atoms::{TileGrid, TileRect};
+    caption(ui, "4×4 atlas — click picks a tile, drag picks a block");
+    // A 4×4 checker of token colors stands in for a material atlas.
+    let tex = ui
+        .ctx()
+        .data_mut(|d| d.get_temp::<egui::TextureHandle>(egui::Id::new("story_tile_tex")));
+    let tex = tex.unwrap_or_else(|| {
+        let palette = [
+            core::RED_500,
+            core::GREEN_500,
+            core::AMBER_500,
+            core::BLUE_500,
+        ];
+        let size = 256;
+        let mut img = egui::ColorImage::new([size, size], vec![core::ZINC_900; size * size]);
+        for y in 0..size {
+            for x in 0..size {
+                let (c, r) = (x / 64, y / 64);
+                let base = palette[(c + r) % palette.len()];
+                let shade = if (x / 8 + y / 8) % 2 == 0 {
+                    base
+                } else {
+                    base.gamma_multiply(0.7)
+                };
+                img.pixels[y * size + x] = shade;
+            }
+        }
+        let handle = ui
+            .ctx()
+            .load_texture("story_tile_tex", img, egui::TextureOptions::NEAREST);
+        ui.ctx()
+            .data_mut(|d| d.insert_temp(egui::Id::new("story_tile_tex"), handle.clone()));
+        handle
+    });
+    let sel_id = egui::Id::new("story_tile_sel");
+    let mut sel: Option<TileRect> = ui.ctx().data(|d| d.get_temp(sel_id)).flatten();
+    TileGrid::new(tex.id(), tex.size_vec2(), 4, 4, &mut sel)
+        .max_width(320.0)
+        .show(ui);
+    ui.ctx().data_mut(|d| d.insert_temp(sel_id, Some(sel)));
+    caption(
+        ui,
+        &match sel {
+            Some(t) => format!("selection: col {} row {} · {}×{}", t.col, t.row, t.w, t.h),
+            None => "selection: none".to_owned(),
+        },
+    );
 }
 
 fn page_progress(ui: &mut Ui, _theme: &Theme) {

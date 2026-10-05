@@ -22,6 +22,7 @@
     - [Button](./components/atoms/button.md)
     - [Checkbox](./components/atoms/checkbox.md)
     - [ColorSwatch](./components/atoms/color_swatch.md)
+    - [TileGrid](./components/atoms/tile_grid.md)
     - [Divider](./components/atoms/divider.md)
     - [Heading](./components/atoms/heading.md)
     - [Icon](./components/atoms/icon.md)
