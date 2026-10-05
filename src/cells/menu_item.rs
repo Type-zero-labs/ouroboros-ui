@@ -12,6 +12,7 @@ pub struct MenuItem {
     shortcut: Option<String>,
     enabled: bool,
     checked: Option<bool>,
+    submenu: bool,
     id_source: Option<Id>,
 }
 
@@ -23,6 +24,7 @@ impl MenuItem {
             shortcut: None,
             enabled: true,
             checked: None,
+            submenu: false,
             id_source: None,
         }
     }
@@ -42,6 +44,11 @@ impl MenuItem {
     /// the mark's width so checked/unchecked siblings stay aligned. [shadcn CheckboxItem]
     pub fn checked(mut self, checked: bool) -> Self {
         self.checked = Some(checked);
+        self
+    }
+    /// Opens a submenu: a trailing caret instead of a shortcut. [shadcn DropdownMenuSubTrigger]
+    pub fn submenu(mut self) -> Self {
+        self.submenu = true;
         self
     }
     pub fn id_source(mut self, id: impl std::hash::Hash) -> Self {
@@ -65,6 +72,7 @@ impl MenuItem {
         let label = self.label;
         let shortcut = self.shortcut;
         let checked = self.checked;
+        let submenu = self.submenu;
         surface
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
@@ -87,6 +95,10 @@ impl MenuItem {
                     if let Some(shortcut) = shortcut {
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             Kbd::new(shortcut).show(ui);
+                        });
+                    } else if submenu {
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            Icon::new(light::CARET_RIGHT).muted().show(ui);
                         });
                     }
                 });

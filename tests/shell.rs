@@ -157,3 +157,42 @@ fn toast_actions_render() {
     h.get_by_label("Reveal");
     h.get_by_label("Exported");
 }
+
+/// Nested submenus open by hover and a row two levels down is clickable. Regression: the row
+/// ids repeated at every level and egui panicked ("widget changed layer_id").
+#[test]
+fn app_menu_nested_submenus() {
+    use ouroboros_ui::atoms::Button;
+    use ouroboros_ui::cells::MenuItem;
+    use ouroboros_ui::organisms::AppMenu;
+    let clicked = Rc::new(Cell::new(false));
+    let c = clicked.clone();
+    let mut h = harness(move |ui| {
+        let trigger = Button::new("Menu").show(ui);
+        AppMenu::show(&trigger, |m| {
+            m.submenu("File", |m| {
+                m.add(MenuItem::new("Save"));
+                m.submenu("Export", |m| {
+                    if m.add(MenuItem::new("Client")) {
+                        c.set(true);
+                    }
+                });
+            });
+            m.submenu("Edit", |m| {
+                m.add(MenuItem::new("Undo"));
+            });
+        });
+    });
+    h.get_by_label("Menu").click();
+    h.run();
+    h.get_by_label("File").hover();
+    h.run();
+    h.get_by_label("Export").hover();
+    h.run();
+    h.get_by_label("Client").click();
+    h.run();
+    assert!(
+        clicked.get(),
+        "row inside a nested submenu reports its click"
+    );
+}

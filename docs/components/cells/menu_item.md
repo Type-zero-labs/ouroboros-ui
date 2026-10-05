@@ -16,6 +16,7 @@ A single menu row: optional leading icon, a label, and an optional right-aligned
   | disabled (`enabled(false)`) | `Surface` is non-interactive (no hover/sense) |
   | with shortcut | trailing `Kbd` pinned right via `Layout::right_to_left(Align::Center)` |
   | checkable (`checked(true)`) | leading check-mark [`Icon`](../atoms/icon.md) before icon/label (shadcn `CheckboxItem`) |
+  | submenu (`submenu()`) | trailing caret instead of a shortcut (shadcn `DropdownMenuSubTrigger`); [`AppMenu`](../organisms/app_menu.md) opens the submenu on hover |
   | checkable (`checked(false)`) | the mark's slot (`core::ICON_MD + core::SPACE_2`) is *reserved* so checked/unchecked siblings stay aligned |
 
 - **Tokens / layout consumed** — `core::SPACE_1` (4px outer pad), `core::SPACE_2` (icon→label gap), `core::RADIUS_SM` (4px), `core::ICON_MD` (reserved check slot). See [tokens](../../tokens.md).

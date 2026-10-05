@@ -13,6 +13,9 @@ use egui::{Response, Ui};
 /// The menu being filled. Rows report `true` when clicked.
 pub struct MenuUi<'u> {
     ui: &'u mut Ui,
+    /// Ids derive from the path in the menu: a counter alone repeats at every level, and the
+    /// same id in a submenu's layer trips egui ("widget changed layer_id").
+    base: egui::Id,
     n: usize,
 }
 
@@ -29,7 +32,7 @@ impl MenuUi<'_> {
     pub fn add(&mut self, item: MenuItem) -> bool {
         self.n += 1;
         let clicked = item
-            .id_source(("app_menu_row", self.n))
+            .id_source(self.base.with(("row", self.n)))
             .show(self.ui)
             .clicked();
         if clicked {
@@ -42,12 +45,14 @@ impl MenuUi<'_> {
         Divider::horizontal().show(self.ui);
         self.ui.add_space(core::SPACE_1);
     }
-    /// A nested submenu opened on hover/click.
+    /// A nested submenu, opened on hover (a [`MenuItem`] row with a caret).
     pub fn submenu(&mut self, label: impl Into<String>, add: impl FnOnce(&mut MenuUi)) {
         self.n += 1;
-        self.ui.menu_button(label.into(), |ui| {
-            ui.set_min_width(core::SPACE_12 * 4.0);
-            add(&mut MenuUi { ui, n: 0 });
+        let base = self.base.with(("sub", self.n));
+        let row = MenuItem::new(label).submenu().id_source(base).show(self.ui);
+        egui::containers::menu::SubMenu::new().show(self.ui, &row, |ui| {
+            fix_width(ui);
+            add(&mut MenuUi { ui, base, n: 0 });
         });
     }
     /// Raw access for custom rows (an input, a toggle group).
@@ -61,9 +66,18 @@ pub struct AppMenu;
 
 impl AppMenu {
     pub fn show(trigger: &Response, add: impl FnOnce(&mut MenuUi)) {
+        let base = trigger.id.with("app_menu");
         egui::Popup::menu(trigger).show(|ui: &mut Ui| {
-            ui.set_min_width(core::SPACE_12 * 5.0);
-            add(&mut MenuUi { ui, n: 0 });
+            fix_width(ui);
+            add(&mut MenuUi { ui, base, n: 0 });
         });
     }
+}
+
+/// Menus have a fixed width: right-aligned shortcuts and dividers fill the available
+/// width, which in a popup is the whole screen.
+fn fix_width(ui: &mut Ui) {
+    let w = core::SPACE_12 * 6.0;
+    ui.set_min_width(w);
+    ui.set_max_width(w);
 }

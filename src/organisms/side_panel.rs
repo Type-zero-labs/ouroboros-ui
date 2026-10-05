@@ -32,6 +32,7 @@ pub struct SidePanel<'a> {
     search: Option<(&'a mut String, String)>,
     collapsed: Option<&'a mut bool>,
     width: Option<&'a mut f32>,
+    scroll: bool,
 }
 
 impl<'a> SidePanel<'a> {
@@ -43,7 +44,14 @@ impl<'a> SidePanel<'a> {
             search: None,
             collapsed: None,
             width: None,
+            scroll: true,
         }
+    }
+    /// Give the body its plain rect instead of a scroll area — for bodies that lay out
+    /// their own regions (a `Splitter` of tree + explorer) and scroll inside them.
+    pub fn no_scroll(mut self) -> Self {
+        self.scroll = false;
+        self
     }
     /// Module title, shown in lowercase.
     pub fn title(mut self, title: impl Into<String>) -> Self {
@@ -74,10 +82,13 @@ impl<'a> SidePanel<'a> {
         let rect = ui.max_rect();
         let mut resized = false;
         let mut collapsed_now = false;
-        let header_rect = Rect::from_min_max(
-            rect.min,
-            pos2(rect.right(), rect.top() + layout::SIDE_HEADER_H),
-        );
+        // Sem busca, o cabeçalho é só a linha do título.
+        let header_h = if self.search.is_some() {
+            layout::SIDE_HEADER_H
+        } else {
+            layout::SIDE_HEADER_H - core::CONTROL_MD - core::SPACE_3
+        };
+        let header_rect = Rect::from_min_max(rect.min, pos2(rect.right(), rect.top() + header_h));
         let header = ui.interact(
             header_rect,
             self.id.with("header"),
@@ -133,10 +144,14 @@ impl<'a> SidePanel<'a> {
                         .max_rect(body_rect.shrink(core::SPACE_1))
                         .layout(Layout::top_down(Align::Min)),
                 );
-                egui::ScrollArea::vertical()
-                    .id_salt(self.id.with("body"))
-                    .auto_shrink([false, false])
-                    .show(&mut b, body);
+                if self.scroll {
+                    egui::ScrollArea::vertical()
+                        .id_salt(self.id.with("body"))
+                        .auto_shrink([false, false])
+                        .show(&mut b, body);
+                } else {
+                    body(&mut b);
+                }
             });
 
         if let Some(width) = self.width {
