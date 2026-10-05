@@ -29,6 +29,7 @@ pub mod surface;
 pub mod switch;
 pub mod text;
 pub mod textarea;
+pub mod tile_grid;
 pub mod toggle;
 pub mod tooltip;
 
@@ -53,5 +54,6 @@ pub use surface::{Surface, SurfaceBorder, SurfaceFill};
 pub use switch::Switch;
 pub use text::{Text, TextRole};
 pub use textarea::Textarea;
+pub use tile_grid::{TileGrid, TileRect};
 pub use toggle::Toggle;
 pub use tooltip::Tooltip;

@@ -10,7 +10,7 @@ use egui_kittest::Harness;
 use ouroboros_ui::atoms::{
     Avatar, Badge, BadgeVariant, Button, Checkbox, ColorSwatch, Divider, Heading, HeadingLevel,
     Icon, Input, Kbd, NumericField, Progress, Radio, Skeleton, Slider, Spinner, Surface, Switch,
-    Text, TextRole, Textarea, Toggle, Tooltip,
+    Text, TextRole, Textarea, TileGrid, TileRect, Toggle, Tooltip,
 };
 use ouroboros_ui::cells::{
     ListItem, MenuItem, PropertyRow, TableCell, TableRow, ToolbarButton, TreeNode,
@@ -1065,4 +1065,49 @@ fn panel_fills_mounted_rect() {
         (h - 200.0).abs() <= 2.0,
         "panel should fill the 200px mounted height, got {h}"
     );
+}
+
+#[test]
+fn tile_rect_spans_any_drag_direction() {
+    let up_left = TileRect::spanning((3, 2), (1, 0));
+    assert_eq!(
+        up_left,
+        TileRect {
+            col: 1,
+            row: 0,
+            w: 3,
+            h: 3
+        }
+    );
+    assert_eq!(
+        TileRect::spanning((2, 2), (2, 2)),
+        TileRect {
+            col: 2,
+            row: 2,
+            w: 1,
+            h: 1
+        }
+    );
+}
+
+#[test]
+fn tile_grid_renders_and_keeps_an_out_of_range_selection_quiet() {
+    rendered(|ui| {
+        let tex = ui.ctx().load_texture(
+            "tile_grid_test",
+            egui::ColorImage::new([64, 64], vec![core::ZINC_500; 64 * 64]),
+            egui::TextureOptions::NEAREST,
+        );
+        let mut sel = Some(TileRect {
+            col: 9,
+            row: 9,
+            w: 1,
+            h: 1,
+        });
+        let r = TileGrid::new(tex.id(), tex.size_vec2(), 4, 4, &mut sel)
+            .max_width(32.0)
+            .show(ui);
+        assert_eq!(r.rect.width(), 32.0, "scaled down to the cap");
+        assert!(!r.changed());
+    });
 }

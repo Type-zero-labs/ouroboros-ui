@@ -42,6 +42,7 @@ sanctioned exception that paints (still via tokens). See [guards](../guards.md).
 - [Surface](./atoms/surface.md) — the painting primitive (fill/border/radius/shadow) everything composes
 - [Divider](./atoms/divider.md) — horizontal/vertical rule
 - [ColorSwatch](./atoms/color_swatch.md) — a painted color chip
+- [TileGrid](./atoms/tile_grid.md) — atlas tile picker (click a tile, drag a block)
 - [SplitterHandle](./atoms/splitter_handle.md) — drag handle for resizable panels
 
 ---

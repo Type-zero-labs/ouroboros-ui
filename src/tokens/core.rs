@@ -50,6 +50,8 @@ pub const GREEN_500: Color32 = Color32::from_rgb(34, 197, 94);
 pub const RED_500: Color32 = Color32::from_rgb(239, 68, 68);
 /// Warning — amber-500.
 pub const AMBER_500: Color32 = Color32::from_rgb(245, 158, 11);
+/// Neutral image tint — multiplies a texture by 1 (draws it as authored).
+pub const TINT_NONE: Color32 = Color32::WHITE;
 /// Info (text) — blue-400.
 pub const BLUE_400: Color32 = Color32::from_rgb(96, 165, 250);
 /// Info (fill base) — blue-500.
