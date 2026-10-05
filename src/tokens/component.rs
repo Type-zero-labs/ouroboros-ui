@@ -64,6 +64,10 @@ impl ButtonTokens {
         t.underline = true;
         t
     }
+    /// Neutral — translucent fill with a hairline (the Figma panel icon button).
+    pub fn neutral(theme: &Theme) -> Self {
+        Self::base(theme.button_neutral, theme.foreground, theme.border_strong)
+    }
 }
 
 /// Resolved paint values for a badge variant. Mirrors the shadcn badge variants

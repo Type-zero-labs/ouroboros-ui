@@ -23,6 +23,8 @@ pub enum ButtonVariant {
     Outline,
     Ghost,
     Link,
+    /// Translucent fill + hairline — panel icon buttons (collapse, header actions).
+    Neutral,
 }
 
 /// A click button. Builder; `show` returns the [`Response`] (`clicked`, `hovered`, …).
@@ -73,6 +75,10 @@ impl Button {
     }
     pub fn link(self) -> Self {
         self.variant(ButtonVariant::Link)
+    }
+    /// Neutral — translucent fill with a hairline (panel icon buttons).
+    pub fn neutral(self) -> Self {
+        self.variant(ButtonVariant::Neutral)
     }
 
     pub fn size(mut self, size: Size) -> Self {
@@ -135,6 +141,7 @@ impl Button {
             ButtonVariant::Outline => ButtonTokens::outline(&theme),
             ButtonVariant::Ghost => ButtonTokens::ghost(&theme),
             ButtonVariant::Link => ButtonTokens::link(&theme),
+            ButtonVariant::Neutral => ButtonTokens::neutral(&theme),
         };
 
         let height = self.size.height();

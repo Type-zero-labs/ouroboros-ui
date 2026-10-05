@@ -48,6 +48,7 @@ enum Page {
     LayoutTokens,
     AutoLayoutDemo,
     ResizeLab,
+    ShellLab,
     Text,
     Heading,
     Icon,
@@ -128,6 +129,7 @@ impl Page {
             Page::LayoutTokens => "Layout & panels",
             Page::AutoLayoutDemo => "Auto-layout (Figma)",
             Page::ResizeLab => "Resize Lab",
+            Page::ShellLab => "Shell Lab (Figma)",
             Page::Text => "Text",
             Page::Heading => "Heading",
             Page::Icon => "Icon",
@@ -212,7 +214,12 @@ const NAV: &[(&str, &[Page])] = &[
     ),
     (
         "LAYOUT",
-        &[Page::LayoutTokens, Page::AutoLayoutDemo, Page::ResizeLab],
+        &[
+            Page::LayoutTokens,
+            Page::AutoLayoutDemo,
+            Page::ResizeLab,
+            Page::ShellLab,
+        ],
     ),
     (
         "ATOMS",
@@ -502,6 +509,7 @@ fn render_page(ui: &mut Ui, theme: &Theme, page: Page) {
         Page::LayoutTokens => page_layout_tokens(ui, theme),
         Page::AutoLayoutDemo => page_auto_layout(ui, theme),
         Page::ResizeLab => page_resize_lab(ui, theme),
+        Page::ShellLab => page_shell_lab(ui, theme),
         Page::Text => page_text(ui, theme),
         Page::Heading => page_heading(ui, theme),
         Page::Icon => page_icon(ui, theme),
@@ -2772,6 +2780,156 @@ fn page_auto_layout(ui: &mut Ui, theme: &Theme) {
         }
         grid.show(ui);
     });
+}
+
+/// The studio shell of the Oct 2026 redesign, assembled from DS parts only: rail + side panel
+/// + canvas with a floating toolbar + console drawer. Mirrors the Figma frame `200:52739`.
+fn page_shell_lab(ui: &mut Ui, _theme: &Theme) {
+    use ouroboros_ui::atoms::{Button, Text};
+    use ouroboros_ui::cells::{MenuItem, TreeNode};
+    use ouroboros_ui::organisms::{
+        toolbar_separator, AppMenu, Drawer, FloatingToolbar, Rail, RailItem, SidePanel, Toast,
+    };
+    use ouroboros_ui::tokens::layout;
+    #[derive(Clone)]
+    struct Lab {
+        module: usize,
+        collapsed: bool,
+        width: f32,
+        search: String,
+        console: bool,
+        console_h: f32,
+        tool: usize,
+        toast: bool,
+    }
+    let id = egui::Id::new("shell_lab");
+    let mut lab = ui.ctx().data(|d| d.get_temp::<Lab>(id)).unwrap_or(Lab {
+        module: 0,
+        collapsed: false,
+        width: layout::SIDE_PANEL_W,
+        search: String::new(),
+        console: false,
+        console_h: layout::DRAWER_H,
+        tool: 0,
+        toast: true,
+    });
+    caption(ui, "Rail · side panel · canvas · floating toolbar · drawer — click the active module to collapse the panel");
+    let area = ui.available_rect_before_wrap();
+    let frame = egui::Rect::from_min_size(
+        area.min,
+        egui::vec2(area.width(), 560.0_f32.min(area.height())),
+    );
+    ui.allocate_rect(frame, egui::Sense::hover());
+    const MODULES: [(&str, &str); 4] = [
+        (light::DATABASE, "Database"),
+        (light::GLOBE, "World"),
+        (light::CORNERS_OUT, "Scenes"),
+        (light::ROCKET_LAUNCH, "Build"),
+    ];
+    let rail_rect =
+        egui::Rect::from_min_size(frame.min, egui::vec2(layout::RAIL_WIDTH, frame.height()));
+    let mut rail_ui = ui.new_child(egui::UiBuilder::new().max_rect(rail_rect));
+    let mut rail = Rail::new(&mut lab.module).logo(|ui| {
+        Button::new("")
+            .icon_only()
+            .secondary()
+            .icon_left(light::INFINITY)
+            .show(ui)
+    });
+    for (i, (icon, label)) in MODULES.iter().enumerate() {
+        rail = rail.item(RailItem::new(icon, *label).shortcut(format!("Ctrl+{}", i + 1)));
+    }
+    let r = rail
+        .footer(RailItem::new(light::TERMINAL_WINDOW, "Console").badge(Some(3)))
+        .show(&mut rail_ui);
+    if r.reclicked {
+        lab.collapsed = !lab.collapsed;
+    }
+    if r.footer_clicked == Some(0) {
+        lab.console = !lab.console;
+    }
+    if let Some(logo) = &r.logo {
+        AppMenu::show(logo, |m| {
+            m.section("File");
+            m.add(
+                MenuItem::new("Save")
+                    .icon(light::FLOPPY_DISK)
+                    .shortcut("Ctrl+S"),
+            );
+            m.submenu("Export", |m| {
+                m.add(MenuItem::new("Client"));
+                m.add(MenuItem::new("Server"));
+            });
+            m.section("Window");
+            m.add(MenuItem::new("Toggle side panel").shortcut("Ctrl+\\"));
+        });
+    }
+    let mut x = rail_rect.right();
+    if !lab.collapsed {
+        let panel = egui::Rect::from_min_size(
+            egui::pos2(x, frame.top()),
+            egui::vec2(lab.width, frame.height()),
+        );
+        let mut pui = ui.new_child(egui::UiBuilder::new().max_rect(panel));
+        let title = MODULES[lab.module].1;
+        SidePanel::new(("lab_panel", lab.module))
+            .title(title)
+            .search(&mut lab.search, "Search")
+            .collapsible(&mut lab.collapsed)
+            .resizable(&mut lab.width)
+            .show(&mut pui, |ui| {
+                for name in [
+                    "Player",
+                    "Character",
+                    "Creature",
+                    "Object",
+                    "Item",
+                    "Event",
+                    "Skill",
+                ] {
+                    TreeNode::new(name).icon(light::DIAMONDS_FOUR).show(ui);
+                }
+            });
+        x = panel.right();
+    }
+    let canvas = egui::Rect::from_min_max(egui::pos2(x, frame.top()), frame.max);
+    let tools = [
+        light::GRID_FOUR,
+        light::SQUARES_FOUR,
+        light::MOUNTAINS,
+        light::PAINT_BRUSH,
+        light::HAMMER,
+        light::MAP_PIN,
+    ];
+    FloatingToolbar::new("lab_toolbar").show(ui.ctx(), canvas, |ui| {
+        for (i, icon) in tools.iter().enumerate() {
+            let active = lab.tool == i;
+            let b = Button::new("").icon_only().icon_left(icon);
+            let b = if active { b.secondary() } else { b.ghost() };
+            if b.id_source(("lab_tool", i)).show(ui).clicked() {
+                lab.tool = i;
+            }
+        }
+        toolbar_separator(ui);
+        Text::new("Map").caption().muted().show(ui);
+    });
+    Drawer::new("lab_console", &mut lab.console, &mut lab.console_h).show(ui.ctx(), canvas, |ui| {
+        Text::new("INFO studio: project loaded").code().show(ui);
+        Text::new("WARN cook: 3 warnings").code().show(ui);
+    });
+    if lab.toast {
+        let t = Toast::new("Exporting client… 12s")
+            .busy(true)
+            .action("Reveal")
+            .dismissible()
+            .bottom()
+            .id_source("lab_toast")
+            .show_with_actions(ui.ctx());
+        if t.dismissed {
+            lab.toast = false;
+        }
+    }
+    ui.ctx().data_mut(|d| d.insert_temp(id, lab));
 }
 
 fn page_resize_lab(ui: &mut Ui, _theme: &Theme) {

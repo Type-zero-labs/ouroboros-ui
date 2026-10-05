@@ -15,6 +15,17 @@ pub struct Toast {
     message: String,
     variant: AlertVariant,
     dismissible: bool,
+    actions: Vec<String>,
+    busy: bool,
+    bottom: bool,
+}
+
+/// What the user did on a toast with actions ([`Toast::show_with_actions`]).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ToastResult {
+    pub dismissed: bool,
+    /// Index of the action button clicked.
+    pub action: Option<usize>,
 }
 
 impl Toast {
@@ -24,6 +35,9 @@ impl Toast {
             message: message.into(),
             variant: AlertVariant::default(),
             dismissible: false,
+            actions: Vec::new(),
+            busy: false,
+            bottom: false,
         }
     }
     pub fn id_source(mut self, id: impl std::hash::Hash) -> Self {
@@ -47,6 +61,93 @@ impl Toast {
     pub fn dismissible(mut self) -> Self {
         self.dismissible = true;
         self
+    }
+
+    /// An action button under the message (e.g. "Reveal", "Stop").
+    pub fn action(mut self, label: impl Into<String>) -> Self {
+        self.actions.push(label.into());
+        self
+    }
+    /// A spinner before the message (work in progress: export, preview build).
+    pub fn busy(mut self, busy: bool) -> Self {
+        self.busy = busy;
+        self
+    }
+    /// Anchor bottom-right instead of top-right (the shell keeps the top for the canvas).
+    pub fn bottom(mut self) -> Self {
+        self.bottom = true;
+        self
+    }
+
+    /// Like [`Toast::show`], with the action row; reports which action was clicked.
+    pub fn show_with_actions(self, ctx: &Context) -> ToastResult {
+        let actions = self.actions.clone();
+        let busy = self.busy;
+        let id = self.id;
+        let mut result = ToastResult::default();
+        let message = self.message.clone();
+        let anchor = if self.bottom {
+            (
+                Align2::RIGHT_BOTTOM,
+                Vec2::new(-core::SPACE_4, -core::SPACE_4),
+            )
+        } else {
+            (Align2::RIGHT_TOP, Vec2::new(-core::SPACE_4, core::SPACE_4))
+        };
+        let variant = self.variant;
+        let dismissible = self.dismissible;
+        Area::new(id)
+            .anchor(anchor.0, anchor.1)
+            .order(Order::Foreground)
+            .show(ctx, |ui| {
+                ui.set_max_width(layout::INSPECTOR_WIDTH);
+                crate::atoms::Surface::new()
+                    .elevated()
+                    .pad(core::SPACE_2)
+                    .show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            if busy {
+                                crate::atoms::Spinner::new().show(ui);
+                            }
+                            let _ = variant;
+                            crate::atoms::Text::new(message).wrap().show(ui);
+                            if dismissible {
+                                ui.with_layout(
+                                    egui::Layout::right_to_left(egui::Align::Min),
+                                    |ui| {
+                                        if Button::new("")
+                                            .icon_only()
+                                            .ghost()
+                                            .sm()
+                                            .icon_left(light::X)
+                                            .id_source((id, "toast_close"))
+                                            .show(ui)
+                                            .clicked()
+                                        {
+                                            result.dismissed = true;
+                                        }
+                                    },
+                                );
+                            }
+                        });
+                        if !actions.is_empty() {
+                            ui.horizontal(|ui| {
+                                for (i, label) in actions.iter().enumerate() {
+                                    if Button::new(label.clone())
+                                        .secondary()
+                                        .sm()
+                                        .id_source((id, "toast_action", i))
+                                        .show(ui)
+                                        .clicked()
+                                    {
+                                        result.action = Some(i);
+                                    }
+                                }
+                            });
+                        }
+                    });
+            });
+        result
     }
 
     pub fn show(self, ctx: &Context) -> bool {

@@ -43,6 +43,8 @@ sanctioned exception that paints (still via tokens). See [guards](../guards.md).
 - [Divider](./atoms/divider.md) — horizontal/vertical rule
 - [ColorSwatch](./atoms/color_swatch.md) — a painted color chip
 - [TileGrid](./atoms/tile_grid.md) — atlas tile picker (click a tile, drag a block)
+- [RailButton](./atoms/rail_button.md) — module icon on the shell rail (active, badge, tooltip)
+- [WindowResizeBorder](./atoms/window_resize_border.md) — edge/corner grips for an undecorated window
 - [SplitterHandle](./atoms/splitter_handle.md) — drag handle for resizable panels
 
 ---
@@ -102,7 +104,12 @@ sanctioned exception that paints (still via tokens). See [guards](../guards.md).
 - [Dialog](./organisms/dialog.md) — modal dialog
 - [Popover](./organisms/popover.md) — floating anchored surface
 - [DropdownMenu](./organisms/dropdown_menu.md) — menu in a popup
-- [Toast](./organisms/toast.md) — transient notification
+- [Toast](./organisms/toast.md) — transient notification (actions, busy, bottom)
+- [Rail](./organisms/rail.md) — vertical module bar of the app shell
+- [SidePanel](./organisms/side_panel.md) — collapsible, resizable module panel with search
+- [AppMenu](./organisms/app_menu.md) — app-wide menu opened from the rail logo
+- [FloatingToolbar](./organisms/floating_toolbar.md) — tool pill floating over a canvas
+- [Drawer](./organisms/drawer.md) — resizable bottom sheet (console)
 - [Select](./organisms/select.md) — select/combo dropdown
 
 ### Data & views

@@ -115,6 +115,33 @@ struct SplitterState {
     collapsed: Vec<bool>,
 }
 
+/// Collapse or expand panel `index` of the splitter whose `id_source` is `id_source` — the
+/// same as double-clicking its divider, from code (a rail click, a shortcut). Works before the
+/// splitter's first frame too.
+pub fn set_collapsed(
+    ctx: &egui::Context,
+    id_source: impl std::hash::Hash,
+    index: usize,
+    collapsed: bool,
+) {
+    let id = Id::new(id_source);
+    ctx.data_mut(|d| {
+        let mut state = d.get_temp::<SplitterState>(id).unwrap_or_default();
+        if state.collapsed.len() <= index {
+            state.collapsed.resize(index + 1, false);
+        }
+        state.collapsed[index] = collapsed;
+        d.insert_temp(id, state);
+    });
+}
+
+/// Is panel `index` of that splitter collapsed?
+pub fn is_collapsed(ctx: &egui::Context, id_source: impl std::hash::Hash, index: usize) -> bool {
+    ctx.data(|d| d.get_temp::<SplitterState>(Id::new(id_source)))
+        .and_then(|s| s.collapsed.get(index).copied())
+        .unwrap_or(false)
+}
+
 /// A resizable pane splitter. Build with [`Splitter::horizontal`] / [`Splitter::vertical`],
 /// add panels, then [`Splitter::show`].
 pub struct Splitter<'a> {
@@ -200,7 +227,7 @@ impl<'a> Splitter<'a> {
 
         let horizontal = self.horizontal;
         let main = |v: Vec2| if horizontal { v.x } else { v.y };
-        let div = core::SPACE_2;
+        let div = core::SPACE_1;
         let main_len = main(rect.size());
 
         // A boundary is draggable only when both neighbours are resizable. Fixed/locked
@@ -221,11 +248,13 @@ impl<'a> Splitter<'a> {
         let id = self.id_source.unwrap_or(response.id);
         let mut state = ui
             .data(|d| d.get_temp::<SplitterState>(id))
-            .filter(|s| s.fracs.len() == n)
-            .unwrap_or_else(|| SplitterState {
-                fracs: init_fracs(&self.panels),
-                collapsed: vec![false; n],
-            });
+            .filter(|s| s.fracs.len() == n || s.fracs.is_empty())
+            .unwrap_or_default();
+        if state.fracs.len() != n {
+            // First frame (or a collapse requested by `set_collapsed` before the first layout).
+            state.fracs = init_fracs(&self.panels);
+        }
+        state.collapsed.resize(n, false);
 
         // ── Effective fractions: fixed and collapsed panels contribute 0 to the flex split ──
         let mut eff: Vec<f32> = (0..n)
